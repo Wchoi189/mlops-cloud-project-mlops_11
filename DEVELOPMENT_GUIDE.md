@@ -421,6 +421,58 @@ rm -f database/mlops_imdb.db
 5. **컨테이너화**: 배포를 위한 Docker 컨테이너 생성
 6. **CI/CD 생성**: 자동화된 테스트 및 배포 설정
 
+
+---
+
+## 📊 Section 1: IMDb 데이터 파이프라인 구현 (Rating Prediction)
+
+### 1.1 IMDb 데이터셋 다운로드 및 준비 (최소 구성)
+
+#### 프로젝트 철학: MLOps 파이프라인 중심
+- **목표**: 복잡한 ML 모델이 아닌 **MLOps 파이프라인 구축**에 집중
+- **데이터**: 필수 2개 파일만 사용 (title.basics + title.ratings)
+- **피처**: 간단하지만 효과적인 4-5개 피처로 제한
+- **이유**: 팀 협업 용이성, 빠른 구현, 디버깅 단순화
+
+#### Step 1: 데이터 로더 구현
+`src/data/data_loader.py` 파일 생성:
+
+
+#### Step 2: 데이터 검증 스크립트
+`scripts/validate_data.py` 파일 생성:
+
+#### Step 3: 실행 명령어
+
+```bash
+# 1. 추가 의존성 설치
+pip install requests
+
+# 2. 데이터 다운로드 및 처리
+python -c "from src.data.data_loader import IMDbDataLoader; loader = IMDbDataLoader(); movies_df = loader.create_movie_dataset()"
+
+# 3. 데이터 검증
+python scripts/validate_data.py
+```
+
+#### 예상 결과
+- `data/raw/` 폴더에 2개 압축 파일 다운로드
+- `data/processed/movies_with_ratings.csv` 생성 
+- 약 10,000-30,000개 영화 데이터 (품질 필터링 후)
+- 4-5개 핵심 피처 (title, year, genre, rating, votes)
+---
+## 📊 Section 2: Data Preprocessing Pipeline
+✅ Step 1: Create the preprocessing module # Create src/data/preprocessing.py
+✅ Step 2: Create the test script # Create scripts/test_preprocessing.py 
+✅ Step 3: Run the preprocessing pipeline
+
+# 1. 전처리 파이프라인 실행
+bash
+
+# Using single quotes to avoid bash interpretation
+python -c 'from src.data.preprocessing import IMDbPreprocessor; p = IMDbPreprocessor(); df = p.load_data(); X, y, features = p.fit_transform(df); p.save_preprocessor(); print("전처리 완료!")'
+
+# 2. 전처리 파이프라인 테스트
+python scripts/test_preprocessing.py
 ---
 
 *즐거운 코딩하세요! 🚀*
