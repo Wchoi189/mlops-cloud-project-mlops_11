@@ -1,0 +1,46 @@
+# 데이터 사이언스 핵심
+pandas>=1.5.0
+numpy>=1.21.0
+scikit-learn>=1.1.0
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# 자연어 처리
+nltk>=3.7
+
+# 딥러닝 - PyTorch (CPU 버전, GPU 필요시 아래 주석 해제)
+torch>=2.0.0,<2.2.0
+torchvision>=0.15.0,<0.17.0
+torchaudio>=2.0.0,<2.2.0
+
+# GPU 버전이 필요한 경우 위의 torch 라인들을 주석처리하고 아래 사용:
+# --index-url https://download.pytorch.org/whl/cu118
+# torch>=2.0.0,<2.2.0
+# torchvision>=0.15.0,<0.17.0
+# torchaudio>=2.0.0,<2.2.0
+
+# API 프레임워크
+fastapi>=0.85.0
+uvicorn>=0.18.0
+python-multipart>=0.0.5
+
+# MLOps
+mlflow>=2.0.0
+
+# 데이터 검증
+pydantic>=1.10.0
+
+# ML 모니터링 및 데이터 드리프트 감지
+evidently>=0.4.0
+
+# 데이터베이스 (SQLite 유틸리티)
+sqlalchemy>=1.4.0
+alembic>=1.8.0
+
+# 추가 유틸리티
+python-dotenv>=1.0.0
+requests>=2.28.0
+
+# PyTorch 관련 추가 패키지 (선택사항)
+transformers>=4.21.0  # Hugging Face transformers (NLP용)
+tokenizers>=0.13.0    # 빠른 토크나이저
