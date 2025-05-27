@@ -1,0 +1,44 @@
+model:
+  name: "imdb_sentiment_model"
+  type: "classification"
+  algorithm: "logistic_regression"  # or "random_forest", "neural_network"
+  version: "1.0.0"
+
+data:
+  train_size: 0.8
+  val_size: 0.1
+  test_size: 0.1
+  random_state: 42
+  max_features: 10000
+  max_length: 500
+
+preprocessing:
+  lowercase: true
+  remove_punctuation: true
+  remove_stopwords: true
+  stemming: false
+  lemmatization: true
+
+training:
+  batch_size: 32
+  epochs: 10
+  learning_rate: 0.001
+  early_stopping: true
+  patience: 3
+
+evaluation:
+  metrics:
+    - accuracy
+    - precision
+    - recall
+    - f1_score
+    - roc_auc
+
+mlflow:
+  experiment_name: "imdb_sentiment_analysis"
+  tracking_uri: "http://localhost:5000"
+  artifact_path: "models"
+
+monitoring:
+  data_drift_threshold: 0.05
+  model_performance_threshold: 0.85
