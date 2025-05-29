@@ -43,6 +43,29 @@ Thumbs.db
 
 # MLOps specific
 models/
-data/
+# data/
 logs/
 *.log
+
+
+# MLflow
+mlruns/
+mlartifacts/
+.mlflow/
+
+# Keep processed data structure but ignore large files
+data/processed/*
+data/raw/*
+data/interim/*
+data/external/*
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Credentials
+credentials.json
+secrets.yaml
+config/secrets/

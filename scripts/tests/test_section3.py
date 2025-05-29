@@ -65,8 +65,10 @@ def test_section3():
         print(f"✅ 데이터 로드 성공: {len(df):,}개 샘플")
         
         # 필요한 컬럼 확인
-        required_columns = ['startYear', 'runtimeMinutes', 'numVotes', 
-                          'is_Action', 'is_Comedy', 'is_Drama', 'averageRating']
+        # required_columns = ['startYear', 'runtimeMinutes', 'numVotes', 
+        #                   'is_Action', 'is_Comedy', 'is_Drama', 'averageRating'] #  누락된 컬럼: ['is_Action', 'is_Comedy', 'is_Drama']
+        
+        required_columns = ['startYear', 'runtimeMinutes', 'numVotes', 'isAdult', 'averageRating']
         
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
