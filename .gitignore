@@ -41,23 +41,40 @@ Thumbs.db
 # Jupyter
 .ipynb_checkpoints/
 
-# MLOps specific
-models/
-# data/
-logs/
-*.log
+# MLOps specific - Model files (usually large and shouldn't be in git)
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.tflite
 
+# Keep model directory structure and Python files
+!models/
+!models/*.py
+!models/.gitkeep
+
+# Data files (usually large)
+data/processed/*
+data/raw/*
+data/interim/*
+data/external/*
+
+# Keep data directory structure
+!data/processed/.gitkeep
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/external/.gitkeep
 
 # MLflow
 mlruns/
 mlartifacts/
 .mlflow/
 
-# Keep processed data structure but ignore large files
-data/processed/*
-data/raw/*
-data/interim/*
-data/external/*
+# Logs
+logs/
+*.log
 
 # Temporary files
 *.tmp
