@@ -1,0 +1,165 @@
+```yaml
+version: '3.8'
+
+# 프로덕션 Docker Compose 구성
+# 안정성, 보안, 성능에 최적화
+
+services:
+  # MLflow 추적 서버
+  mlflow:
+    image: python:3.11-slim
+    container_name: mlops-mlflow-prod
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlruns:/mlruns
+      - ./mlartifacts:/mlartifacts
+    command: >
+      bash -c "pip install mlflow==2.8.1 gunicorn &&
+               mlflow server --host 0.0.0.0 --port 5000 
+               --backend-store-uri sqlite:///mlruns/mlflow.db
+               --default-artifact-root /mlartifacts
+               --serve-artifacts"
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlruns/mlflow.db
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlartifacts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+
+  # API 서비스 (프로덕션)
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    image: mlops-imdb-api:prod
+    container_name: mlops-api-prod
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MODEL_PATH=/app/models
+      - LOG_LEVEL=INFO
+      - WORKERS=4
+      - MAX_WORKERS=8
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    volumes:
+      - ../models:/app/models:ro
+      - ../logs:/app/logs
+      - ../data:/app/data:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '1.0'
+      replicas: 2  # 로드 밸런싱 (swarm 모드 사용 시)
+
+  # Nginx 로드 밸런서 (선택사항)
+  nginx:
+    image: nginx:alpine
+    container_name: mlops-nginx-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro  # SSL 인증서
+    depends_on:
+      - api
+    restart: unless-stopped
+    profiles:
+      - production  # 프로덕션에서만
+
+  # 훈련 서비스 (배치)
+  trainer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.train
+    image: mlops-imdb-trainer:prod
+    container_name: mlops-trainer-prod
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MODEL_PATH=/app/models
+      - DATA_PATH=/app/data
+      - LOG_LEVEL=INFO
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    volumes:
+      - ../models:/app/models
+      - ../data:/app/data
+      - ../logs:/app/logs
+    profiles:
+      - training
+    restart: "no"  # 한 번만 실행
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '4.0'
+
+  # 모니터링 (Prometheus + Grafana)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mlops-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mlops-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning:ro
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+volumes:
+  mlruns:
+  mlartifacts:
+  grafana-storage:
+
+networks:
+  default:
+    name: mlops-network-prod
+    driver: bridge
+```

@@ -1,36 +1,85 @@
+```yaml
 version: '3.8'
 
 services:
-  api:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.api
-    ports:
-      - "8000:8000"
-    environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
-    depends_on:
-      - mlflow
-    volumes:
-      - ../models:/app/models
-      - ../logs:/app/logs
-
+  # MLflow 추적 서버
   mlflow:
     image: python:3.11-slim
+    container_name: mlops-mlflow
     ports:
       - "5000:5000"
     volumes:
-      - ../mlruns:/mlruns
-      - ../mlartifacts:/mlartifacts
+      - ./mlruns:/mlruns
+      - ./mlartifacts:/mlartifacts
     command: >
-      bash -c "pip install mlflow &&
+      bash -c "pip install mlflow==2.8.1 &&
                mlflow server --host 0.0.0.0 --port 5000 
                --backend-store-uri sqlite:///mlruns/mlflow.db
                --default-artifact-root /mlartifacts"
     environment:
       - MLFLOW_BACKEND_STORE_URI=sqlite:///mlruns/mlflow.db
       - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlartifacts
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # API 서비스
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: mlops-api
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MODEL_PATH=/app/models
+      - LOG_LEVEL=INFO
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    volumes:
+      - ../models:/app/models:ro  # 읽기 전용 모델 파일
+      - ../logs:/app/logs         # 로그 디렉토리
+      - ../data:/app/data:ro      # 읽기 전용 데이터 파일
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  # 훈련 서비스 (선택사항 - 예약된 훈련용)
+  trainer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.train
+    container_name: mlops-trainer
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MODEL_PATH=/app/models
+      - DATA_PATH=/app/data
+      - LOG_LEVEL=INFO
+    depends_on:
+      mlflow:
+        condition: service_healthy
+    volumes:
+      - ../models:/app/models     # 모델 저장을 위한 읽기-쓰기
+      - ../data:/app/data         # 데이터 디렉토리
+      - ../logs:/app/logs         # 로그 디렉토리
+    profiles:
+      - training  # 명시적으로 요청될 때만 시작
+    command: ["python", "scripts/train_model.py"]
 
 volumes:
   mlruns:
   mlartifacts:
+
+networks:
+  default:
+    name: mlops-network
+```
