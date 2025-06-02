@@ -1,4 +1,3 @@
-```yaml
 version: '3.8'
 
 # 프로덕션 Docker Compose 구성
@@ -162,4 +161,3 @@ networks:
   default:
     name: mlops-network-prod
     driver: bridge
-```
