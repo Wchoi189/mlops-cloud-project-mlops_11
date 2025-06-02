@@ -49,9 +49,10 @@ receivers:
   # Critical alerts - multiple channels
   - name: 'critical-alerts'
     slack_configs:
-      - api_url: 'YOUR_SLACK_WEBHOOK_URL'
+      - api_url: 'https://hooks.slack.com/services/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'
         channel: '#mlops-critical'
         title: '🚨 Critical MLOps Alert'
+        icon_emoji: ':fire:'  # For critical alerts
         text: |
           {{ range .Alerts }}
           **Alert:** {{ .Annotations.summary }}
@@ -62,23 +63,31 @@ receivers:
         send_resolved: true
     
     # Email notification for critical alerts
-    email_configs:
-      - to: 'team@mlops-imdb.com'
-        subject: '🚨 Critical MLOps Alert - {{ .GroupLabels.alertname }}'
-        html: |
-          <h2>Critical Alert Triggered</h2>
-          {{ range .Alerts }}
-          <h3>{{ .Annotations.summary }}</h3>
-          <p><strong>Description:</strong> {{ .Annotations.description }}</p>
-          <p><strong>Severity:</strong> {{ .Labels.severity }}</p>
-          <p><strong>Service:</strong> {{ .Labels.service }}</p>
-          <p><strong>Started:</strong> {{ .StartsAt }}</p>
-          {{ end }}
-
+    # email_configs:
+    #   - to: 'recipient@example.com'
+    #     from: 'alertmanager@example.com'
+    #     smarthost: 'smtp.example.com:587'
+    #     auth_username: 'username'
+    #     auth_password: 'password'
+    #     auth_identity: 'username'
+    #     auth_secret: 'password'
+    #     headers:
+    #       subject: '🚨 Critical MLOps Alert - {{ .GroupLabels.alertname }}'
+    #     html: |
+    #       <h2>Critical Alert Triggered</h2>
+    #       {{ range .Alerts }}
+    #       <h3>{{ .Annotations.summary }}</h3>
+    #       <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+    #       <p><strong>Severity:</strong> {{ .Labels.severity }}</p>
+    #       <p><strong>Service:</strong> {{ .Labels.service }}</p>
+    #       <p><strong>Started:</strong> {{ .StartsAt }}</p>
+    #       {{ end }}
+    #     send_resolved: true
+        
   # API team notifications
   - name: 'api-team'
     slack_configs:
-      - api_url: 'YOUR_API_TEAM_SLACK_WEBHOOK'
+      - api_url: 'https://hooks.slack.com/services/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'
         channel: '#api-alerts'
         title: '🔧 API Alert'
         text: |
@@ -91,7 +100,7 @@ receivers:
   # ML team notifications
   - name: 'ml-team'
     slack_configs:
-      - api_url: 'YOUR_ML_TEAM_SLACK_WEBHOOK'
+      - api_url: 'https://hooks.slack.com/services/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'
         channel: '#ml-alerts'
         title: '🤖 Model Alert'
         text: |
@@ -103,7 +112,7 @@ receivers:
   # DevOps team notifications
   - name: 'devops-team'
     slack_configs:
-      - api_url: 'YOUR_DEVOPS_SLACK_WEBHOOK'
+      - api_url: 'https://hooks.slack.com/services/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'
         channel: '#infrastructure'
         title: '🖥️ System Alert'
         text: |

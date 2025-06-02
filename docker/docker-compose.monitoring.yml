@@ -1,4 +1,4 @@
-version: '3.8'
+# version: '3.8' # the attribute `version` is obsolet
 
 # Extended Docker Compose with Monitoring Stack
 # Includes: Prometheus, Grafana, AlertManager
@@ -14,7 +14,11 @@ services:
       - ./mlruns:/mlruns
       - ./mlartifacts:/mlartifacts
     command: >
-      bash -c "pip install mlflow==2.8.1 &&
+      bash -c 
+      "apt-get update && apt-get install -y curl netcat-traditional &&
+               pip install mlflow==2.8.1 &&
+               mkdir -p /mlruns /mlartifacts &&
+               mlflow server --host 0.0.0.0 --port 5000 
                mlflow server --host 0.0.0.0 --port 5000 
                --backend-store-uri sqlite:///mlruns/mlflow.db
                --default-artifact-root /mlartifacts"
@@ -22,11 +26,11 @@ services:
       - MLFLOW_BACKEND_STORE_URI=sqlite:///mlruns/mlflow.db
       - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlartifacts
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - mlops-network
 
@@ -109,15 +113,23 @@ services:
     ports:
       - "9093:9093"
     volumes:
-      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      # - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager-storage:/alertmanager
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
       - '--web.external-url=http://localhost:9093'
+      - '--log.level=debug'  # Add this for debugging
     restart: unless-stopped
     networks:
       - mlops-network
+    healthcheck:  
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s    
 
   # 📈 Node Exporter - System Metrics
   node-exporter:
