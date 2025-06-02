@@ -1,0 +1,140 @@
+groups:
+  - name: mlops-api-alerts
+    rules:
+      # API Availability
+      - alert: MLOpsAPIDown
+        expr: up{job="mlops-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "MLOps API is down"
+          description: "MLOps API has been down for more than 1 minute"
+
+      # High API Response Time
+      - alert: APIHighResponseTime
+        expr: histogram_quantile(0.95, http_request_duration_seconds_bucket{job="mlops-api"}) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: api
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is {{ $value }}s"
+
+      # High Error Rate
+      - alert: APIHighErrorRate
+        expr: rate(http_requests_total{job="mlops-api", code=~"5.."}[5m]) > 0.1
+        for: 3m
+        labels:
+          severity: critical
+          service: api
+        annotations:
+          summary: "High API error rate"
+          description: "Error rate is {{ $value | humanizePercentage }}"
+
+      # Model Prediction Latency
+      - alert: ModelPredictionHighLatency
+        expr: histogram_quantile(0.95, model_prediction_duration_seconds_bucket) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: model
+        annotations:
+          summary: "High model prediction latency"
+          description: "95th percentile prediction time is {{ $value }}s"
+
+  - name: mlops-system-alerts
+    rules:
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80% for {{ $labels.instance }}"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 3m
+        labels:
+          severity: critical
+          service: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 90% for {{ $labels.instance }}"
+
+      # Low Disk Space
+      - alert: LowDiskSpace
+        expr: (1 - (node_filesystem_free_bytes / node_filesystem_size_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage is above 85% for {{ $labels.instance }}"
+
+  - name: mlops-model-alerts
+    rules:
+      # Model Accuracy Drop
+      - alert: ModelAccuracyDrop
+        expr: model_accuracy_score < 0.7
+        for: 10m
+        labels:
+          severity: warning
+          service: model
+        annotations:
+          summary: "Model accuracy dropped"
+          description: "Model accuracy is {{ $value | humanizePercentage }}"
+
+      # Data Drift Detected
+      - alert: DataDriftDetected
+        expr: data_drift_score > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: data
+        annotations:
+          summary: "Data drift detected"
+          description: "Data drift score is {{ $value }}"
+
+      # Model Training Failure
+      - alert: ModelTrainingFailed
+        expr: increase(model_training_failures_total[1h]) > 0
+        for: 1m
+        labels:
+          severity: critical
+          service: training
+        annotations:
+          summary: "Model training failed"
+          description: "{{ $value }} training failures in the last hour"
+
+  - name: mlops-container-alerts
+    rules:
+      # Container Restart
+      - alert: ContainerRestarted
+        expr: increase(container_start_time_seconds[10m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: container
+        annotations:
+          summary: "Container restarted"
+          description: "Container {{ $labels.name }} has restarted"
+
+      # High Container Memory Usage
+      - alert: ContainerHighMemoryUsage
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: container
+        annotations:
+          summary: "High container memory usage"
+          description: "Container {{ $labels.name }} memory usage is {{ $value | humanizePercentage }}"

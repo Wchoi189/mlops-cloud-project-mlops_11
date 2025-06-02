@@ -132,7 +132,7 @@ class ProgressTracker:
                 rich_console = Console()
                 return Progress(
                     SpinnerColumn(),
-                    TextColumn("[progress.description{task.description}]")
+                    TextColumn("[progress.description{task.description}]"),
                     BarColumn(),
                     TaskProgressColumn(),
                     console=rich_console
@@ -458,6 +458,22 @@ def log_error(message: str):
 def track_progress(iterable, description: str = "Processing"):
     """Quick progress tracking"""
     return tools.progress.track(iterable, description)
+
+def get_package_version(package_name: str) -> str:
+    """Get version of any installed package"""
+    try:
+        from importlib.metadata import version
+        return version(package_name)
+    except ImportError:
+        # Python < 3.8 fallback
+        try:
+            import pkg_resources
+            return pkg_resources.get_distribution(package_name).version
+        except Exception:
+            return "unknown"
+        # Usage
+        # prometheus_version = get_package_version('prometheus-client')
+        # print(f"prometheus_client version: {prometheus_version}")
 
 # CLI setup for fire
 CLI_FUNCTIONS = {
