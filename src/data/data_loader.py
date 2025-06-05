@@ -70,7 +70,7 @@ class IMDbDataLoader:
         logger.info(f"로드 완료: {dataset_name} - {len(df):,} 행")
         return df
     
-    def create_movie_dataset(self, sample_size: int = 50000) -> pd.DataFrame:
+    def create_movie_dataset(self, sample_size: int = 50000, save_path=None) -> pd.DataFrame:
         """
         영화 평점 예측용 통합 데이터셋 생성 (MLOps 파이프라인용)
         
@@ -124,11 +124,17 @@ class IMDbDataLoader:
         logger.info(f"✅ 최종 데이터셋: {len(movie_ratings):,} 영화")
         
         # 6. 결과 저장
-        output_path = self.data_dir.parent / 'processed' / 'movies_with_ratings.csv'
-        output_path.parent.mkdir(exist_ok=True)
-        movie_ratings.to_csv(output_path, index=False)
-        
-        logger.info(f"💾 데이터셋 저장: {output_path}")
+        if save_path:
+            # DAG에서 경로 설정
+            movie_ratings.to_csv(save_path, index=False)
+            logger.info(f"💾 데이터셋 저장: {save_path}")
+        else:
+            # 기본 저장 경로로 저장 (예: 상대 경로)
+            df.to_csv("data/processed/movies_with_ratings.csv", index=False)
+            output_path = self.data_dir.parent / 'processed' / 'movies_with_ratings.csv'
+            output_path.parent.mkdir(exist_ok=True)
+            movie_ratings.to_csv(output_path, index=False)
+            logger.info(f"💾 데이터셋 저장: {output_path}")
         
         return movie_ratings
 

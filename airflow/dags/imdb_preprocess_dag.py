@@ -10,10 +10,21 @@ sys.path.append(str(Path(__file__).resolve().parents[2]))
 # IMDb 데이터 로더 임포트
 from src.data.data_loader import IMDbDataLoader
 
+# Airflow 작업 공간 절대 경로 설정
+from pathlib import Path
+import os
+
 # 전처리 함수 정의
 def run_preprocessing():
+    project_root = Path(__file__).resolve().parents[2]  # 프로젝트 루트 경로
+    data_dir = project_root / "data"
+    print(f"데이터 디렉토리: {data_dir}")
+
     loader = IMDbDataLoader()
-    loader.create_movie_dataset(sample_size=100000)  # 필요한 만큼 조절
+    loader.create_movie_dataset(
+        sample_size=100000,
+        save_path=str(data_dir / "processed" / "movies_with_ratings.csv")
+    ) # size 필요한 만큼 조절
 
 # DAG 정의
 default_args = {
