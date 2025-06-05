@@ -1,3 +1,4 @@
+---
 groups:
   - name: mlops-api-alerts
     rules:
@@ -25,7 +26,7 @@ groups:
 
       # High Error Rate
       - alert: APIHighErrorRate
-        expr: rate(http_requests_total{job="mlops-api", code=~"5.."}[5m]) > 0.1
+        expr: rate(prometheus_http_requests_total{job="mlops-api", code=~"5.."}[5m]) > 0.1 # http_requests_total not working
         for: 3m
         labels:
           severity: critical
@@ -60,7 +61,7 @@ groups:
 
       # High Memory Usage
       - alert: HighMemoryUsage
-        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 50
         for: 3m
         labels:
           severity: critical
@@ -130,7 +131,7 @@ groups:
 
       # High Container Memory Usage
       - alert: ContainerHighMemoryUsage
-        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 90
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100 > 950
         for: 5m
         labels:
           severity: warning

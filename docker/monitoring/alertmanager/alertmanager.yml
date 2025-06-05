@@ -22,7 +22,7 @@ route:
       receiver: 'critical-alerts'
       group_wait: 10s
       repeat_interval: 5m
-  
+
     # API-specific alerts
     - match:
         service: api

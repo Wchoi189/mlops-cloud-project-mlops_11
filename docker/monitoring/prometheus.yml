@@ -21,7 +21,7 @@ scrape_configs:
   # Prometheus itself
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['prometheus:9090']
     metrics_path: /metrics
     scrape_interval: 30s
 
@@ -35,10 +35,11 @@ scrape_configs:
     params:
       format: ['prometheus']
 
-  # MLflow metrics
-  - job_name: 'mlflow'
+
+  # MLflow Prometheus metrics (from your Python script)
+  - job_name: 'mlflow-metrics'
     static_configs:
-      - targets: ['mlflow:5000']
+      - targets: ['mlflow:9090']  # Internal container port
     metrics_path: /metrics
     scrape_interval: 30s
 
