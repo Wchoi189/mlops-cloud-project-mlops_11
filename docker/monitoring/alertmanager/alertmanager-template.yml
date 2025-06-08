@@ -1,0 +1,117 @@
+---
+global:
+  smtp_smarthost: '${SMTP_HOST}'
+  smtp_from: '${SMTP_FROM}'
+  resolve_timeout: 5m
+
+# Email templates
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Routing rules
+route:
+  group_by: ['alertname', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 12h
+  receiver: 'web.hook'
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 10s
+      repeat_interval: 5m
+  
+    # API-specific alerts
+    - match:
+        service: api
+      receiver: 'api-team'
+      group_interval: 2m
+
+    # Model-specific alerts
+    - match:
+        service: model
+      receiver: 'ml-team'
+
+    # System alerts
+    - match:
+        service: system
+      receiver: 'devops-team'
+
+# Alert receivers
+receivers:
+  # Default webhook (for development)
+  - name: 'web.hook'
+    webhook_configs:
+      - url: '${WEBHOOK_URL}'
+        send_resolved: true
+
+  # Critical alerts - multiple channels
+  - name: 'critical-alerts'
+    slack_configs:
+      - api_url: "${SLACK_CRITICAL_WEBHOOK_URL}"
+        channel: '#mlops-critical'
+        title: '🚨 Critical MLOps Alert'
+        icon_emoji: ':fire:'
+        text: |
+          {{ range .Alerts }}
+          **Alert:** {{ .Annotations.summary }}
+          **Description:** {{ .Annotations.description }}
+          **Severity:** {{ .Labels.severity }}
+          **Service:** {{ .Labels.service }}
+          {{ end }}
+        send_resolved: true
+
+  # API team notifications
+  - name: 'api-team'
+    slack_configs:
+      - api_url: "${SLACK_API_WEBHOOK_URL}"
+        channel: '#api-alerts'
+        title: '🔧 API Alert'
+        text: |
+          {{ range .Alerts }}
+          **Alert:** {{ .Annotations.summary }}
+          **Service:** {{ .Labels.service }}
+          **Details:** {{ .Annotations.description }}
+          {{ end }}
+
+  # ML team notifications
+  - name: 'ml-team'
+    slack_configs:
+      - api_url: "${SLACK_ML_WEBHOOK_URL}"
+        channel: '#ml-alerts'
+        title: '🤖 Model Alert'
+        text: |
+          {{ range .Alerts }}
+          **Model Alert:** {{ .Annotations.summary }}
+          **Details:** {{ .Annotations.description }}
+          {{ end }}
+
+  # DevOps team notifications
+  - name: 'devops-team'
+    slack_configs:
+      - api_url: "${SLACK_DEVOPS_WEBHOOK_URL}"
+        channel: '#infrastructure'
+        title: '🖥️ System Alert'
+        text: |
+          {{ range .Alerts }}
+          **System Alert:** {{ .Annotations.summary }}
+          **Instance:** {{ .Labels.instance }}
+          **Details:** {{ .Annotations.description }}
+          {{ end }}
+
+# Inhibition rules (prevent spam)
+inhibit_rules:
+  # Inhibit warning if critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'service']
+
+  # Inhibit API alerts if API is down
+  - source_match:
+      alertname: 'MLOpsAPIDown'
+    target_match_re:
+      alertname: 'API.*'

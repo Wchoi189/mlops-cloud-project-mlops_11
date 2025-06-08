@@ -22,11 +22,18 @@ wheels/
 
 # Virtual environments
 mlops-env/
+mlops-env-light/
 venv/
 env/
 ENV/
 env.bak/
 venv.bak/
+
+# environment variables
+.env
+.env.local
+.env.*.local
+docker/.env
 
 # IDEs
 .vscode/
@@ -41,8 +48,48 @@ Thumbs.db
 # Jupyter
 .ipynb_checkpoints/
 
-# MLOps specific
-models/
-data/
+# MLOps specific - Model files (usually large and shouldn't be in git)
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/*.pt
+models/*.pth
+models/*.onnx
+models/*.tflite
+
+# Keep model directory structure and Python files
+!models/
+!models/*.py
+!models/.gitkeep
+
+# Data files (usually large)
+data/processed/*
+data/raw/*
+data/interim/*
+data/external/*
+
+# Keep data directory structure
+!data/processed/.gitkeep
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/external/.gitkeep
+
+# MLflow
+mlruns/
+mlartifacts/
+.mlflow/
+
+# Logs
 logs/
 *.log
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Credentials
+credentials.json
+secrets.yaml
+config/secrets/

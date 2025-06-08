@@ -17,10 +17,10 @@ README.md
 *.md
 
 # Data
-data/
-models/
-logs/
-mlruns/
+# data/
+# models/
+# logs/
+# mlruns/
 
 # IDEs
 .vscode

@@ -1,36 +1,130 @@
-version: '3.8'
-
+# docker/docker-compose.yml
+# Basic MLOps Development Setup
+# Minimal services for quick development and testing
 services:
+  # MLflow 추적 서버 (기본)
+  mlflow:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.mlflow
+    image: mlops-mlflow:latest
+    container_name: mlops-mlflow-basic
+    ports:
+      - "${MLFLOW_PORT:-5000}:5000"
+    volumes:
+      - ./mlruns:/mlruns
+      - ./mlartifacts:/mlartifacts
+    environment:
+      - MLFLOW_BACKEND_STORE_URI=${MLFLOW_BACKEND_STORE_URI:-sqlite:////mlruns/mlflow.db}
+      - MLFLOW_DEFAULT_ARTIFACT_ROOT=${MLFLOW_DEFAULT_ARTIFACT_ROOT:-/mlartifacts}
+      - MLFLOW_HOST=${MLFLOW_HOST:-0.0.0.0}
+      - MLFLOW_PORT=${MLFLOW_PORT:-5000}
+    env_file:
+      - basic.env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - mlops-network
+
+  # API 서비스 (기본)
   api:
     build:
       context: ..
       dockerfile: docker/Dockerfile.api
+    container_name: mlops-api-basic
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI:-http://mlflow:5000}
+      - MODEL_PATH=${MODEL_PATH:-/app/models}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-true}
+      - PYTHONPATH=${PYTHONPATH:-/app}
+    env_file:
+      - basic.env
     depends_on:
-      - mlflow
+      mlflow:
+        condition: service_healthy
+    volumes:
+      - ../models:/app/models:ro
+      - ../logs:/app/logs
+      - ../data:/app/data:ro
+      - ../src:/app/src
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+    networks:
+      - mlops-network
+
+  # 훈련 서비스 (기본 - 프로파일로 제어)
+  trainer:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.train
+    container_name: mlops-trainer-basic
+    environment:
+      - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI:-http://mlflow:5000}
+      - MODEL_PATH=${MODEL_PATH:-/app/models}
+      - DATA_PATH=${DATA_PATH:-/app/data}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEBUG=${DEBUG:-true}
+    env_file:
+      - basic.env
+    depends_on:
+      mlflow:
+        condition: service_healthy
     volumes:
       - ../models:/app/models
+      - ../data:/app/data
       - ../logs:/app/logs
+    profiles:
+      - training
+    restart: "no"
+    networks:
+      - mlops-network
 
-  mlflow:
-    image: python:3.11-slim
-    ports:
-      - "5000:5000"
-    volumes:
-      - ../mlruns:/mlruns
-      - ../mlartifacts:/mlartifacts
-    command: >
-      bash -c "pip install mlflow &&
-               mlflow server --host 0.0.0.0 --port 5000 
-               --backend-store-uri sqlite:///mlruns/mlflow.db
-               --default-artifact-root /mlartifacts"
-    environment:
-      - MLFLOW_BACKEND_STORE_URI=sqlite:///mlruns/mlflow.db
-      - MLFLOW_DEFAULT_ARTIFACT_ROOT=/mlartifacts
+  # 기본 데이터베이스 (개발용 - 선택사항)
+  # db:
+  #   image: postgres:${POSTGRES_VERSION:-15}
+  #   container_name: mlops-postgres-basic
+  #   ports:
+  #     - "${DB_PORT:-5432}:5432"
+  #   environment:
+  #     - POSTGRES_DB=${DB_NAME:-mlops_dev}
+  #     - POSTGRES_USER=${DB_USER:-dev_user}
+  #     - POSTGRES_PASSWORD=${DB_PASSWORD:-dev_password123}
+  #   env_file:
+  #     - basic.env
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dev_user} -d ${DB_NAME:-mlops_dev}"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 3
+  #   restart: unless-stopped
+  #   profiles:
+  #     - database
+  #   networks:
+  #     - mlops-network
 
 volumes:
   mlruns:
+    driver: local
   mlartifacts:
+    driver: local
+  # postgres_data:
+  #   driver: local
+
+networks:
+  mlops-network:
+    driver: bridge

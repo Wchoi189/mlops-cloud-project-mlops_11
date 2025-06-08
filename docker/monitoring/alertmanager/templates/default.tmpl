@@ -1,0 +1,9 @@
+{{ define "slack.default.title" }}Alert: {{ .GroupLabels.alertname }}{{ end }}
+{{ define "slack.default.text" }}
+{{ range .Alerts }}
+*Alert:* {{ .Annotations.summary }}
+*Description:* {{ .Annotations.description }}
+*Severity:* {{ .Labels.severity }}
+*Service:* {{ .Labels.service }}
+{{ end }}
+{{ end }}
