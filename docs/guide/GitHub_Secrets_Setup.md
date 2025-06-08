@@ -8,7 +8,7 @@ Navigate to your GitHub repository → Settings → Secrets and variables → Ac
 
 ```bash
 # Slack Webhook for notifications
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+SLACK_ML_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
 
 # Email notifications
 EMAIL_USERNAME=your-email@gmail.com
@@ -22,7 +22,7 @@ NOTIFICATION_EMAIL=team@your-company.com
 1. Go to your Slack workspace
 2. Apps → Incoming Webhooks → Add to Slack
 3. Choose channel and copy webhook URL
-4. Add as `SLACK_WEBHOOK_URL` secret
+4. Add as `SLACK_ML_WEBHOOK_URL` secret
 
 #### Email Notifications:
 1. Use Gmail with App Password (recommended)

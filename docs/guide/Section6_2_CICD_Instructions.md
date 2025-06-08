@@ -62,7 +62,7 @@ GitHub 저장소 → Settings → Secrets and variables → Actions로 이동
 **필수 Secrets:**
 ```bash
 # 알림 (선택 사항이지만 권장됨)
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+SLACK_ML_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
 EMAIL_USERNAME=your-email@gmail.com
 EMAIL_PASSWORD=your-app-password
 NOTIFICATION_EMAIL=team@your-company.com

@@ -307,7 +307,7 @@ def test_section62():
     
     required_secrets = [
         'GITHUB_TOKEN',  # 자동 제공
-        'SLACK_WEBHOOK_URL',  # Slack 알림용
+        'SLACK_ML_WEBHOOK_URL',  # Slack 알림용
         'EMAIL_USERNAME',  # 이메일 알림용
         'EMAIL_PASSWORD',  # 이메일 알림용
         'NOTIFICATION_EMAIL'  # 알림 받을 이메일
@@ -403,7 +403,7 @@ def test_section62():
     
     print("\n💡 다음 단계:")
     print("   1. GitHub Secrets 설정:")
-    print("      - SLACK_WEBHOOK_URL (Slack 알림용)")
+    print("      - SLACK_ML_WEBHOOK_URL (Slack 알림용)")
     print("      - EMAIL_USERNAME, EMAIL_PASSWORD (이메일 알림용)")
     print("      - NOTIFICATION_EMAIL (알림 받을 이메일)")
     print("   2. 첫 번째 파이프라인 실행:")

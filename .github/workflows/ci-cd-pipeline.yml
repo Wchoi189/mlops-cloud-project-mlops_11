@@ -45,7 +45,7 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Cache dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
@@ -91,7 +91,7 @@ jobs:
         safety check --continue-on-error
     
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: security-reports
@@ -177,7 +177,7 @@ jobs:
         pytest tests/ --cov=src --cov-report=xml --cov-report=html -v || true
     
     - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
         flags: unittests
@@ -603,7 +603,7 @@ jobs:
         "
     
     - name: Upload deployment artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: deployment-report
         path: deployment-report.json
@@ -647,7 +647,7 @@ jobs:
           Commit: ${{ github.sha }}
           Branch: ${{ github.ref_name }}
       env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        SLACK_ML_WEBHOOK_URL: ${{ secrets.SLACK_ML_WEBHOOK_URL }}
     
     - name: Email notification
       if: failure()
@@ -655,10 +655,10 @@ jobs:
       with:
         server_address: smtp.gmail.com
         server_port: 587
-        username: ${{ secrets.EMAIL_USERNAME }}
+        username: ${{ vars.EMAIL_USERNAME }}
         password: ${{ secrets.EMAIL_PASSWORD }}
         subject: "MLOps Pipeline Failed - ${{ github.ref_name }}"
-        to: ${{ secrets.NOTIFICATION_EMAIL }}
+        to: ${{ vars.NOTIFICATION_EMAIL }}
         from: MLOps CI/CD
         body: |
           MLOps pipeline failed for branch ${{ github.ref_name }}
