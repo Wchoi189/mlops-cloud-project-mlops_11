@@ -1,12 +1,12 @@
 import logging
 from contextlib import asynccontextmanager
 from datetime import datetime
+from pyexpat import model
 from typing import Any, Dict
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pyexpat import model
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # 로깅 설정

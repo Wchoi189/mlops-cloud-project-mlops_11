@@ -59,7 +59,11 @@ def test_docker_files():
     # 2. Docker Compose 파일 구문 검증
     print("\n2️⃣ Docker Compose 파일 구문 검증...")
 
-    compose_files = ["docker/docker-compose.yml","docker/docker-compose.monitoring.yml", "docker/docker-compose.prod.yml"]
+    compose_files = [
+        "docker/docker-compose.yml",
+        "docker/docker-compose.monitoring.yml",
+        "docker/docker-compose.prod.yml",
+    ]
 
     for compose_file in compose_files:
         try:
