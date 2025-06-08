@@ -12,19 +12,27 @@ RUN apt-get update && apt-get install -y \
 
 # 더 나은 캐싱을 위해 requirements 먼저 복사
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install  -r requirements.txt
 
 # 애플리케이션 코드 복사
-COPY src/ src/
+# ? COPY src/ src/
 COPY configs/ configs/
+COPY src/ ./src/ 
+COPY models/ ./models/
+
 
 # 모델과 로그를 위한 디렉토리 생성
 RUN mkdir -p models logs data/processed
+
+RUN mkdir -p /app/logs /tmp/prometheus_multiproc
 
 # 환경 변수 설정
 ENV PYTHONPATH=/app
 ENV MODEL_PATH=/app/models
 ENV LOG_LEVEL=INFO
+ENV PYTHONPATH=/app
+ENV PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
 
 # 포트 노출
 EXPOSE 8000
@@ -34,4 +42,5 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
 # 애플리케이션 실행
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+CMD ["uvicorn", "src.api.main_with_metrics:app", "--host", "0.0.0.0", "--port", "8000"]

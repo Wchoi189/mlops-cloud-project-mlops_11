@@ -29,6 +29,12 @@ ENV/
 env.bak/
 venv.bak/
 
+# environment variables
+.env
+.env.local
+.env.*.local
+docker/.env
+
 # IDEs
 .vscode/
 .idea/

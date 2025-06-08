@@ -2,7 +2,9 @@
 MLOps Prometheus Metrics Collection
 Custom metrics for API, models, and data monitoring
 """
-
+from functools import wraps
+import time
+from typing import Callable, Any, Optional
 import time
 import numpy as np
 from datetime import datetime
@@ -162,6 +164,8 @@ class MLOpsMetrics:
             buckets=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
             registry=registry
         )
+        
+
         
         self.api_users_active = Gauge(
             'api_users_active',
@@ -394,13 +398,44 @@ class MLOpsMetrics:
 # Global metrics instance
 metrics = MLOpsMetrics()
 
-# Context managers for timing operations
-class MetricsTimer:
-    """Context manager for timing operations"""
+# # Context managers for timing operations
+# class MetricsTimer:
+#     """Context manager for timing operations"""
     
-    def __init__(self, metric_func, *labels):
+#     def __init__(self, metric_func, *labels):
+#         self.metric_func = metric_func
+#         self.labels = labels
+#         self.start_time = None
+    
+#     def __enter__(self):
+#         self.start_time = time.time()
+#         return self
+    
+#     def __exit__(self, exc_type, exc_val, exc_tb):
+#         if self.start_time and metrics.enabled:
+#             duration = time.time() - self.start_time
+#             self.metric_func(*self.labels).observe(duration)
+
+# # Utility functions for easy metrics collection
+# def track_api_call(endpoint: str, method: str = "GET"):
+#     """Context manager to track API calls"""
+#     return MetricsTimer(
+#         lambda e, m: metrics.http_request_duration_seconds.labels(endpoint=e, method=m),
+#         endpoint, method
+#     )
+
+# def track_prediction_time(model_name: str = "imdb_model", model_version: str = "1.0"):
+#     """Context manager to track prediction time"""
+#     return MetricsTimer(
+#         lambda mn, mv: metrics.model_prediction_duration_seconds.labels(model_name=mn, model_version=mv),
+#         model_name, model_version
+#     )
+# Context manager for timing
+class MetricsTimer:
+    def __init__(self, metric_func, *args, **kwargs):
         self.metric_func = metric_func
-        self.labels = labels
+        self.args = args
+        self.kwargs = kwargs
         self.start_time = None
     
     def __enter__(self):
@@ -408,24 +443,165 @@ class MetricsTimer:
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.start_time and metrics.enabled:
+        if self.start_time:
             duration = time.time() - self.start_time
-            self.metric_func(*self.labels).observe(duration)
+            try:
+                metric = self.metric_func(*self.args, **self.kwargs)
+                metric.observe(duration)
+            except Exception as e:
+                logger.error(f"Failed to record metric: {e}")
 
-# Utility functions for easy metrics collection
-def track_api_call(endpoint: str, method: str = "GET"):
-    """Context manager to track API calls"""
-    return MetricsTimer(
-        lambda e, m: metrics.http_request_duration_seconds.labels(endpoint=e, method=m),
-        endpoint, method
-    )
-
+# Decorator functions
 def track_prediction_time(model_name: str = "imdb_model", model_version: str = "1.0"):
-    """Context manager to track prediction time"""
-    return MetricsTimer(
-        lambda mn, mv: metrics.model_prediction_duration_seconds.labels(model_name=mn, model_version=mv),
-        model_name, model_version
-    )
+    """Decorator to track prediction time"""
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            start_time = time.time()
+            try:
+                result = await func(*args, **kwargs)
+                duration = time.time() - start_time
+                
+                # Record the metric
+                try:
+                    metrics.model_prediction_duration_seconds.labels(
+                        model_name=model_name, 
+                        model_version=model_version
+                    ).observe(duration)
+                except Exception as e:
+                    logger.error(f"Failed to record prediction time: {e}")
+                
+                return result
+            except Exception as e:
+                duration = time.time() - start_time
+                # Record failed prediction time too
+                try:
+                    metrics.model_prediction_duration_seconds.labels(
+                        model_name=model_name, 
+                        model_version=model_version
+                    ).observe(duration)
+                except:
+                    pass
+                raise
+        
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            start_time = time.time()
+            try:
+                result = func(*args, **kwargs)
+                duration = time.time() - start_time
+                
+                # Record the metric
+                try:
+                    metrics.model_prediction_duration_seconds.labels(
+                        model_name=model_name, 
+                        model_version=model_version
+                    ).observe(duration)
+                except Exception as e:
+                    logger.error(f"Failed to record prediction time: {e}")
+                
+                return result
+            except Exception as e:
+                duration = time.time() - start_time
+                # Record failed prediction time too
+                try:
+                    metrics.model_prediction_duration_seconds.labels(
+                        model_name=model_name, 
+                        model_version=model_version
+                    ).observe(duration)
+                except:
+                    pass
+                raise
+        
+        # Return appropriate wrapper based on function type
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
+    
+    return decorator
+
+def track_api_call(endpoint: str, method: str = "GET"):
+    """Decorator to track API calls"""
+    def decorator(func: Callable) -> Callable:
+        @wraps(func)
+        async def async_wrapper(*args, **kwargs):
+            start_time = time.time()
+            status_code = "200"  # Default
+            
+            try:
+                result = await func(*args, **kwargs)
+                
+                # Try to extract status code from response
+                if hasattr(result, 'status_code'):
+                    status_code = str(result.status_code)
+                
+                return result
+                
+            except Exception as e:
+                status_code = "500"
+                raise
+            finally:
+                duration = time.time() - start_time
+                
+                # Record metrics
+                try:
+                    metrics.http_requests_total.labels(
+                        method=method,
+                        endpoint=endpoint,
+                        status_code=status_code
+                    ).inc()
+                    
+                    metrics.http_request_duration_seconds.labels(
+                        endpoint=endpoint,
+                        method=method
+                    ).observe(duration)
+                except Exception as e:
+                    logger.error(f"Failed to record API call metrics: {e}")
+        
+        @wraps(func)
+        def sync_wrapper(*args, **kwargs):
+            start_time = time.time()
+            status_code = "200"  # Default
+            
+            try:
+                result = func(*args, **kwargs)
+                
+                # Try to extract status code from response
+                if hasattr(result, 'status_code'):
+                    status_code = str(result.status_code)
+                
+                return result
+                
+            except Exception as e:
+                status_code = "500"
+                raise
+            finally:
+                duration = time.time() - start_time
+                
+                # Record metrics
+                try:
+                    metrics.http_requests_total.labels(
+                        method=method,
+                        endpoint=endpoint,
+                        status_code=status_code
+                    ).inc()
+                    
+                    metrics.http_request_duration_seconds.labels(
+                        endpoint=endpoint,
+                        method=method
+                    ).observe(duration)
+                except Exception as e:
+                    logger.error(f"Failed to record API call metrics: {e}")
+        
+        # Return appropriate wrapper based on function type
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
+    
+    return decorator
+
 
 def track_data_processing(step: str):
     """Context manager to track data processing time"""

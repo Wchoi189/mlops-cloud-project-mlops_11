@@ -34,6 +34,7 @@ watchdog>=3.0.0          # ~2MB   - 자동 리로드를 위한 파일 시스템 
 # 메트릭 수집 (Metrics Collection)
 prometheus-client>=0.19.0 # ~3MB   - Prometheus 메트릭 수집 (Section 6.1 필수)
 psutil>=5.9.6            # ~5MB   - 시스템 리소스 모니터링 (CPU, 메모리, 디스크)
+prometheus-fastapi-instrumentatormentator=7.1.0 # ~2MB   - FastAPI용 Prometheus 메트릭 수집기
 
 # 성능 모니터링 (Performance Monitoring)
 memory-profiler>=0.61.0  # ~2MB   - 메모리 사용량 프로파일링

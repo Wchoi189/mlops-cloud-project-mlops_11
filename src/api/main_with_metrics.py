@@ -11,6 +11,9 @@ import logging
 import asyncio
 from typing import Dict, Any, Union
 from datetime import datetime
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from prometheus_fastapi_instrumentator import Instrumentator
 
 # Monitoring imports
 try:
@@ -35,7 +38,7 @@ async def lifespan(app: FastAPI):
     logger.info("🚀 MLOps IMDB API with Monitoring 시작 중...")
     
     # Start metrics collection
-    if HAS_MONITORING:
+    if HAS_MONITORING and 'metrics_collector' in globals():
         metrics_collector.start()
         logger.info("📊 Metrics collection started")
     
@@ -51,14 +54,14 @@ async def lifespan(app: FastAPI):
         logger.warning("⚠️ 모델 로드 실패 - 일부 기능이 제한됩니다")
     
     # Start background health metrics update
-    if HAS_MONITORING:
+    if HAS_MONITORING and 'update_health_metrics' in globals():
         asyncio.create_task(periodic_health_update())
     
     yield
     
     # 종료 시 실행
     logger.info("🛑 MLOps IMDB API 종료 중...")
-    if HAS_MONITORING:
+    if HAS_MONITORING and 'metrics_collector' in globals():
         metrics_collector.stop()
 
 async def periodic_health_update():
@@ -104,9 +107,19 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Add Prometheus middleware
-if HAS_MONITORING:
-    app.add_middleware(PrometheusMiddleware, metrics_instance=metrics)
+# Enable Prometheus metrics
+@app.on_event("startup")
+async def startup():
+    Instrumentator().instrument(app).expose(app)
+
+# Add Prometheus middleware safely
+if HAS_MONITORING and PrometheusMiddleware is not None:
+    try:
+        app.add_middleware(PrometheusMiddleware, metrics_instance=metrics)
+        logger.info("📊 Prometheus middleware added successfully")
+    except Exception as e:
+        logger.warning(f"Failed to add Prometheus middleware: {e}")
+        HAS_MONITORING = False
 
 # CORS 설정 (개발 환경용)
 app.add_middleware(
@@ -121,27 +134,54 @@ app.add_middleware(
 from .endpoints import router as prediction_router
 app.include_router(prediction_router, tags=["predictions"])
 
-# 모니터링 전용 엔드포인트들
-@app.get("/metrics", response_class=PlainTextResponse, include_in_schema=False)
-async def get_metrics():
+@app.get("/metrics")
+async def metrics_endpoint():
     """Prometheus metrics endpoint"""
     if not HAS_MONITORING:
-        return "# Monitoring not available\n"
+        return Response(
+            content="# Monitoring not enabled\n# TYPE info gauge\ninfo{version=\"1.1.0\",status=\"monitoring_disabled\"} 1\n",
+            media_type="text/plain",
+            status_code=200  # Changed from 503 to 200
+        )
     
     try:
-        # Update health metrics before serving
-        update_health_metrics()
-        return metrics.get_metrics()
+        # Try multiprocess metrics collection first
+        try:
+            registry = CollectorRegistry()
+            multiprocess.MultiProcessCollector(registry)
+            metrics_data = generate_latest(registry)
+        except (ValueError, OSError, Exception) as e:
+            logger.warning(f"Multiprocess metrics failed, using default: {e}")
+            # Fallback to default registry
+            metrics_data = generate_latest()
+        
+        # Return as Response with correct content type
+        return Response(
+            content=metrics_data,
+            media_type=CONTENT_TYPE_LATEST
+        )
+        
     except Exception as e:
         logger.error(f"Error generating metrics: {e}")
-        return f"# Error generating metrics: {e}\n"
+        # Return basic error metrics instead of failing
+        error_metrics = f"""# Error generating metrics: {e}
+        # TYPE mlops_api_error_total counter
+        mlops_api_error_total{{error_type="metrics_generation"}} 1
+        # TYPE mlops_api_info gauge
+        mlops_api_info{{version="1.1.0",status="metrics_error"}} 1
+        """
+        return Response(
+            content=error_metrics,
+            media_type="text/plain",
+            status_code=200  # Return 200 with error info instead of 500
+        )
 
 @app.get("/monitoring/status")
 async def monitoring_status():
     """Monitoring system status"""
     return {
         "monitoring_enabled": HAS_MONITORING,
-        "metrics_collector_running": metrics_collector.running if HAS_MONITORING else False,
+        "metrics_collector_running": metrics_collector.running if HAS_MONITORING and 'metrics_collector' in globals() else False,
         "prometheus_endpoint": "/metrics",
         "grafana_dashboard": "http://localhost:3000",
         "alertmanager": "http://localhost:9093",
@@ -152,8 +192,9 @@ async def monitoring_status():
         },
         "timestamp": datetime.now().isoformat()
     }
+        
 
-@app.get("/", response_model=Dict[str, Any])
+@app.get("/")
 async def root():
     """루트 엔드포인트 - API 정보 제공"""
     
@@ -165,39 +206,31 @@ async def root():
             status_code="200"
         ).inc()
     
-    return {
-        "message": "MLOps IMDB Movie Rating Prediction API (Monitoring Edition)",
-        "status": "running",
-        "version": "1.1.0",
-        "description": "영화 평점 예측을 위한 모니터링 지원 MLOps API",
-        "monitoring": {
-            "enabled": HAS_MONITORING,
-            "prometheus_metrics": "/metrics",
-            "health_check": "/health",
-            "monitoring_status": "/monitoring/status"
-        },
-        "endpoints": {
-            "predict_text": "POST /predict - 텍스트 기반 예측 (레거시)",
-            "predict_movie": "POST /predict/movie - 영화 피처 기반 예측",
-            "predict_batch": "POST /predict/batch - 배치 예측",
-            "model_info": "GET /model/info - 모델 정보",
-            "health": "GET /health - 상태 확인",
-            "docs": "GET /docs - API 문서"
-        },
-        "features_used": ["startYear", "runtimeMinutes", "numVotes"],
-        "model_info": {
-            "type": "Random Forest Regressor", 
-            "performance": "RMSE ~0.69, R² ~0.31",
-            "target": "IMDB Rating (1-10)"
-        },
-        "monitoring_dashboards": {
-            "grafana": "http://localhost:3000",
-            "prometheus": "http://localhost:9090",
-            "alertmanager": "http://localhost:9093"
-        },
-        "timestamp": datetime.now().isoformat(),
-        "github": "https://github.com/AIBootcamp13/mlops-cloud-project-mlops_11"
+    return JSONResponse(
+        status_code=200,
+        content={
+            "message": "Welcome to the MLOps IMDB Movie Rating Prediction API (Monitoring Edition)",
+            "version": "1.1.0",
+            "description": "영화 평점 예측을 위한 모니터링 지원 MLOps API",
+            "endpoints": {
+                "/predict/movie": "POST - 영화 피처 기반 예측",
+                "/predict/batch": "POST - 배치 예측",
+                "/model/info": "GET - 모델 정보 조회",
+                "/health": "GET - 헬스 체크",
+                "/metrics": "GET - Prometheus 메트릭스",
+                "/monitoring/status": "GET - 모니터링 시스템 상태"
+            },
+            "features_used": ["startYear", "runtimeMinutes", "numVotes"],
+            "model_info": {
+                "type": "Random Forest Regressor", 
+                "performance": "RMSE ~0.69, R² ~0.31",
+                "target": "IMDB Rating (1-10)"
+            },
+            "monitoring_enabled": HAS_MONITORING,
+            "timestamp": datetime.now().isoformat(),
+            "github": "https://github.com/AIBootcamp13/mlops-cloud-project-mlops_11"
     }
+)
 
 @app.get("/health")
 async def enhanced_health_check():
@@ -230,20 +263,30 @@ async def enhanced_health_check():
                     "num_threads": process.num_threads()
                 }
                 
-                # Update health metrics
-                update_health_metrics()
+                # Update health metrics safely
+                if 'update_health_metrics' in globals() and callable(update_health_metrics):
+                    update_health_metrics()
                 
             except ImportError:
                 health_data["system_metrics"] = "psutil not available"
-        
+            except Exception as e:
+                health_data["system_metrics"] = f"Error: {str(e)}"
+
         if model_loaded and HAS_MONITORING:
-            model_info = model_evaluator.get_model_info()
-            health_data["model_info"] = model_info
+            if model_evaluator is not None:
+                model_info = model_evaluator.get_model_info()
+                health_data["model_info"] = model_info
+            else:
+                health_data["model_info"] = "Model evaluator not available"
             
-            # Record model status
-            metrics.set_active_users(1)  # Simple active user tracking
+            # Record model status safely
+            if 'metrics' in globals() and hasattr(metrics, 'set_active_users'):
+                try:
+                    metrics.set_active_users(1)  # Simple active user tracking
+                except Exception as e:
+                    logger.warning(f"Failed to set active users metric: {e}")
         
-        return health_data
+        return JSONResponse(status_code=200, content=health_data)
         
     except Exception as e:
         logger.error(f"헬스체크 오류: {e}")
@@ -254,15 +297,18 @@ async def enhanced_health_check():
             "model_loaded": False,
             "error": str(e)
         }
+
+        if HAS_MONITORING and 'metrics' in globals():
+            try:
+                metrics.http_requests_total.labels(
+                    method="GET",
+                    endpoint="/health",
+                    status_code="500"
+                ).inc()
+            except Exception as metrics_error:
+                logger.warning(f"Metrics recording failed: {metrics_error}")
         
-        if HAS_MONITORING:
-            metrics.http_requests_total.labels(
-                method="GET",
-                endpoint="/health",
-                status_code="500"
-            ).inc()
-        
-        return error_response
+        return JSONResponse(status_code=500, content=error_response)
 
 @app.get("/metrics/custom")
 async def custom_metrics():
@@ -285,6 +331,10 @@ async def custom_metrics():
             # Simulate some business metrics
             metrics.record_prediction_rating(7.5)  # Example rating
             metrics.set_active_users(5)  # Example active users
+            
+            custom_data["predictions_today"] = 42  # Example data
+            custom_data["average_rating"] = 7.2   # Example data
+            custom_data["active_users"] = 5
             
             custom_data["predictions_today"] = 42  # Example data
             custom_data["average_rating"] = 7.2   # Example data
@@ -312,48 +362,49 @@ async def add_monitoring_headers(request: Request, call_next):
     
     return response
 
-# 오류 핸들러 with monitoring
-@app.exception_handler(404)
-async def not_found_handler(request, exc):
-    if HAS_MONITORING:
-        metrics.http_requests_total.labels(
-            method=request.method,
-            endpoint=request.url.path,
-            status_code="404"
-        ).inc()
-    
-    return {
-        "error": "Not Found",
-        "message": "요청한 엔드포인트를 찾을 수 없습니다.",
-        "available_endpoints": [
-            "/",
-            "/predict/movie", 
-            "/predict/batch",
-            "/model/info",
-            "/health",
-            "/metrics",
-            "/monitoring/status",
-            "/docs"
-        ]
-    }
 
-@app.exception_handler(500)
-async def internal_error_handler(request, exc):
-    logger.error(f"내부 서버 오류: {exc}")
-    
-    if HAS_MONITORING:
-        metrics.http_requests_total.labels(
-            method=request.method,
-            endpoint=request.url.path,
-            status_code="500"
-        ).inc()
-    
-    return {
-        "error": "Internal Server Error",
-        "message": "서버 내부 오류가 발생했습니다.",
-        "monitoring": "Check /metrics for system health" if HAS_MONITORING else "Monitoring disabled",
-        "timestamp": datetime.now().isoformat()
-    }
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        if HAS_MONITORING:
+            metrics.http_requests_total.labels(
+                method=request.method,
+                endpoint=request.url.path,
+                status_code="404"
+            ).inc()
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": "Not Found",
+                "message": "요청한 엔드포인트를 찾을 수 없습니다.",
+                "available_endpoints": [
+                    "/",
+                    "/predict/movie", 
+                    "/predict/batch",
+                    "/model/info",
+                    "/health",
+                    "/metrics",
+                    "/monitoring/status",
+                    "/docs"
+                ]
+            }
+        )
+    else:
+        if HAS_MONITORING and 'metrics' in globals():
+            metrics.http_requests_total.labels(
+                method=request.method,
+                endpoint=request.url.path,
+                status_code="500"
+            ).inc()
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error": exc.detail if exc.status_code != 500 else "Internal Server Error",
+                "message": "An error occurred." if exc.status_code != 500 else "서버 내부 오류가 발생했습니다.",
+                "monitoring": "Check /metrics for system health" if HAS_MONITORING and exc.status_code == 500 else None,
+                "timestamp": datetime.now().isoformat()
+            }
+        )
 
 # 개발 서버 실행 (python src/api/main_with_metrics.py로 실행 가능)
 if __name__ == "__main__":

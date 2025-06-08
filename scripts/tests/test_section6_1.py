@@ -31,7 +31,7 @@ def test_section61():
         'docker/docker-compose.monitoring.yml',
         'docker/monitoring/prometheus.yml',
         'docker/monitoring/rules/mlops-alerts.yml',
-        'docker/monitoring/alertmanager.yml',
+        'docker/monitoring/alertmanager/alertmanager.yml',
         'docker/monitoring/grafana/provisioning/datasources/prometheus.yml',
         'docker/monitoring/grafana/provisioning/dashboards/dashboard.yml',
         'docker/monitoring/grafana/dashboards/mlops-overview.json',
@@ -59,7 +59,7 @@ def test_section61():
         'docker/docker-compose.monitoring.yml',
         'docker/monitoring/prometheus.yml',
         'docker/monitoring/rules/mlops-alerts.yml',
-        'docker/monitoring/alertmanager.yml',
+        'docker/monitoring/alertmanager/alertmanager.yml',
         'docker/monitoring/grafana/provisioning/datasources/prometheus.yml',
         'docker/monitoring/grafana/provisioning/dashboards/dashboard.yml'
     ]
@@ -256,8 +256,8 @@ def test_section61():
         print(f"✅ FastAPI 앱 타입: {type(monitoring_app)}")
         print(f"✅ Router 타입: {type(monitoring_router)}")
         
-        # 라우트 확인
-        # 라우트 확인 - 안전한 방법 (Safe route checking)
+        
+        # 라우트 확인 - 안전한 방법 (Safe route checking) #  NOT WORKING
         # routes = []
         # for route in monitoring_app.routes:
         #     # 다양한 라우트 타입에 대한 안전한 경로 추출
@@ -273,8 +273,9 @@ def test_section61():
         #         routes.append(f"<{type(route).__name__}>")
         
         # print(f"✅ 등록된 라우트들: {routes}")
-
-         # FastAPI의 내장 라우트 검사 사용 (Using FastAPI's built-in route inspection)
+        
+        # 라우트 확인
+        # FastAPI의 내장 라우트 검사 사용 (Using FastAPI's built-in route inspection)
         print("\n📋 등록된 라우트 목록:")
         routes = []
         for route in monitoring_app.routes:

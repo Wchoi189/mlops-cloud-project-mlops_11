@@ -2,7 +2,8 @@
 Enhanced API endpoints with Prometheus metrics integration
 Monitoring-ready endpoints for MLOps pipeline
 """
-
+import asyncio
+from functools import wraps
 from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
 import logging
@@ -10,21 +11,26 @@ import time
 from typing import List, Dict, Any
 import numpy as np
 import pandas as pd
+from typing import Callable, Any, Optional
+
 
 # Monitoring imports
 try:
-    from ..monitoring.metrics import metrics, track_prediction_time, track_api_call
+    from ..monitoring.metrics import metrics as mlops_metrics, track_prediction_time, track_api_call
     HAS_MONITORING = True
 except ImportError:
     HAS_MONITORING = False
-    # Fallback decorators
-    def track_prediction_time(*args, **kwargs):
-        def decorator(func): return func
-        return decorator
-    def track_api_call(*args, **kwargs):
-        def decorator(func): return func
-        return decorator
 
+    def track_prediction_time(model_name: str = "imdb_model", model_version: str = "1.0"):
+        def decorator(func: Callable) -> Callable:
+            return func  # No-op decorator
+        return decorator
+    
+    def track_api_call(endpoint: str, method: str = "GET"):
+        def decorator(func: Callable) -> Callable:
+            return func  # No-op decorator
+        return decorator
+    
 from .schemas import (
     PredictionRequest, 
     PredictionResponse, 
@@ -42,7 +48,9 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # 전역 모델 평가기 (앱 시작시 로드됨)
-model_evaluator: ModelEvaluator = None
+
+# model_evaluator: ModelEvaluator = None
+
 
 def get_model_evaluator() -> ModelEvaluator:
     """모델 평가기 의존성 주입"""
@@ -54,6 +62,7 @@ def get_model_evaluator() -> ModelEvaluator:
     return model_evaluator
 
 @router.post("/predict", response_model=PredictionResponse)
+@track_prediction_time(model_name="imdb_model", model_version="1.0")
 async def predict_movie_rating(
     request: PredictionRequest,
     evaluator: ModelEvaluator = Depends(get_model_evaluator)
@@ -68,7 +77,7 @@ async def predict_movie_rating(
         
         # Record API call if monitoring enabled
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="POST",
                 endpoint="/predict",
                 status_code="200"
@@ -82,13 +91,15 @@ async def predict_movie_rating(
         }
         
         # 모델 예측 with monitoring
-        with track_prediction_time("imdb_model", "1.0"):
+        if HAS_MONITORING:
+            predicted_rating = track_prediction_time("imdb_model", "1.0")(evaluator.predict_single_movie)(movie_data)
+        else:
             predicted_rating = evaluator.predict_single_movie(movie_data)
         
         # Record prediction metrics
         if HAS_MONITORING:
-            metrics.record_prediction_rating(predicted_rating)
-            metrics.model_predictions_total.labels(
+            mlops_metrics.record_prediction_rating(predicted_rating)
+            mlops_metrics.model_predictions_total.labels(
                 model_name="imdb_model",
                 model_version="1.0",
                 prediction_type="single"
@@ -101,7 +112,7 @@ async def predict_movie_rating(
         # Record response time
         response_time = time.time() - start_time
         if HAS_MONITORING:
-            metrics.http_request_duration_seconds.labels(
+            mlops_metrics.http_request_duration_seconds.labels(
                 method="POST",
                 endpoint="/predict"
             ).observe(response_time)
@@ -118,7 +129,7 @@ async def predict_movie_rating(
     except Exception as e:
         # Record error metrics
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="POST",
                 endpoint="/predict",
                 status_code="500"
@@ -126,8 +137,9 @@ async def predict_movie_rating(
         
         logger.error(f"예측 오류: {str(e)}")
         raise HTTPException(status_code=500, detail=f"예측 실패: {str(e)}")
-
-@router.post("/predict/movie", response_model=Dict[str, Any])
+    
+@router.post("/predict/movie", response_model=Dict[str, Any]) 
+@track_api_call(endpoint="/predict/movie", method="POST")
 async def predict_movie_with_features(
     movie_data: Dict[str, Any],
     evaluator: ModelEvaluator = Depends(get_model_evaluator)
@@ -142,7 +154,7 @@ async def predict_movie_with_features(
         
         # Record API call
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="POST",
                 endpoint="/predict/movie",
                 status_code="200"
@@ -153,13 +165,15 @@ async def predict_movie_with_features(
         logger.info(f"모델 필요 피처: {required_features}")
         
         # 예측 실행 with monitoring
-        with track_prediction_time("imdb_model", "1.0"):
+        if HAS_MONITORING:
+            predicted_rating = track_prediction_time("imdb_model", "1.0")(evaluator.predict_single_movie)(movie_data)
+        else:
             predicted_rating = evaluator.predict_single_movie(movie_data)
         
-        # Record business metrics
+        # Record business mlops_metrics
         if HAS_MONITORING:
-            metrics.record_prediction_rating(predicted_rating)
-            metrics.model_predictions_total.labels(
+            mlops_metrics.record_prediction_rating(predicted_rating)
+            mlops_metrics.model_predictions_total.labels(
                 model_name="imdb_model",
                 model_version="1.0",
                 prediction_type="movie_features"
@@ -168,7 +182,7 @@ async def predict_movie_with_features(
             # Record feature usage
             for feature in required_features:
                 if feature in movie_data:
-                    metrics.data_validation_errors_total.labels(
+                    mlops_metrics.data_validation_errors_total.labels(
                         validation_type="feature_present",
                         error_type="none"
                     ).inc()
@@ -186,7 +200,7 @@ async def predict_movie_with_features(
         # Record response time
         response_time = time.time() - start_time
         if HAS_MONITORING:
-            metrics.http_request_duration_seconds.labels(
+            mlops_metrics.http_request_duration_seconds.labels(
                 method="POST",
                 endpoint="/predict/movie"
             ).observe(response_time)
@@ -195,9 +209,9 @@ async def predict_movie_with_features(
         return response
         
     except Exception as e:
-        # Record error metrics
+        # Record error mlops_metrics
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="POST",
                 endpoint="/predict/movie", 
                 status_code="500"
@@ -207,6 +221,7 @@ async def predict_movie_with_features(
         raise HTTPException(status_code=500, detail=f"예측 실패: {str(e)}")
 
 @router.post("/predict/batch", response_model=BatchPredictionResponse)
+@track_api_call(endpoint="/predict/batch", method="POST")
 async def predict_batch_movies(
     request: BatchPredictionRequest,
     evaluator: ModelEvaluator = Depends(get_model_evaluator)
@@ -222,7 +237,7 @@ async def predict_batch_movies(
         
         # Record API call
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="POST",
                 endpoint="/predict/batch",
                 status_code="200"
@@ -236,55 +251,57 @@ async def predict_batch_movies(
         failed_predictions = 0
         
         # Process batch with monitoring
-        with track_prediction_time("imdb_model", "1.0"):
-            for i, text in enumerate(request.texts):
-                try:
-                    # 간단한 더미 데이터 생성 (실제로는 텍스트 파싱 필요)
-                    movie_data = {
-                        'startYear': 2020 - (i % 20),  # 2000-2020 범위
-                        'runtimeMinutes': 90 + (i % 60),  # 90-150분 범위
-                        'numVotes': 1000 + (i * 100)   # 다양한 인기도
-                    }
-                    
+        for i, text in enumerate(request.texts):
+            try:
+                # 간단한 더미 데이터 생성 (실제로는 텍스트 파싱 필요)
+                movie_data = {
+                    'startYear': 2020 - (i % 20),  # 2000-2020 범위
+                    'runtimeMinutes': 90 + (i % 60),  # 90-150분 범위
+                    'numVotes': 1000 + (i * 100)   # 다양한 인기도
+                }
+
+                if HAS_MONITORING:
+                    predicted_rating = track_prediction_time("imdb_model", "1.0")(evaluator.predict_single_movie)(movie_data)
+                else:
                     predicted_rating = evaluator.predict_single_movie(movie_data)
-                    sentiment = "positive" if predicted_rating >= 6.0 else "negative"
-                    confidence = min(0.95, max(0.55, predicted_rating / 10.0))
-                    
-                    predictions.append(PredictionResponse(
-                        text=text,
-                        sentiment=sentiment,
-                        confidence=confidence,
-                        timestamp=datetime.now()
-                    ))
-                    
-                    successful_predictions += 1
-                    
-                    # Record individual prediction
-                    if HAS_MONITORING:
-                        metrics.record_prediction_rating(predicted_rating)
-                    
-                except Exception as e:
-                    logger.warning(f"개별 예측 실패 ({text[:30]}...): {e}")
-                    failed_predictions += 1
-                    
-                    # 실패한 경우 기본값
-                    predictions.append(PredictionResponse(
-                        text=text,
-                        sentiment="neutral",
-                        confidence=0.5,
-                        timestamp=datetime.now()
-                    ))
+                sentiment = "positive" if predicted_rating >= 6.0 else "negative"
+                confidence = min(0.95, max(0.55, predicted_rating / 10.0))
+
+                predictions.append(PredictionResponse(
+                    text=text,
+                    sentiment=sentiment,
+                    confidence=confidence,
+                    timestamp=datetime.now()
+                ))
+
+                successful_predictions += 1
+
+                # Record individual prediction
+                if HAS_MONITORING:
+                    mlops_metrics.record_prediction_rating(predicted_rating)
+
+            except Exception as e:
+                logger.warning(f"개별 예측 실패 ({text[:30]}...): {e}")
+                failed_predictions += 1
+
+                # 실패한 경우 기본값
+                predictions.append(PredictionResponse(
+                    text=text,
+                    sentiment="neutral",
+                    confidence=0.5,
+                    timestamp=datetime.now()
+                ))
         
         # Record batch metrics
         if HAS_MONITORING:
-            metrics.model_predictions_total.labels(
+            mlops_metrics.model_predictions_total.labels(
                 model_name="imdb_model",
                 model_version="1.0",
                 prediction_type="batch"
             ).inc(successful_predictions)
             
             if failed_predictions > 0:
-                metrics.model_predictions_total.labels(
+                mlops_metrics.model_predictions_total.labels(
                     model_name="imdb_model",
                     model_version="1.0",
                     prediction_type="failed"
@@ -293,7 +310,7 @@ async def predict_batch_movies(
         # Record response time
         response_time = time.time() - start_time
         if HAS_MONITORING:
-            metrics.http_request_duration_seconds.labels(
+            mlops_metrics.http_request_duration_seconds.labels(
                 method="POST",
                 endpoint="/predict/batch"
             ).observe(response_time)
@@ -310,7 +327,7 @@ async def predict_batch_movies(
     except Exception as e:
         # Record error metrics
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="POST",
                 endpoint="/predict/batch",
                 status_code="500"
@@ -329,7 +346,7 @@ async def get_model_info(
     try:
         # Record API call
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="GET",
                 endpoint="/model/info",
                 status_code="200"
@@ -353,7 +370,7 @@ async def get_model_info(
         # Record response time
         response_time = time.time() - start_time
         if HAS_MONITORING:
-            metrics.http_request_duration_seconds.labels(
+            mlops_metrics.http_request_duration_seconds.labels(
                 method="GET",
                 endpoint="/model/info"
             ).observe(response_time)
@@ -363,7 +380,7 @@ async def get_model_info(
     except Exception as e:
         # Record error metrics
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="GET",
                 endpoint="/model/info",
                 status_code="500"
@@ -373,6 +390,7 @@ async def get_model_info(
         raise HTTPException(status_code=500, detail=f"모델 정보 조회 실패: {str(e)}")
 
 @router.get("/health", response_model=HealthResponse)
+@track_api_call(endpoint="/health", method="GET")
 async def health_check():
     """API 상태 확인 (Enhanced with monitoring)"""
     start_time = time.time()
@@ -382,14 +400,14 @@ async def health_check():
         
         # Record API call
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="GET",
                 endpoint="/health",
                 status_code="200"
             ).inc()
             
             # Update active users (simple example)
-            metrics.set_active_users(1)
+            mlops_metrics.set_active_users(1)
         
         response = HealthResponse(
             status="healthy" if model_loaded else "degraded",
@@ -401,7 +419,7 @@ async def health_check():
         # Record response time
         response_time = time.time() - start_time
         if HAS_MONITORING:
-            metrics.http_request_duration_seconds.labels(
+            mlops_metrics.http_request_duration_seconds.labels(
                 method="GET",
                 endpoint="/health"
             ).observe(response_time)
@@ -411,7 +429,7 @@ async def health_check():
     except Exception as e:
         # Record error metrics
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="GET",
                 endpoint="/health",
                 status_code="500"
@@ -427,6 +445,7 @@ async def health_check():
 
 # 새로운 모니터링 전용 엔드포인트들
 @router.get("/monitoring/predictions/stats")
+@track_api_call(endpoint="/monitoring/predictions/stats", method="GET")
 async def get_prediction_stats():
     """예측 통계 조회"""
     if not HAS_MONITORING:
@@ -445,7 +464,7 @@ async def get_prediction_stats():
         }
         
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="GET",
                 endpoint="/monitoring/predictions/stats",
                 status_code="200"
@@ -458,6 +477,7 @@ async def get_prediction_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/monitoring/data-drift/check")
+@track_api_call(endpoint="/monitoring/data-drift/check", method="POST")
 async def check_data_drift(data: Dict[str, Any]):
     """데이터 드리프트 체크"""
     if not HAS_MONITORING:
@@ -475,7 +495,7 @@ async def check_data_drift(data: Dict[str, Any]):
             
             # Record drift metrics
             if HAS_MONITORING:
-                metrics.record_data_drift(feature_name, drift_score, "imdb_model")
+                mlops_metrics.record_data_drift(feature_name, drift_score, "imdb_model")
         
         # Overall drift status
         max_drift = max(drift_scores.values()) if drift_scores else 0
@@ -490,7 +510,7 @@ async def check_data_drift(data: Dict[str, Any]):
         }
         
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="POST",
                 endpoint="/monitoring/data-drift/check",
                 status_code="200"
@@ -503,6 +523,7 @@ async def check_data_drift(data: Dict[str, Any]):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/monitoring/alerts/active")
+@track_api_call(endpoint="/monitoring/alerts/active", method="GET")
 async def get_active_alerts():
     """활성 알림 조회"""
     try:
@@ -533,7 +554,7 @@ async def get_active_alerts():
         }
         
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="GET",
                 endpoint="/monitoring/alerts/active",
                 status_code="200"
@@ -546,6 +567,7 @@ async def get_active_alerts():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/monitoring/model/update-accuracy")
+@track_api_call(endpoint="/monitoring/model/update-accuracy", method="POST")
 async def update_model_accuracy(accuracy_data: Dict[str, Any]):
     """모델 정확도 업데이트"""
     if not HAS_MONITORING:
@@ -562,7 +584,7 @@ async def update_model_accuracy(accuracy_data: Dict[str, Any]):
         
         # Record accuracy metric
         if HAS_MONITORING:
-            metrics.record_model_accuracy(accuracy, model_name, model_version)
+            mlops_metrics.record_model_accuracy(accuracy, model_name, model_version)
         
         response = {
             "message": "Model accuracy updated",
@@ -573,7 +595,7 @@ async def update_model_accuracy(accuracy_data: Dict[str, Any]):
         }
         
         if HAS_MONITORING:
-            metrics.http_requests_total.labels(
+            mlops_metrics.http_requests_total.labels(
                 method="POST",
                 endpoint="/monitoring/model/update-accuracy",
                 status_code="200"
@@ -621,11 +643,11 @@ def load_model_at_startup():
         
         # Record model loading success in metrics
         if HAS_MONITORING:
-            metrics.record_model_accuracy(0.69, "imdb_model", "1.0")  # Initial accuracy
-            metrics.mlflow_experiments_total.labels(
+            mlops_metrics.record_model_accuracy(0.69, "imdb_model", "1.0")  # Initial accuracy
+            mlops_metrics.mlflow_experiments_total.labels(
                 experiment_name="model_loading"
             ).inc()
-            metrics.mlflow_runs_total.labels(
+            mlops_metrics.mlflow_runs_total.labels(
                 experiment_name="model_loading",
                 status="success"
             ).inc()
@@ -637,7 +659,7 @@ def load_model_at_startup():
         
         # Record model loading failure
         if HAS_MONITORING:
-            metrics.mlflow_runs_total.labels(
+            mlops_metrics.mlflow_runs_total.labels(
                 experiment_name="model_loading",
                 status="failed"
             ).inc()

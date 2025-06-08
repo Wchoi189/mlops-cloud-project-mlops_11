@@ -120,7 +120,10 @@ def test_section3():
     
     try:
         evaluator = ModelEvaluator()
-        evaluator.load_model(model_paths['model_path'], model_type="random_forest")
+        model_path = model_paths['model_path']
+        if isinstance(model_path, list):
+            model_path = model_path[0]
+        evaluator.load_model(model_path, model_type="random_forest")
         
         eval_metrics, y_pred = evaluator.evaluate_model(X, y)
         print(f"✅ 모델 평가 성공:")
@@ -182,7 +185,7 @@ def test_section3():
         print(f"   예측 범위: {predictions.min():.2f} ~ {predictions.max():.2f}")
         
         # 실제값과 비교
-        actual_ratings = batch_sample[trainer.TARGET_COLUMN].values
+        actual_ratings = batch_sample[trainer.TARGET_COLUMN].to_numpy()
         print(f"   실제 범위: {actual_ratings.min():.2f} ~ {actual_ratings.max():.2f}")
         
     except Exception as e:

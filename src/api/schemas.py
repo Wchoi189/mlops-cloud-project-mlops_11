@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, Annotated
 
 class PredictionRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=5000, description="Text to analyze")
@@ -31,8 +31,12 @@ class MoviePredictionResponse(BaseModel):
     model_features: List[str]
     timestamp: str
 
+# class BatchPredictionRequest(BaseModel):
+#     texts: List[str] = Field(..., max_length =100, description="List of texts to analyze")
+
+# v2 
 class BatchPredictionRequest(BaseModel):
-    texts: List[str] = Field(..., max_items=100, description="List of texts to analyze")
+    texts: Annotated[List[str], Field(max_length=100, description="List of texts to analyze")]
 
 class BatchPredictionResponse(BaseModel):
     predictions: List[PredictionResponse]
@@ -68,3 +72,15 @@ class ErrorResponse(BaseModel):
     message: str
     timestamp: str
     details: Optional[Dict[str, Any]] = None
+
+
+# Metrics
+class CustomMetricsResponse(BaseModel):
+    """Response model for custom metrics endpoint"""
+    timestamp: str
+    model_status: str
+    api_version: str
+    predictions_today: Optional[int] = None
+    average_rating: Optional[float] = None
+    active_users: Optional[int] = None
+    error: Optional[str] = None

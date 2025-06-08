@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y \
 
 # 더 나은 캐싱을 위해 requirements 먼저 복사
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install -r requirements.txt
 
 # 애플리케이션 코드 복사
 COPY src/ src/

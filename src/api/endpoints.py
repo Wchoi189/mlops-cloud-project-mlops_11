@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from datetime import datetime
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import numpy as np
 import pandas as pd
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # 전역 모델 평가기 (앱 시작시 로드됨)
-model_evaluator: ModelEvaluator = None
+model_evaluator: Optional[ModelEvaluator] = None
 
 def get_model_evaluator() -> ModelEvaluator:
     """모델 평가기 의존성 주입"""
