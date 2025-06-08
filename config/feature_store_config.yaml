@@ -1,0 +1,108 @@
+# 2단계 피처 스토어 설정 파일
+# MLOps Stage 2: Feature Store Configuration
+
+# 피처 스토어 기본 설정
+feature_store:
+  base_path: "data/feature_store"
+  cache_enabled: true
+  cache_max_size: 100
+  cache_ttl_seconds: 3600
+  enable_versioning: true
+  compression: "snappy"
+  backup_enabled: true
+  
+  # Redis 캐시 설정 (선택사항)
+  redis:
+    enabled: false
+    host: "localhost"
+    port: 6379
+    db: 0
+    password: null
+    
+  # 모니터링 설정
+  metrics:
+    enabled: true
+    port: 8000
+    
+  # 스토리지 백엔드
+  storage:
+    backend: "file"  # file, s3, gcs, azure
+    options: {}
+
+# 피처 엔지니어링 설정
+feature_engineering:
+  # 고급 인코딩 설정
+  encoding:
+    binary_encoding_threshold: 10  # 고유값이 10개 이상이면 binary encoding
+    target_encoding_enabled: true
+    log_transform_skewness_threshold: 1.0
+    
+  # 데이터 검증 설정
+  validation:
+    schema_validation: true
+    great_expectations_enabled: true
+    business_logic_validation: true
+    
+  # 피처 생성 설정
+  generation:
+    temporal_features: true
+    statistical_features: true
+    text_features: true
+    interaction_features: true
+    augmented_data: true
+
+# API 서버 설정
+api_server:
+  host: "0.0.0.0"
+  port: 8001
+  reload: true
+  log_level: "info"
+  cors_enabled: true
+  docs_enabled: true
+
+# Feast 통합 설정 (선택사항)
+feast:
+  enabled: false
+  repo_path: "feature_repo"
+  project_name: "movie_mlops"
+  
+  # 온라인 스토어 설정
+  online_store:
+    type: "sqlite"  # sqlite, redis, dynamodb
+    path: "feature_repo/data/online_store.db"
+    
+  # 오프라인 스토어 설정  
+  offline_store:
+    type: "file"  # file, bigquery, snowflake
+    
+  # 레지스트리 설정
+  registry:
+    type: "file"
+    path: "feature_repo/data/registry.db"
+
+# 로깅 설정
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file_enabled: true
+  file_path: "logs/feature_store.log"
+
+# 성능 최적화 설정
+performance:
+  parallel_processing: true
+  max_workers: 4
+  chunk_size: 1000
+  memory_limit_mb: 2048
+  
+# 품질 관리 설정
+quality:
+  validation_enabled: true
+  missing_value_threshold: 0.1  # 10% 이상 결측값 시 경고
+  outlier_detection: true
+  data_drift_monitoring: true
+  
+# 보안 설정
+security:
+  api_key_required: false
+  rate_limiting: false
+  encryption_enabled: false

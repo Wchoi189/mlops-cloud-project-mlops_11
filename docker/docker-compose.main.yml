@@ -1,0 +1,200 @@
+# MLOps 프로젝트 Docker Compose - 개발환경 (2단계 피처 스토어 업데이트)
+
+services:
+  # 메인 개발 환경 (2단계 피처 스토어 지원)
+  dev:
+    platform: linux/amd64  # Windows에서 Linux 컨테이너 명시
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      platforms:
+        - linux/amd64
+    container_name: mlops-dev
+    env_file:
+      - .env  # .env 파일 직접 로드
+    volumes:
+      - .:/app
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./feature_repo:/app/feature_repo  # Feast 피처 스토어
+    environment:
+      - PYTHONPATH=/app/src
+      - PYTHON_VERSION=3.11
+      - LOG_LEVEL=DEBUG
+      # 2단계 피처 스토어 환경변수
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - FEATURE_STORE_BASE_PATH=/app/data/feature_store
+      - METRICS_ENABLED=true
+    ports:
+      - "8001:8001"  # FastAPI 피처 스토어 API
+      - "8000:8000"  # Prometheus 메트릭
+      - "8888:8888"  # Jupyter
+    networks:
+      - mlops-network
+    depends_on:
+      - redis
+      - postgres
+    tty: true
+    stdin_open: true
+
+  # FastAPI 피처 스토어 API 서버 (새로 추가)
+  feature-store-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: mlops-feature-api
+    command: >
+      bash -c "
+        cd /app &&
+        python src/api/main.py
+      "
+    volumes:
+      - .:/app
+      - ./data:/app/data
+    environment:
+      - PYTHONPATH=/app/src
+      - REDIS_HOST=redis
+      - POSTGRES_HOST=postgres
+      - FEATURE_STORE_BASE_PATH=/app/data/feature_store
+    ports:
+      - "8002:8001"  # 외부 포트 8002로 매핑
+    networks:
+      - mlops-network
+    depends_on:
+      - redis
+      - postgres
+    profiles:
+      - api
+
+  # Jupyter Notebook 서비스
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: mlops-jupyter
+    command: >
+      bash -c "
+        pip install jupyter &&
+        jupyter notebook --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password=''
+      "
+    volumes:
+      - .:/app
+      - mlops-data:/app/data
+    environment:
+      - PYTHONPATH=/app/src
+    ports:
+      - "8889:8888"
+    networks:
+      - mlops-network
+    profiles:
+      - jupyter
+
+  # PostgreSQL 데이터베이스 (피처 메타데이터용)
+  postgres:
+    image: postgres:15  # 버전 업데이트
+    container_name: mlops-postgres
+    environment:
+      POSTGRES_DB: mlops
+      POSTGRES_USER: mlops_user
+      POSTGRES_PASSWORD: mlops_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./config/postgres:/docker-entrypoint-initdb.d  # 초기화 SQL
+    ports:
+      - "5432:5432"
+    networks:
+      - mlops-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mlops_user -d mlops"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis (피처 스토어 캐시용) - 2단계에서 필수
+  redis:
+    image: redis:7-alpine
+    container_name: mlops-redis
+    command: redis-server --appendonly yes  # 데이터 지속성
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - mlops-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prometheus 모니터링 (선택사항)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: mlops-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - mlops-network
+    profiles:
+      - monitoring
+
+  # Grafana 대시보드 (선택사항)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: mlops-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana:/etc/grafana/provisioning
+    ports:
+      - "3000:3000"
+    networks:
+      - mlops-network
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+  # MinIO S3 호환 스토리지 (선택사항)
+  minio:
+    image: minio/minio:latest
+    container_name: mlops-minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin123
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # Web Console
+    networks:
+      - mlops-network
+    profiles:
+      - storage
+
+volumes:
+  mlops-data:
+  mlops-logs:
+  postgres-data:
+  redis-data:
+  prometheus-data:
+  grafana-data:
+  minio-data:
+
+networks:
+  mlops-network:
+    driver: bridge

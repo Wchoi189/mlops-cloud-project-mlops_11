@@ -1,0 +1,70 @@
+# 피처 파이프라인 기본 설정
+# 2.2 피처 파이프라인 구축용 YAML 설정
+
+input_source: "data/raw/movies"
+input_format: "json"
+output_destination: "data/features"
+output_format: "parquet"
+
+# 병렬 처리 설정
+parallel_processing: true
+max_workers: 4
+chunk_size: 1000
+enable_caching: true
+progress_reporting: true
+
+# 파이프라인 단계 정의
+stages:
+  - name: "data_validation"
+    type: "DataValidationStage"
+    params:
+      required_fields: ["movie_id", "title", "vote_average"]
+      min_records: 10
+      check_data_types: true
+      
+  - name: "feature_extraction"
+    type: "FeatureExtractionStage"
+    params:
+      extraction_type: "all"  # all, basic, temporal, statistical, text, interaction
+      enable_augmentation: true
+      genre_encoding: "one_hot"
+      text_analysis: true
+      
+  - name: "feature_transformation"
+    type: "FeatureTransformationStage"
+    params:
+      enable_scaling: true
+      scaling_method: "standard"  # standard, minmax, robust
+      handle_missing: true
+      missing_strategy: "median"  # median, mean, zero, drop
+      handle_outliers: true
+      outlier_method: "iqr"  # iqr, zscore, isolation_forest
+      
+  - name: "feature_validation"
+    type: "FeatureValidationStage"
+    params:
+      min_records: 10
+      max_missing_ratio: 0.5
+      strict_validation: false
+      validate_ranges: true
+      check_correlations: true
+      
+  - name: "feature_storage"
+    type: "FeatureStorageStage"
+    params:
+      output_path: "data/features"
+      save_metadata: true
+      compression: "snappy"
+      backup_enabled: true
+
+# 품질 관리 설정
+quality_control:
+  enable_drift_detection: true
+  baseline_comparison: true
+  anomaly_threshold: 0.05
+  
+# 로깅 설정
+logging:
+  level: "INFO"
+  save_logs: true
+  log_path: "logs/feature_pipeline"

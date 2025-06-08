@@ -1,0 +1,18 @@
+services:
+  mlops-git-workflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: mlops-git-workflow
+    volumes:
+      - .:/workspace
+      - ~/.gitconfig:/root/.gitconfig:ro
+      - ~/.ssh:/root/.ssh:ro
+    working_dir: /workspace
+    environment:
+      - MLOPS_PROJECT_ROOT=/workspace
+      - TEST_MODE=true
+      - WSL_DISTRO_NAME=Ubuntu
+      - PYTHONPATH=/workspace
+    stdin_open: true
+    tty: true

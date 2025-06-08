@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps 아키텍처 가이드 - 9단계 진화 과정</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .overview-section {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .overview-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .overview-content {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+            margin: 20px 0;
+        }
+
+        .stage-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stage-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-left: 5px solid #667eea;
+        }
+
+        .stage-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .stage-card.enhanced {
+            border-left: 5px solid #ffd700;
+            background: rgba(255, 248, 220, 0.95);
+        }
+
+        .stage-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stage-number {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 18px;
+        }
+
+        .stage-number.enhanced {
+            background: linear-gradient(45deg, #ffd700, #ffb300);
+            color: #333;
+        }
+
+        .stage-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            flex: 1;
+        }
+
+        .enhanced-badge {
+            background: #ffd700;
+            color: #333;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .stage-content {
+            margin-top: 15px;
+        }
+
+        .stage-goal {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #2196f3;
+        }
+
+        .stage-concepts {
+            background: #f3e5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #9c27b0;
+        }
+
+        .stage-tools {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #4caf50;
+        }
+
+        .stage-highlight {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #ff9800;
+            font-style: italic;
+        }
+
+        .tool-badge {
+            background: #667eea;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            margin: 2px;
+            display: inline-block;
+        }
+
+        .tool-badge.star {
+            background: #ffd700;
+            color: #333;
+        }
+
+        .summary-table {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-table h2 {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .summary-table table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .summary-table th,
+        .summary-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .summary-table th {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            font-weight: bold;
+        }
+
+        .summary-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .summary-table .enhanced-row {
+            background: #fff3cd;
+        }
+
+        .conclusion {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-top: 30px;
+        }
+
+        .conclusion h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .conclusion p {
+            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .highlight {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+
+        .success-factors {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+
+        .success-factor {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #4caf50;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .stage-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .nav-dots {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+        }
+
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-dot.active {
+            background: #667eea;
+            transform: scale(1.3);
+        }
+
+        .emoji {
+            font-size: 1.5em;
+            margin-right: 8px;
+        }
+
+        .definition-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .definition-item {
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .definition-item:last-child {
+            border-bottom: none;
+        }
+
+        .definition-term {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .definition-desc {
+            color: #6c757d;
+            margin-left: 10px;
+        }
+
+        .framework-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .framework-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-dots">
+        <div class="nav-dot active" data-target="header"></div>
+        <div class="nav-dot" data-target="overview"></div>
+        <div class="nav-dot" data-target="stages-1-5"></div>
+        <div class="nav-dot" data-target="stages-6-9"></div>
+        <div class="nav-dot" data-target="summary"></div>
+        <div class="nav-dot" data-target="conclusion"></div>
+    </div>
+
+    <div class="container">
+        <header class="header" id="header">
+            <h1>🚀 MLOps 아키텍처 가이드 - 9단계 진화 과정</h1>
+            <p>머신러닝 시스템의 체계적인 9단계 진화 과정과 핵심 도구들에 대한 완전 가이드</p>
+            <div style="margin-top: 20px;">
+                <span style="background: #e3f2fd; padding: 8px 15px; border-radius: 20px; margin: 5px;">📊 단계별 목표</span>
+                <span style="background: #f3e5f5; padding: 8px 15px; border-radius: 20px; margin: 5px;">🧠 핵심 개념</span>
+                <span style="background: #e8f5e8; padding: 8px 15px; border-radius: 20px; margin: 5px;">⭐ 주요 도구</span>
+                <span style="background: #fff3e0; padding: 8px 15px; border-radius: 20px; margin: 5px;">🟡 강화 단계</span>
+            </div>
+        </header>
+
+        <section class="overview-section" id="overview">
+            <h2>📋 개요</h2>
+            <div class="overview-content">
+                <p><strong>MLOps</strong>는 머신러닝 모델의 개발부터 배포, 운영까지의 전체 생명주기를 자동화하고 효율적으로 관리하는 방법론입니다.</p>
+                <p>이 가이드는 <strong>9단계의 체계적인 진화 과정</strong>을 통해 완전 자동화된 ML 생태계 구축 방법을 설명합니다.</p>
+                <div style="text-align: center; margin: 20px 0; font-style: italic; color: #666;">
+                    "각 단계는 이전 단계의 기반 위에 구축되며, 점진적으로 완전 자율적인 ML 시스템으로 발전합니다."
+                </div>
+            </div>
+        </section>
+
+        <section id="stages-1-5">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #333;">🏗️ 기반 구축 단계 (1-5단계)</h2>
+            <div class="stage-grid">
+                <!-- 1단계 -->
+                <div class="stage-card">
+                    <div class="stage-header">
+                        <div class="stage-number">1</div>
+                        <div class="stage-title">데이터 처리 및 분석 도구들</div>
+                    </div>
+                    
+                    <div class="stage-content">
+                        <div class="stage-goal">
+                            <strong><span class="emoji">🎯</span>단계 목표:</strong> 안정적인 데이터 파이프라인 구축
+                        </div>
+                        
+                        <div class="stage-concepts">
+                            <strong><span class="emoji">🧠</span>핵심 개념:</strong>
+                            <div class="definition-list">
+                                <div class="definition-item">
+                                    <span class="definition-term">데이터 파이프라인:</span>
+                                    <span class="definition-desc">원시 데이터를 수집하여 분석 가능한 형태로 변환하고 저장하는 자동화된 프로세스</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">ETL:</span>
+                                    <span class="definition-desc">Extract(추출), Transform(변환), Load(적재) 프로세스</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-tools">
+                            <strong><span class="emoji">⭐</span>주요 도구들:</strong><br>
+                            <span class="tool-badge star">Apache Airflow</span>
+                            <span class="tool-badge">Apache Kafka</span>
+                            <span class="tool-badge">Python</span>
+                            <span class="tool-badge">Apache Spark</span>
+                            <span class="tool-badge">Amazon S3</span>
+                            <span class="tool-badge">MinIO</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2단계 -->
+                <div class="stage-card">
+                    <div class="stage-header">
+                        <div class="stage-number">2</div>
+                        <div class="stage-title">피처 스토어 및 ML 플랫폼 도구들</div>
+                    </div>
+                    
+                    <div class="stage-content">
+                        <div class="stage-goal">
+                            <strong><span class="emoji">🎯</span>단계 목표:</strong> 재사용 가능한 피처 관리 체계 구축
+                        </div>
+                        
+                        <div class="stage-concepts">
+                            <strong><span class="emoji">🧠</span>핵심 개념:</strong>
+                            <div class="definition-list">
+                                <div class="definition-item">
+                                    <span class="definition-term">피처(Feature):</span>
+                                    <span class="definition-desc">ML 모델이 학습하고 예측에 사용하는 입력 변수</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">피처 엔지니어링:</span>
+                                    <span class="definition-desc">원시 데이터를 ML 모델이 이해할 수 있는 형태로 변환하는 과정</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">피처 스토어:</span>
+                                    <span class="definition-desc">ML 피처들을 중앙에서 관리하고 저장하는 시스템</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-tools">
+                            <strong><span class="emoji">⭐</span>주요 도구들:</strong><br>
+                            <span class="tool-badge star">Feast</span>
+                            <span class="tool-badge">Hopsworks</span>
+                            <span class="tool-badge">Tecton</span>
+                            <span class="tool-badge">Amazon SageMaker</span>
+                            <span class="tool-badge">Google Vertex AI</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3단계 -->
+                <div class="stage-card">
+                    <div class="stage-header">
+                        <div class="stage-number">3</div>
+                        <div class="stage-title">버전 관리 시스템</div>
+                    </div>
+                    
+                    <div class="stage-content">
+                        <div class="stage-goal">
+                            <strong><span class="emoji">🎯</span>단계 목표:</strong> 코드, 데이터, 모델의 체계적 버전 관리
+                        </div>
+                        
+                        <div class="stage-concepts">
+                            <strong><span class="emoji">🧠</span>핵심 개념:</strong>
+                            <div class="definition-list">
+                                <div class="definition-item">
+                                    <span class="definition-term">Git:</span>
+                                    <span class="definition-desc">분산 버전 관리 시스템</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">Repository:</span>
+                                    <span class="definition-desc">프로젝트의 모든 파일과 변경 이력이 저장된 공간</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">재현 가능성(Reproducibility):</span>
+                                    <span class="definition-desc">이전 실험 결과를 정확히 재현할 수 있는 능력</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-tools">
+                            <strong><span class="emoji">⭐</span>주요 도구들:</strong><br>
+                            <span class="tool-badge star">Git</span>
+                            <span class="tool-badge star">GitHub</span>
+                            <span class="tool-badge">GitLab</span>
+                            <span class="tool-badge">Atlassian Bitbucket</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4단계 -->
+                <div class="stage-card">
+                    <div class="stage-header">
+                        <div class="stage-number">4</div>
+                        <div class="stage-title">CI/CD 파이프라인 구축</div>
+                    </div>
+                    
+                    <div class="stage-content">
+                        <div class="stage-goal">
+                            <strong><span class="emoji">🎯</span>단계 목표:</strong> 자동화된 빌드, 테스트, 배포 시스템 구축
+                        </div>
+                        
+                        <div class="stage-concepts">
+                            <strong><span class="emoji">🧠</span>핵심 개념:</strong>
+                            <div class="definition-list">
+                                <div class="definition-item">
+                                    <span class="definition-term">CI (Continuous Integration):</span>
+                                    <span class="definition-desc">지속적 통합 - 코드 변경사항을 자주 공유 저장소에 통합</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">CD (Continuous Deployment):</span>
+                                    <span class="definition-desc">지속적 배포 - 프로덕션까지 완전 자동 배포</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">GitOps:</span>
+                                    <span class="definition-desc">Git을 "진실의 유일한 소스"로 사용하는 배포 방법론</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-tools">
+                            <strong><span class="emoji">⭐</span>주요 도구들:</strong><br>
+                            <span class="tool-badge star">Jenkins</span>
+                            <span class="tool-badge star">GitHub Actions</span>
+                            <span class="tool-badge">GitLab CI/CD</span>
+                            <span class="tool-badge">CircleCI</span>
+                            <span class="tool-badge">ArgoCD</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5단계 -->
+                <div class="stage-card">
+                    <div class="stage-header">
+                        <div class="stage-number">5</div>
+                        <div class="stage-title">워크플로우 오케스트레이션</div>
+                    </div>
+                    
+                    <div class="stage-content">
+                        <div class="stage-goal">
+                            <strong><span class="emoji">🎯</span>단계 목표:</strong> 복잡한 ML 워크플로우 자동화 및 관리
+                        </div>
+                        
+                        <div class="stage-concepts">
+                            <strong><span class="emoji">🧠</span>핵심 개념:</strong>
+                            <div class="definition-list">
+                                <div class="definition-item">
+                                    <span class="definition-term">워크플로우 오케스트레이션:</span>
+                                    <span class="definition-desc">연관된 작업들을 정의된 순서와 조건에 따라 자동 실행하고 관리</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">DAG (Directed Acyclic Graph):</span>
+                                    <span class="definition-desc">방향이 있고 순환하지 않는 그래프로 워크플로우 표현</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">의존성 관리:</span>
+                                    <span class="definition-desc">작업 간의 실행 순서와 조건 관리</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-tools">
+                            <strong><span class="emoji">⭐</span>주요 도구들:</strong><br>
+                            <span class="tool-badge star">Apache Airflow</span>
+                            <span class="tool-badge star">Kubeflow</span>
+                            <span class="tool-badge">MLflow</span>
+                            <span class="tool-badge">Prefect</span>
+                            <span class="tool-badge">Argo Workflows</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="stages-6-9">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #333;">🟡 핵심 기능 단계 (6-9단계)</h2>
+            <div class="stage-grid">
+                <!-- 6단계 -->
+                <div class="stage-card enhanced">
+                    <div class="stage-header">
+                        <div class="stage-number enhanced">6</div>
+                        <div class="stage-title">모델 레지스트리 중심의 모델 관리 체계</div>
+                        <span class="enhanced-badge">🟡 Model Registry</span>
+                    </div>
+                    
+                    <div class="stage-content">
+                        <div class="stage-goal">
+                            <strong><span class="emoji">🎯</span>단계 목표:</strong> 체계적인 모델 생명주기 관리
+                        </div>
+                        
+                        <div class="stage-concepts">
+                            <strong><span class="emoji">🧠</span>핵심 개념:</strong>
+                            <div class="definition-list">
+                                <div class="definition-item">
+                                    <span class="definition-term">모델 레지스트리:</span>
+                                    <span class="definition-desc">학습된 ML 모델들을 중앙에서 저장, 버전 관리, 메타데이터 추적하는 시스템</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">모델 거버넌스:</span>
+                                    <span class="definition-desc">모델 배포 전 승인 프로세스 및 규제 준수</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">모델 상태:</span>
+                                    <span class="definition-desc">개발/스테이징/프로덕션 단계 구분</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-tools">
+                            <strong><span class="emoji">⭐</span>주요 도구들:</strong><br>
+                            <span class="tool-badge star">MLflow Registry</span>
+                        </div>
+
+                        <div class="stage-highlight">
+                            <strong>🔥 강조 포인트:</strong>
+                            <ul>
+                                <li>Model Registry가 워크플로우의 중심에 위치</li>
+                                <li>모든 학습된 모델이 레지스트리를 거쳐 관리됨</li>
+                                <li>배포 전 모델 검증 및 승인 프로세스 강화</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 7단계 -->
+                <div class="stage-card enhanced">
+                    <div class="stage-header">
+                        <div class="stage-number enhanced">7</div>
+                        <div class="stage-title">ML 프레임워크와 모델 서빙 통합</div>
+                        <span class="enhanced-badge">🟡 Model Serving</span>
+                    </div>
+                    
+                    <div class="stage-content">
+                        <div class="stage-goal">
+                            <strong><span class="emoji">🎯</span>단계 목표:</strong> 다양한 ML 프레임워크와 모델 서빙 플랫폼 통합
+                        </div>
+                        
+                        <div class="stage-concepts">
+                            <strong><span class="emoji">🧠</span>핵심 개념:</strong>
+                            <div class="definition-list">
+                                <div class="definition-item">
+                                    <span class="definition-term">모델 서빙:</span>
+                                    <span class="definition-desc">학습된 모델을 실제 서비스에서 사용할 수 있도록 배포하고 운영</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">온라인 추론:</span>
+                                    <span class="definition-desc">사용자 요청 즉시 예측 결과 반환 (실시간)</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">카나리 배포:</span>
+                                    <span class="definition-desc">트래픽의 일부만 새 모델로 전송하여 안전하게 배포</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="framework-grid">
+                            <div class="framework-item">
+                                <strong>ML 프레임워크:</strong><br>
+                                <span class="tool-badge">PyTorch</span>
+                                <span class="tool-badge">TensorFlow</span>
+                                <span class="tool-badge">ONNX</span>
+                            </div>
+                            <div class="framework-item">
+                                <strong>모델 서빙 플랫폼:</strong><br>
+                                <span class="tool-badge">KServe</span>
+                                <span class="tool-badge">BentoML</span>
+                                <span class="tool-badge">Seldon Core</span>
+                            </div>
+                        </div>
+
+                        <div class="stage-highlight">
+                            <strong>🔥 강조 포인트:</strong>
+                            <ul>
+                                <li>CD: Model Serving이 핵심으로 강조됨</li>
+                                <li>멀티 프레임워크 지원 및 자동 최적화</li>
+                                <li>지능적 배포 전략 (A/B 테스트, 카나리 배포)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 8단계 -->
+                <div class="stage-card enhanced">
+                    <div class="stage-header">
+                        <div class="stage-number enhanced">8</div>
+                        <div class="stage-title">모니터링 및 관측성 강화</div>
+                        <span class="enhanced-badge">🟡 Monitoring</span>
+                    </div>
+                    
+                    <div class="stage-content">
+                        <div class="stage-goal">
+                            <strong><span class="emoji">🎯</span>단계 목표:</strong> 종합적인 시스템 및 모델 성능 모니터링
+                        </div>
+                        
+                        <div class="stage-concepts">
+                            <strong><span class="emoji">🧠</span>핵심 개념:</strong>
+                            <div class="definition-list">
+                                <div class="definition-item">
+                                    <span class="definition-term">데이터 드리프트:</span>
+                                    <span class="definition-desc">시간이 지나면서 실제 운영 환경의 데이터가 학습 데이터와 달라지는 현상</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">모델 드리프트:</span>
+                                    <span class="definition-desc">데이터 드리프트로 인해 모델의 예측 성능이 점진적으로 저하되는 현상</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">관측성(Observability):</span>
+                                    <span class="definition-desc">시스템 내부 상태를 외부에서 관찰할 수 있는 능력</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-tools">
+                            <strong><span class="emoji">⭐</span>모니터링 도구들:</strong><br>
+                            <span class="tool-badge star">Prometheus</span>
+                            <span class="tool-badge star">Grafana</span>
+                            <span class="tool-badge">EFK Stack</span>
+                            <span class="tool-badge">ELK Stack</span>
+                            <span class="tool-badge">TensorBoard</span>
+                        </div>
+
+                        <div class="stage-highlight">
+                            <strong>🔥 강조 포인트:</strong>
+                            <ul>
+                                <li>Performance Monitoring이 핵심으로 강조됨</li>
+                                <li>다층 모니터링 체계 (인프라, 애플리케이션, 모델, 비즈니스)</li>
+                                <li>실시간 알림 시스템 구현</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 9단계 -->
+                <div class="stage-card enhanced">
+                    <div class="stage-header">
+                        <div class="stage-number enhanced">9</div>
+                        <div class="stage-title">이벤트 기반 아키텍처 완성</div>
+                        <span class="enhanced-badge">🟡 Trigger</span>
+                    </div>
+                    
+                    <div class="stage-content">
+                        <div class="stage-goal">
+                            <strong><span class="emoji">🎯</span>단계 목표:</strong> 완전 자율적인 이벤트 기반 ML 생태계 구축
+                        </div>
+                        
+                        <div class="stage-concepts">
+                            <strong><span class="emoji">🧠</span>핵심 개념:</strong>
+                            <div class="definition-list">
+                                <div class="definition-item">
+                                    <span class="definition-term">이벤트 기반 아키텍처:</span>
+                                    <span class="definition-desc">시스템 구성 요소들이 이벤트를 통해 통신하고 자동으로 반응하는 패턴</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">트리거:</span>
+                                    <span class="definition-desc">특정 조건이나 이벤트 발생 시 자동으로 파이프라인을 실행시키는 메커니즘</span>
+                                </div>
+                                <div class="definition-item">
+                                    <span class="definition-term">자동 대응:</span>
+                                    <span class="definition-desc">이벤트 발생 시 사전 정의된 액션 자동 실행</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="stage-tools">
+                            <strong><span class="emoji">⭐</span>메시징 및 이벤트 스트리밍 도구들:</strong><br>
+                            <span class="tool-badge star">Apache Kafka</span>
+                            <span class="tool-badge">RabbitMQ</span>
+                            <span class="tool-badge">Amazon SQS</span>
+                            <span class="tool-badge">Google Cloud Pub/Sub</span>
+                            <span class="tool-badge">Azure Service Bus</span>
+                        </div>
+
+                        <div class="stage-highlight">
+                            <strong>🔥 강조 포인트:</strong>
+                            <ul>
+                                <li>Trigger가 핵심으로 강조됨</li>
+                                <li>완전 자율적인 이벤트 기반 ML 생태계 완성</li>
+                                <li>지능적 트리거 시스템 (데이터, 모델 성능, 비즈니스 이벤트 기반)</li>
+                                <li>자동 대응 시스템 (드리프트 감지, 성능 저하, 모델 승급 등)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="summary-table" id="summary">
+            <h2>📊 9단계 진화 요약</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>단계</th>
+                        <th>핵심 가치</th>
+                        <th>강조 포인트</th>
+                        <th>주요 도구</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1단계</strong></td>
+                        <td>안정적 데이터 처리</td>
+                        <td>데이터 파이프라인</td>
+                        <td><span class="tool-badge">Airflow</span> <span class="tool-badge">Kafka</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>2단계</strong></td>
+                        <td>피처 재사용성</td>
+                        <td>피처 관리</td>
+                        <td><span class="tool-badge">Feast</span> <span class="tool-badge">SageMaker</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>3단계</strong></td>
+                        <td>협업 및 추적성</td>
+                        <td>버전 관리</td>
+                        <td><span class="tool-badge">Git</span> <span class="tool-badge">GitHub</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>4단계</strong></td>
+                        <td>자동화 및 품질</td>
+                        <td>CI/CD</td>
+                        <td><span class="tool-badge">Jenkins</span> <span class="tool-badge">GitHub Actions</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>5단계</strong></td>
+                        <td>복잡성 관리</td>
+                        <td>워크플로우 오케스트레이션</td>
+                        <td><span class="tool-badge">Airflow</span> <span class="tool-badge">Kubeflow</span></td>
+                    </tr>
+                    <tr class="enhanced-row">
+                        <td><strong>6단계</strong></td>
+                        <td>모델 거버넌스</td>
+                        <td><strong>🟡 Model Registry</strong></td>
+                        <td><span class="tool-badge">MLflow Registry</span></td>
+                    </tr>
+                    <tr class="enhanced-row">
+                        <td><strong>7단계</strong></td>
+                        <td>프로덕션 배포</td>
+                        <td><strong>🟡 CD: Model Serving</strong></td>
+                        <td><span class="tool-badge">KServe</span> <span class="tool-badge">BentoML</span></td>
+                    </tr>
+                    <tr class="enhanced-row">
+                        <td><strong>8단계</strong></td>
+                        <td>운영 안정성</td>
+                        <td><strong>🟡 Performance Monitoring</strong></td>
+                        <td><span class="tool-badge">Prometheus</span> <span class="tool-badge">Grafana</span></td>
+                    </tr>
+                    <tr class="enhanced-row">
+                        <td><strong>9단계</strong></td>
+                        <td>완전 자율화</td>
+                        <td><strong>🟡 Trigger</strong></td>
+                        <td><span class="tool-badge">Kafka</span> <span class="tool-badge">Event-driven</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="conclusion" id="conclusion">
+            <h2>🎯 결론</h2>
+            <p>이 9단계 MLOps 아키텍처는 단순한 데이터 처리부터 완전 자율적인 ML 생태계까지의 <span class="highlight">체계적인 진화 과정</span>을 제시합니다.</p>
+            <p>각 단계별로 점진적으로 도입하여 조직의 ML 성숙도를 높이고, 최종적으로는 <span class="highlight">완전 자동화된 지능형 ML 시스템</span>을 구축할 수 있습니다.</p>
+            
+            <h3 style="margin-top: 30px; color: #333;">🏆 핵심 성공 요소</h3>
+            <div class="success-factors">
+                <div class="success-factor">
+                    <h4>📈 점진적 도입</h4>
+                    <p>단계별 성숙도 향상을 통한 안정적 발전</p>
+                </div>
+                <div class="success-factor">
+                    <h4>🔧 도구 선택</h4>
+                    <p>조직 규모와 요구사항에 맞는 최적 도구 선택</p>
+                </div>
+                <div class="success-factor">
+                    <h4>🤝 문화 변화</h4>
+                    <p>기술과 함께 조직 문화도 동반 발전</p>
+                </div>
+                <div class="success-factor">
+                    <h4>🔄 지속적 개선</h4>
+                    <p>MLOps는 완성이 아닌 지속적 개선 과정</p>
+                </div>
+            </div>
+            
+            <div style="font-size: 1.3em; margin-top: 30px; padding: 20px; background: rgba(255, 255, 255, 0.8); border-radius: 10px;">
+                <span class="highlight">"MLOps는 여정이지 목적지가 아닙니다. 지속적으로 발전하는 ML 생태계를 만들어가세요!"</span> 🚀✨
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // 스크롤 네비게이션
+        const navDots = document.querySelectorAll('.nav-dot');
+        const sections = document.querySelectorAll('section, header');
+
+        function updateActiveNav() {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (window.pageYOffset >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navDots.forEach(dot => {
+                dot.classList.remove('active');
+                if (dot.getAttribute('data-target') === current) {
+                    dot.classList.add('active');
+                }
+            });
+        }
+
+        navDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const target = document.getElementById(dot.getAttribute('data-target'));
+                target.scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+
+        window.addEventListener('scroll', updateActiveNav);
+
+        // 카드 애니메이션
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.stage-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(card);
+        });
+
+        // 향상된 카드들에 특별한 애니메이션 효과 추가
+        document.querySelectorAll('.stage-card.enhanced').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.background = 'rgba(255, 248, 220, 0.98)';
+                card.style.borderLeft = '5px solid #ff9800';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.background = 'rgba(255, 248, 220, 0.95)';
+                card.style.borderLeft = '5px solid #ffd700';
+            });
+        });
+    </script>
+</body>
+</html>

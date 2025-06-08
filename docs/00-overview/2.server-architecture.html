@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps 프로젝트 서버 구성 정리</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .project-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .info-card strong {
+            color: #4a5568;
+            font-size: 1.1em;
+        }
+        
+        .environment-section {
+            margin-bottom: 50px;
+        }
+        
+        .env-header {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .env-header h2 {
+            color: #2d3748;
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+        
+        .env-content {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+        }
+        
+        .subsection {
+            margin-bottom: 30px;
+        }
+        
+        .subsection h3 {
+            color: #2b6cb0;
+            border-bottom: 2px solid #bee3f8;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .subsection h4 {
+            color: #2c5282;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        .tech-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .tech-list li {
+            background: #f7fafc;
+            margin: 8px 0;
+            padding: 12px 20px;
+            border-left: 4px solid #4299e1;
+            border-radius: 8px;
+            transition: background 0.3s ease;
+        }
+        
+        .tech-list li:hover {
+            background: #edf2f7;
+        }
+        
+        .tech-list li strong {
+            color: #2b6cb0;
+        }
+        
+        .comparison-table {
+            overflow-x: auto;
+            margin: 30px 0;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            transition: background 0.3s ease;
+        }
+        
+        tr:hover td {
+            background: #f7fafc;
+        }
+        
+        .directory-structure {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .advantages-list {
+            background: #f0fff4;
+            border-left: 4px solid #38a169;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .limitations-list {
+            background: #fffaf0;
+            border-left: 4px solid #ed8936;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+        
+        .tag {
+            display: inline-block;
+            background: #4299e1;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin: 2px;
+        }
+        
+        .future-plans {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin-top: 40px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .future-plans h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+        
+        .future-plans ul {
+            list-style: none;
+        }
+        
+        .future-plans li {
+            background: rgba(255, 255, 255, 0.7);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .project-info {
+                grid-template-columns: 1fr;
+            }
+            
+            table {
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 MLOps 프로젝트 서버 구성 정리</h1>
+            <p>클라우드 기반 머신러닝 운영 플랫폼 아키텍처</p>
+        </div>
+        
+        <div class="project-info">
+            <div class="info-card">
+                <strong>프로젝트명</strong><br>
+                mlops-cloud-project-mlops_11
+            </div>
+            <div class="info-card">
+                <strong>팀 구성</strong><br>
+                5명 (11조)
+            </div>
+            <div class="info-card">
+                <strong>조장</strong><br>
+                username1
+            </div>
+            <div class="info-card">
+                <strong>팀원</strong><br>
+                username2, username3, username4, username5
+            </div>
+        </div>
+        
+        <div class="environment-section">
+            <div class="env-header">
+                <h2>🖥️ 1. Dev 환경 (개발 환경)</h2>
+            </div>
+            <div class="env-content">
+                <div class="subsection">
+                    <h3>1.1 환경 구성</h3>
+                    <ul class="tech-list">
+                        <li><strong>총 개수:</strong> 5개 (팀원 개인별 로컬 환경)</li>
+                        <li><strong>기본 OS:</strong> Windows 11 (4명), macOS (username4)</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h3>1.2 username5 개발 환경</h3>
+                    <ul class="tech-list">
+                        <li><strong>OS:</strong> Windows 11 + WSL Ubuntu 24.04 LTS</li>
+                        <li><strong>Shell:</strong> zsh + Powerlevel10k</li>
+                        <li><strong>컨테이너화:</strong> Docker</li>
+                        <li><strong>가상환경:</strong> Docker만 사용 (venv 미사용으로 결정)</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h3>1.3 기타 팀원 환경</h3>
+                    <ul class="tech-list">
+                        <li><strong>username1, username2, username3:</strong> Windows 11 기반 (개별 구성)</li>
+                        <li><strong>username4:</strong> macOS 기반</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="environment-section">
+            <div class="env-header">
+                <h2>🔧 2. Staging 환경 (스테이징 환경)</h2>
+            </div>
+            <div class="env-content">
+                <div class="subsection">
+                    <h3>2.1 서버 환경</h3>
+                    <ul class="tech-list">
+                        <li><strong>플랫폼:</strong> AIStages 서버 (개인별 할당)</li>
+                        <li><strong>OS:</strong> Ubuntu 20.04 LTS (업그레이드 불가)</li>
+                        <li><strong>접근 권한:</strong> 소유자 개인만 접속 가능</li>
+                        <li><strong>업그레이드 제한:</strong> reboot 불가능으로 인한 시스템 업그레이드 제한</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h3>2.2 기술 스택</h3>
+                    <ul class="tech-list">
+                        <li><strong>오케스트레이션:</strong> <span class="tag">Kubernetes</span></li>
+                        <li><strong>컨테이너:</strong> <span class="tag">Docker</span></li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h3>2.3 jayden Staging 서버 구성</h3>
+                    <ul class="tech-list">
+                        <li><strong>Shell:</strong> zsh + Powerlevel10k</li>
+                        <li><strong>파일 전송:</strong> SFTP (vsftpd + FileZilla 연동)</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h3>2.4 FTP vs SFTP 선택 이유</h3>
+                    <div class="limitations-list">
+                        <h4>⚠️ FTP 방식의 제한사항:</h4>
+                        <ul>
+                            <li>포트 21 (명령 포트) + Passive 모드 포트 범위 (예: 30461~30468) 필요</li>
+                            <li>AIStages 환경에서 추가 포트 개방 불가능</li>
+                            <li>방화벽 설정 복잡</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="advantages-list">
+                        <h4>✅ SFTP 방식의 장점:</h4>
+                        <ul>
+                            <li>SSH 포트 22번만 사용</li>
+                            <li>추가 포트 개방 불필요</li>
+                            <li>기본 SSH 연결로 파일 전송 가능</li>
+                            <li>방화벽 설정 간단</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="environment-section">
+            <div class="env-header">
+                <h2>🌐 3. Production 환경 (운영 환경)</h2>
+            </div>
+            <div class="env-content">
+                <div class="subsection">
+                    <h3>3.1 Production 1: 카페24 가상서버호스팅</h3>
+                    
+                    <h4>서버 사양</h4>
+                    <ul class="tech-list">
+                        <li><strong>OS:</strong> Ubuntu 24.04</li>
+                        <li><strong>Shell:</strong> zsh + Powerlevel10k</li>
+                        <li><strong>FTP:</strong> 일반 FTP 환경 (포트 개방 가능)</li>
+                    </ul>
+                    
+                    <h4>권한 관리</h4>
+                    <ul class="tech-list">
+                        <li><strong>jayden:</strong> 최고관리자 권한</li>
+                        <li><strong>기타 팀원:</strong> 일반사용자 권한</li>
+                        <li><strong>접근 제어:</strong> 개인별 경로 제한 + 팀 프로젝트 폴더 마운팅</li>
+                    </ul>
+                    
+                    <h4>디렉터리 구조</h4>
+                    <div class="directory-structure">
+/home/<br>
+├── username5/ (관리자)<br>
+├── username1/ → /team-project/ (마운트)<br>
+├── username2/ → /team-project/ (마운트)<br>
+├── username3/ → /team-project/ (마운트)<br>
+├── username4/ → /team-project/ (마운트)<br>
+└── team-project/ (공유 프로젝트 폴더)
+                    </div>
+                    
+                    <h4>기술 스택</h4>
+                    <ul class="tech-list">
+                        <li><strong>오케스트레이션:</strong> <span class="tag">Kubernetes</span></li>
+                        <li><strong>컨테이너 런타임:</strong> <span class="tag">containerd</span></li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h3>3.2 Production 2: AWS 환경 (예정)</h3>
+                    
+                    <h4>후원 및 계획</h4>
+                    <ul class="tech-list">
+                        <li><strong>후원자:</strong> kyshin00</li>
+                        <li><strong>플랫폼:</strong> AWS</li>
+                    </ul>
+                    
+                    <h4>서버 사양</h4>
+                    <ul class="tech-list">
+                        <li><strong>OS:</strong> Ubuntu 24.04</li>
+                    </ul>
+                    
+                    <h4>구성 옵션</h4>
+                    <ul class="tech-list">
+                        <li><strong>EC2 기반:</strong> AWS EC2 인스턴스 구성</li>
+                        <li><strong>관리형 서비스:</strong> Amazon EKS (Elastic Kubernetes Service)</li>
+                    </ul>
+                    
+                    <h4>기술 스택</h4>
+                    <ul class="tech-list">
+                        <li><strong>오케스트레이션:</strong> <span class="tag">Kubernetes</span></li>
+                        <li><strong>컨테이너 런타임:</strong> <span class="tag">containerd</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="environment-section">
+            <div class="env-header">
+                <h2>📊 4. 환경별 비교 요약</h2>
+            </div>
+            <div class="env-content">
+                <div class="comparison-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>환경</th>
+                                <th>개수</th>
+                                <th>플랫폼</th>
+                                <th>OS</th>
+                                <th>컨테이너</th>
+                                <th>오케스트레이션</th>
+                                <th>접근성</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Dev</strong></td>
+                                <td>5개</td>
+                                <td>로컬 PC</td>
+                                <td>Win11/macOS/Ubuntu 24.04</td>
+                                <td>Docker</td>
+                                <td>-</td>
+                                <td>개인</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Staging</strong></td>
+                                <td>5개</td>
+                                <td>AIStages</td>
+                                <td>Ubuntu 20.04</td>
+                                <td>Docker</td>
+                                <td>Kubernetes</td>
+                                <td>개인</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Prod 1</strong></td>
+                                <td>1개</td>
+                                <td>카페24 VPS</td>
+                                <td>Ubuntu 24.04</td>
+                                <td>containerd</td>
+                                <td>Kubernetes</td>
+                                <td>팀 공유</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Prod 2</strong></td>
+                                <td>1개</td>
+                                <td>AWS</td>
+                                <td>Ubuntu 24.04</td>
+                                <td>containerd</td>
+                                <td>Kubernetes/EKS</td>
+                                <td>팀 공유</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="environment-section">
+            <div class="env-header">
+                <h2>⚙️ 5. 주요 기술 결정사항</h2>
+            </div>
+            <div class="env-content">
+                <div class="subsection">
+                    <h3>5.1 컨테이너화 전략</h3>
+                    <ul class="tech-list">
+                        <li><strong>Dev:</strong> Docker 단독 사용 (venv 미사용)</li>
+                        <li><strong>Staging/Prod:</strong> Kubernetes + 컨테이너 런타임</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h3>5.2 파일 전송 방식</h3>
+                    <ul class="tech-list">
+                        <li><strong>Staging:</strong> SFTP (포트 제약)</li>
+                        <li><strong>Prod:</strong> FTP/SFTP (포트 개방 가능)</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h3>5.3 권한 관리</h3>
+                    <ul class="tech-list">
+                        <li><strong>Staging:</strong> 개인별 독립 환경</li>
+                        <li><strong>Prod:</strong> 중앙집중식 권한 관리 + 마운팅 구조</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="environment-section">
+            <div class="env-header">
+                <h2>🔒 6. 네트워크 및 보안 고려사항</h2>
+            </div>
+            <div class="env-content">
+                <div class="subsection">
+                    <h3>6.1 포트 관리</h3>
+                    <ul class="tech-list">
+                        <li><strong>AIStages:</strong> 기본 포트만 사용 가능 (22, 80, 443 등)</li>
+                        <li><strong>카페24 VPS:</strong> 사용자 정의 포트 개방 가능</li>
+                        <li><strong>AWS:</strong> Security Group을 통한 포트 관리</li>
+                    </ul>
+                </div>
+                
+                <div class="subsection">
+                    <h3>6.2 접근 제어</h3>
+                    <ul class="tech-list">
+                        <li><strong>Staging:</strong> 개인별 격리</li>
+                        <li><strong>Production:</strong> 역할 기반 접근 제어 (RBAC)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="future-plans">
+            <h2>🚀 7. 향후 확장 계획</h2>
+            <ul>
+                <li>AWS 환경 구축 및 운영</li>
+                <li>Multi-cloud 환경에서의 workload 분산</li>
+                <li>CI/CD 파이프라인 통합</li>
+                <li>모니터링 및 로깅 시스템 구축</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

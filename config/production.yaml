@@ -1,0 +1,44 @@
+# 프로덕션 환경 설정
+environment: production
+
+# TMDB API 설정
+tmdb:
+  region: "KR"
+  language: "ko-KR"
+  request_delay: 0.5  # 프로덕션에서는 더 보수적
+  max_retries: 5
+  timeout: 60
+  batch_size: 50
+
+# 데이터 설정
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  backup_dir: "data/backup"
+  max_file_age_days: 90  # 프로덕션에서는 더 오래 보관
+  compression_enabled: true
+
+# 로깅 설정
+logging:
+  level: "WARNING"  # 프로덕션에서는 WARNING 레벨 이상만
+  max_bytes: 52428800  # 50MB
+  backup_count: 10
+
+# 스케줄링 설정
+scheduler:
+  enabled: true
+  daily_collection_time: "02:00"
+  weekly_collection_day: "sunday"
+  hourly_trending_enabled: false  # 프로덕션에서는 시간별 수집 비활성화
+
+# 성능 설정
+performance:
+  max_concurrent_requests: 10
+  connection_pool_size: 20
+  retry_backoff_factor: 3
+
+# 모니터링 설정
+monitoring:
+  metrics_enabled: true
+  health_check_interval: 300  # 5분
+  alert_threshold_error_rate: 0.05  # 5% 에러율 이상 시 알림

@@ -1,0 +1,41 @@
+# Prometheus 설정 파일 - 2단계 피처 스토어 모니터링
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  # Prometheus 자체 모니터링
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # 피처 스토어 메트릭 수집
+  - job_name: 'feature-store'
+    static_configs:
+      - targets: ['dev:8000']  # 피처 스토어 메트릭 포트
+    scrape_interval: 5s
+    metrics_path: /metrics
+
+  # FastAPI 애플리케이션 모니터링 (선택사항)
+  - job_name: 'feature-store-api'
+    static_configs:
+      - targets: ['feature-store-api:8001']
+    scrape_interval: 15s
+    metrics_path: /metrics
+
+  # Redis 모니터링 (선택사항)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    scrape_interval: 30s
+
+  # PostgreSQL 모니터링 (선택사항)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres:5432']
+    scrape_interval: 30s

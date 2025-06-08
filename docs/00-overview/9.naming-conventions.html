@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps 프로젝트 네이밍 컨벤션</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            border-left: 5px solid #11998e;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #11998e;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #11998e;
+            padding-bottom: 10px;
+        }
+        
+        .section h3 {
+            color: #333;
+            margin: 20px 0 15px 0;
+            font-size: 1.3em;
+        }
+        
+        .naming-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .naming-table th {
+            background: #11998e;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .naming-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .naming-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .naming-table tr:hover {
+            background: #e8f5e8;
+        }
+        
+        .code-snippet {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin: 15px 0;
+            line-height: 1.6;
+            white-space: pre;
+        }
+        
+        .code-snippet .comment {
+            color: #6A9955;
+        }
+        
+        .code-snippet .string {
+            color: #CE9178;
+        }
+        
+        .code-snippet .keyword {
+            color: #569CD6;
+        }
+        
+        .code-snippet .function {
+            color: #DCDCAA;
+        }
+        
+        .branch-examples {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .branch-examples {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .branch-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #11998e;
+        }
+        
+        .branch-card h4 {
+            color: #11998e;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .branch-card .pattern {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+        
+        .branch-card .example {
+            color: #666;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .rules-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+        
+        .do-list, .dont-list {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .do-list {
+            border-left: 4px solid #28a745;
+        }
+        
+        .dont-list {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .do-list h4 {
+            color: #28a745;
+            margin-bottom: 15px;
+        }
+        
+        .dont-list h4 {
+            color: #dc3545;
+            margin-bottom: 15px;
+        }
+        
+        .rule-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .rule-list li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .do-list .rule-list li:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+            top: 8px;
+            font-size: 1.2em;
+        }
+        
+        .dont-list .rule-list li:before {
+            content: "❌";
+            position: absolute;
+            left: 0;
+            top: 8px;
+            font-size: 1.2em;
+        }
+        
+        .tip-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .tip-box h3 {
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #ffd700 0%, #ffed4e 100%);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #11998e;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+        
+        .badge.python {
+            background: #3776ab;
+        }
+        
+        .badge.docker {
+            background: #2496ed;
+        }
+        
+        .badge.git {
+            background: #f05032;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border-radius: 15px;
+            margin-top: 40px;
+        }
+        
+        .checklist {
+            background: #f8f9fa;
+            border: 2px solid #11998e;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .checklist h3 {
+            color: #11998e;
+            margin-bottom: 15px;
+        }
+        
+        .checklist ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            padding: 5px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .checklist li:before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            color: #11998e;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📝 MLOps 프로젝트 네이밍 컨벤션</h1>
+            <p>브랜치, 파일, 변수명 등 모든 네이밍에 대한 표준 규칙</p>
+        </header>
+
+        <!-- 개요 -->
+        <div class="section">
+            <h2>🎯 개요</h2>
+            <p>이 문서는 MLOps 프로젝트에서 사용할 모든 네이밍 규칙을 정의합니다. 
+            Git 브랜치명부터 파일명, 변수명까지 일관성 있는 명명 규칙을 제공합니다.</p>
+            
+            <div class="tip-box">
+                <h3>🎯 네이밍 원칙</h3>
+                <ul>
+                    <li><strong>소문자 + 하이픈 조합</strong>: 일관성 있는 형식</li>
+                    <li><strong>의미 있는 명확한 이름</strong>: 축약어 지양</li>
+                    <li><strong>일관성 있는 패턴</strong>: 동일한 규칙 적용</li>
+                    <li><strong>확장 가능한 구조</strong>: 새로운 요구사항 대응</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Git 브랜치 네이밍 -->
+        <div class="section">
+            <h2>🌿 Git 브랜치 네이밍</h2>
+            
+            <h3>MLOps 9단계 브랜치 패턴</h3>
+            <div class="code-snippet">
+<span class="comment"># 기본 패턴</span>
+<span class="keyword">feature</span>/<span class="string">stage&lt;1-9&gt;</span>-<span class="string">&lt;기능명&gt;</span>
+
+<span class="comment"># 예시</span>
+<span class="function">feature/stage1-data-pipeline</span>
+<span class="function">feature/stage2-feature-store</span>
+<span class="function">feature/stage3-version-control</span>
+<span class="function">feature/stage4-cicd-pipeline</span>
+<span class="function">feature/stage5-model-serving</span>
+<span class="function">feature/stage6-monitoring</span>
+<span class="function">feature/stage7-security</span>
+<span class="function">feature/stage8-scalability</span>
+<span class="function">feature/stage9-event-driven</span>
+            </div>
+
+            <h3>브랜치 타입별 패턴</h3>
+            <div class="branch-examples">
+                <div class="branch-card">
+                    <h4>MLOps 기능 <span class="badge git">Git</span></h4>
+                    <div class="pattern">feature/stage&lt;N&gt;-&lt;기능명&gt;</div>
+                    <div class="example">feature/stage6-monitoring-dashboard</div>
+                </div>
+                
+                <div class="branch-card">
+                    <h4>실험 <span class="badge">Experiment</span></h4>
+                    <div class="pattern">experiment/&lt;실험명&gt;</div>
+                    <div class="example">experiment/hyperparameter-tuning</div>
+                </div>
+                
+                <div class="branch-card">
+                    <h4>버그 수정 <span class="badge">Bugfix</span></h4>
+                    <div class="pattern">bugfix/&lt;이슈번호&gt;-&lt;설명&gt;</div>
+                    <div class="example">bugfix/123-memory-leak</div>
+                </div>
+                
+                <div class="branch-card">
+                    <h4>긴급 수정 <span class="badge">Hotfix</span></h4>
+                    <div class="pattern">hotfix/&lt;이슈번호&gt;-&lt;설명&gt;</div>
+                    <div class="example">hotfix/456-security-patch</div>
+                </div>
+                
+                <div class="branch-card">
+                    <h4>문서 <span class="badge">Docs</span></h4>
+                    <div class="pattern">docs/&lt;문서타입&gt;</div>
+                    <div class="example">docs/api-documentation</div>
+                </div>
+                
+                <div class="branch-card">
+                    <h4>리팩토링 <span class="badge">Refactor</span></h4>
+                    <div class="pattern">refactor/&lt;대상&gt;-&lt;목적&gt;</div>
+                    <div class="example">refactor/data-pipeline-optimization</div>
+                </div>
+            </div>
+
+            <h3>브랜치명 규칙</h3>
+            <div class="rules-grid">
+                <div class="do-list">
+                    <h4>✅ DO (권장사항)</h4>
+                    <ul class="rule-list">
+                        <li>소문자만 사용</li>
+                        <li>하이픈(-)으로 단어 구분</li>
+                        <li>의미 있고 구체적인 이름</li>
+                        <li>영어 사용</li>
+                        <li>동사로 시작하는 기능명</li>
+                    </ul>
+                </div>
+                
+                <div class="dont-list">
+                    <h4>❌ DON'T (금지사항)</h4>
+                    <ul class="rule-list">
+                        <li>대문자 사용 금지</li>
+                        <li>언더스코어(_) 사용 금지</li>
+                        <li>연속된 하이픈 금지</li>
+                        <li>하이픈으로 시작/끝나기 금지</li>
+                        <li>보호된 브랜치명 사용 금지</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- 파일 및 디렉터리 네이밍 -->
+        <div class="section">
+            <h2>📁 파일 및 디렉터리 네이밍</h2>
+            
+            <h3>스크립트 파일 네이밍</h3>
+            <div class="code-snippet">
+<span class="comment"># 설정 스크립트</span>
+<span class="keyword">setup_</span><span class="string">&lt;대상&gt;</span>_<span class="string">&lt;기능&gt;</span><span class="keyword">.sh</span>
+<span class="function">setup_mlops_git.sh</span>
+<span class="function">setup_docker_network.sh</span>
+<span class="function">setup_stage_5_serving.sh</span>
+
+<span class="comment"># 실행 스크립트</span>
+<span class="keyword">run_</span><span class="string">&lt;대상&gt;</span>_<span class="string">&lt;기능&gt;</span><span class="keyword">.sh</span>
+<span class="function">run_tests.sh</span>
+<span class="function">run_docker_tests.sh</span>
+<span class="function">run_3_1_tests.sh</span>
+
+<span class="comment"># 배포 스크립트</span>
+<span class="keyword">deploy_</span><span class="string">&lt;환경&gt;</span>_<span class="string">&lt;타겟&gt;</span><span class="keyword">.sh</span>
+<span class="function">deploy_production_api.sh</span>
+<span class="function">deploy_staging_model.sh</span>
+
+<span class="comment"># 모니터링 스크립트</span>
+<span class="keyword">monitor_</span><span class="string">&lt;대상&gt;</span>_<span class="string">&lt;메트릭&gt;</span><span class="keyword">.sh</span>
+<span class="function">monitor_model_performance.sh</span>
+<span class="function">monitor_system_health.sh</span>
+            </div>
+
+            <h3>설정 파일 네이밍</h3>
+            <div class="code-snippet">
+<span class="comment"># Docker Compose</span>
+<span class="keyword">docker-compose.</span><span class="string">&lt;용도&gt;</span><span class="keyword">.yml</span>
+<span class="function">docker-compose.main.yml</span>
+<span class="function">docker-compose.stage-5.yml</span>
+<span class="function">docker-compose.monitoring.yml</span>
+
+<span class="comment"># 환경 설정</span>
+<span class="string">&lt;환경&gt;</span><span class="keyword">.env</span>
+<span class="function">development.env</span>
+<span class="function">production.env</span>
+<span class="function">testing.env</span>
+
+<span class="comment"># YAML 설정</span>
+<span class="string">&lt;기능&gt;</span><span class="keyword">_config.yaml</span>
+<span class="function">feature_store_config.yaml</span>
+<span class="function">monitoring_config.yaml</span>
+            </div>
+        </div>
+
+        <!-- Python 코드 네이밍 -->
+        <div class="section">
+            <h2>🐍 Python 코드 네이밍</h2>
+            
+            <table class="naming-table">
+                <thead>
+                    <tr>
+                        <th>요소</th>
+                        <th>규칙</th>
+                        <th>예시</th>
+                        <th>설명</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>변수명</strong></td>
+                        <td>snake_case</td>
+                        <td><code>user_name, api_key</code></td>
+                        <td>소문자 + 언더스코어</td>
+                    </tr>
+                    <tr>
+                        <td><strong>함수명</strong></td>
+                        <td>snake_case</td>
+                        <td><code>load_movie_data()</code></td>
+                        <td>동사로 시작</td>
+                    </tr>
+                    <tr>
+                        <td><strong>클래스명</strong></td>
+                        <td>PascalCase</td>
+                        <td><code>MovieDataProcessor</code></td>
+                        <td>명사로 구성</td>
+                    </tr>
+                    <tr>
+                        <td><strong>상수</strong></td>
+                        <td>UPPER_SNAKE_CASE</td>
+                        <td><code>MAX_RETRY_COUNT</code></td>
+                        <td>대문자 + 언더스코어</td>
+                    </tr>
+                    <tr>
+                        <td><strong>모듈/패키지</strong></td>
+                        <td>snake_case</td>
+                        <td><code>data_processing</code></td>
+                        <td>소문자, 짧게</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Python 코드 예시</h3>
+            <div class="code-snippet">
+<span class="comment"># 변수명 (snake_case)</span>
+<span class="string">user_name</span> = <span class="string">"mlops_user"</span>
+<span class="string">api_key</span> = <span class="string">"your_api_key"</span>
+<span class="string">data_file_path</span> = <span class="string">"/app/data/movies.csv"</span>
+
+<span class="comment"># 상수 (UPPER_SNAKE_CASE)</span>
+<span class="keyword">MAX_RETRY_COUNT</span> = 3
+<span class="keyword">DEFAULT_BATCH_SIZE</span> = 1000
+<span class="keyword">API_BASE_URL</span> = <span class="string">"https://api.example.com"</span>
+
+<span class="comment"># 함수명 (snake_case, 동사로 시작)</span>
+<span class="keyword">def</span> <span class="function">load_movie_data</span>():
+    <span class="keyword">pass</span>
+
+<span class="keyword">def</span> <span class="function">is_model_trained</span>():  <span class="comment"># Boolean 반환</span>
+    <span class="keyword">return</span> True
+
+<span class="comment"># 클래스명 (PascalCase)</span>
+<span class="keyword">class</span> <span class="function">MovieDataProcessor</span>:
+    <span class="keyword">pass</span>
+
+<span class="keyword">class</span> <span class="function">MLOpsWorkflowOrchestrator</span>:
+    <span class="keyword">pass</span>
+            </div>
+        </div>
+
+        <!-- Docker 네이밍 -->
+        <div class="section">
+            <h2>🐳 Docker 네이밍</h2>
+            
+            <div class="branch-examples">
+                <div class="branch-card">
+                    <h4>컨테이너명 <span class="badge docker">Docker</span></h4>
+                    <div class="pattern">mlops-&lt;기능&gt;-&lt;환경&gt;</div>
+                    <div class="example">mlops-api-prod<br>mlops-worker-staging</div>
+                </div>
+                
+                <div class="branch-card">
+                    <h4>이미지명 <span class="badge docker">Docker</span></h4>
+                    <div class="pattern">&lt;프로젝트&gt;/&lt;기능&gt;:&lt;태그&gt;</div>
+                    <div class="example">movie-mlops/api:latest<br>movie-mlops/worker:v1.2.0</div>
+                </div>
+                
+                <div class="branch-card">
+                    <h4>볼륨명 <span class="badge docker">Docker</span></h4>
+                    <div class="pattern">&lt;프로젝트&gt;-&lt;데이터타입&gt;-&lt;환경&gt;</div>
+                    <div class="example">mlops-data-dev<br>mlops-postgres-data</div>
+                </div>
+                
+                <div class="branch-card">
+                    <h4>네트워크명 <span class="badge docker">Docker</span></h4>
+                    <div class="pattern">&lt;프로젝트&gt;-network</div>
+                    <div class="example">mlops-network<br>mlops-monitoring-net</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 환경 변수 네이밍 -->
+        <div class="section">
+            <h2>🔧 환경 변수 네이밍</h2>
+            
+            <div class="code-snippet">
+<span class="comment"># API 관련</span>
+<span class="keyword">TMDB_API_KEY</span>=<span class="string">your_api_key</span>
+<span class="keyword">FEATURE_STORE_API_URL</span>=<span class="string">http://localhost:8001</span>
+<span class="keyword">MODEL_SERVING_PORT</span>=<span class="string">8080</span>
+
+<span class="comment"># 데이터베이스 관련</span>
+<span class="keyword">POSTGRES_HOST</span>=<span class="string">localhost</span>
+<span class="keyword">POSTGRES_PORT</span>=<span class="string">5432</span>
+<span class="keyword">POSTGRES_DB</span>=<span class="string">mlops</span>
+<span class="keyword">POSTGRES_USER</span>=<span class="string">mlops_user</span>
+<span class="keyword">POSTGRES_PASSWORD</span>=<span class="string">mlops_password</span>
+
+<span class="comment"># Redis 관련</span>
+<span class="keyword">REDIS_HOST</span>=<span class="string">localhost</span>
+<span class="keyword">REDIS_PORT</span>=<span class="string">6379</span>
+<span class="keyword">REDIS_PASSWORD</span>=<span class="string">redis_password</span>
+
+<span class="comment"># MLOps 설정</span>
+<span class="keyword">MLOPS_ENVIRONMENT</span>=<span class="string">development</span>
+<span class="keyword">MLOPS_LOG_LEVEL</span>=<span class="string">INFO</span>
+<span class="keyword">MLOPS_FEATURE_STORE_PATH</span>=<span class="string">/app/data/feature_store</span>
+            </div>
+        </div>
+
+        <!-- 네이밍 체크리스트 -->
+        <div class="checklist">
+            <h3>✅ 네이밍 체크리스트</h3>
+            
+            <h4>🌿 Git 브랜치</h4>
+            <ul>
+                <li>소문자 + 하이픈 사용</li>
+                <li>feature/stage&lt;N&gt;-&lt;기능&gt; 패턴 준수</li>
+                <li>의미 있는 구체적인 이름</li>
+                <li>보호된 브랜치명 사용 안함</li>
+            </ul>
+            
+            <h4>📁 파일/디렉터리</h4>
+            <ul>
+                <li>snake_case 또는 kebab-case 일관성 유지</li>
+                <li>동사_명사_타입.확장자 패턴</li>
+                <li>영어 사용, 축약어 지양</li>
+                <li>숫자는 의미가 있을 때만 사용</li>
+            </ul>
+            
+            <h4>🐍 Python 코드</h4>
+            <ul>
+                <li>변수/함수: snake_case</li>
+                <li>클래스: PascalCase</li>
+                <li>상수: UPPER_SNAKE_CASE</li>
+                <li>private: _underscore 접두사</li>
+            </ul>
+            
+            <h4>🐳 Docker</h4>
+            <ul>
+                <li>컨테이너: mlops-&lt;기능&gt;-&lt;환경&gt;</li>
+                <li>이미지: &lt;프로젝트&gt;/&lt;기능&gt;:&lt;태그&gt;</li>
+                <li>볼륨: &lt;프로젝트&gt;-&lt;데이터타입&gt;</li>
+                <li>환경변수: UPPER_SNAKE_CASE</li>
+            </ul>
+        </div>
+
+        <!-- 자동화 도구 -->
+        <div class="section">
+            <h2>🚀 자동화 도구</h2>
+            
+            <div class="tip-box">
+                <h3>🔧 검증 도구</h3>
+                <p>브랜치명 검증 스크립트가 이미 구현되어 있습니다:</p>
+            </div>
+            
+            <div class="code-snippet">
+<span class="comment"># 브랜치명 검증</span>
+<span class="function">./scripts/validate_branch_name.sh</span> <span class="string">feature/stage6-monitoring</span>
+
+<span class="comment"># Pre-commit 훅으로 자동 검증</span>
+<span class="function">pre-commit install</span>
+
+<span class="comment"># VS Code 설정 권장</span>
+{
+  <span class="string">"python.linting.pylintArgs"</span>: [
+    <span class="string">"--naming-style=snake_case"</span>
+  ]
+}
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <h2>🎯 네이밍의 힘</h2>
+            <p><strong>일관성 있는 네이밍으로 코드 가독성과 유지보수성 향상</strong></p>
+            <p style="margin-top: 15px;">
+                <span class="badge">가독성</span>
+                <span class="badge">일관성</span>
+                <span class="badge">협업 효율성</span>
+                <span class="badge">자동화</span>
+            </p>
+            <p style="margin-top: 20px;">
+                좋은 네이밍은 코드가 스스로 설명하게 만듭니다!
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

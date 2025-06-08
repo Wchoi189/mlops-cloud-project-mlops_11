@@ -1,0 +1,25 @@
+services:
+  mlops-git-workflow:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: mlops-git-workflow
+    volumes:
+      # 현재 디렉터리를 /workspace에 마운트
+      - .:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Git 설정 공유 (선택적)
+      - ~/.gitconfig:/root/.gitconfig:ro
+      - ~/.ssh:/root/.ssh:ro
+    working_dir: /workspace
+    environment:
+      - MLOPS_PROJECT_ROOT=/workspace
+      - TEST_MODE=true
+      - WSL_DISTRO_NAME=${WSL_DISTRO_NAME:-Ubuntu}
+    command: /bin/bash -c "tail -f /dev/null"
+    stdin_open: true
+    tty: true
+
+networks:
+  default:
+    driver: bridge

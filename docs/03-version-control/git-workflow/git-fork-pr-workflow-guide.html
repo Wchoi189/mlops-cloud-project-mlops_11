@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Fork/PR 워크플로우 완전 가이드 | MLOps Team</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #f8fafc;
+            --accent-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --border-color: #e2e8f0;
+            --code-bg: #f1f5f9;
+            --gradient-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background: var(--secondary-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header Styles */
+        .header {
+            background: var(--gradient-bg);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="40%"><stop offset="0%" stop-color="%23fff" stop-opacity=".1"/><stop offset="100%" stop-color="%23fff" stop-opacity="0"/></radialGradient></defs><rect width="100" height="20" fill="url(%23a)"/></svg>');
+            opacity: 0.1;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .meta-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .meta-card {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .meta-card h4 {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .meta-card p {
+            font-weight: 600;
+        }
+
+        /* Navigation */
+        .nav {
+            background: white;
+            padding: 1rem 0;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-list {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-link {
+            color: var(--text-dark);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Main Content */
+        .main {
+            padding: 3rem 0;
+        }
+
+        .section {
+            background: white;
+            margin-bottom: 3rem;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .section-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 1.5rem 2rem;
+            position: relative;
+        }
+
+        .section-header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .section-header .emoji {
+            font-size: 2rem;
+            margin-right: 1rem;
+        }
+
+        .section-content {
+            padding: 2rem;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            position: relative;
+            overflow-x: auto;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .code-block:hover {
+            box-shadow: var(--shadow);
+        }
+
+        .code-block::before {
+            content: attr(data-language);
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0 10px 0 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .code-block code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre;
+        }
+
+        /* Workflow Diagram */
+        .workflow-diagram {
+            background: var(--gradient-bg);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .workflow-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .workflow-step {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Alert Boxes */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin: 1.5rem 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border-color: var(--primary-color);
+            color: #1e40af;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            border-color: var(--accent-color);
+            color: #065f46;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            border-color: var(--warning-color);
+            color: #92400e;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            border-color: var(--error-color);
+            color: #991b1b;
+        }
+
+        /* Cards */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        /* Lists */
+        .custom-list {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .custom-list li {
+            padding: 0.5rem 0;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .custom-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 2rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: var(--secondary-color);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--text-dark);
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-section h4 {
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+        }
+
+        .footer-link {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .nav-list {
+                justify-content: center;
+            }
+
+            .section-content {
+                padding: 1rem;
+            }
+
+            .code-block {
+                padding: 1rem;
+            }
+        }
+
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Loading Animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--accent-color);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1>🚀 Git Fork/PR 워크플로우 완전 가이드</h1>
+            <p class="subtitle">개인 계정 Fork에서 팀 계정으로 Pull Request하는 전체 워크플로우</p>
+            
+            <div class="meta-info">
+                <div class="meta-card">
+                    <h4>📝 작성자</h4>
+                    <p>MLOps Team</p>
+                </div>
+                <div class="meta-card">
+                    <h4>📅 작성일</h4>
+                    <p>2025-06-04</p>
+                </div>
+                <div class="meta-card">
+                    <h4>🎯 난이도</h4>
+                    <p>Intermediate</p>
+                </div>
+                <div class="meta-card">
+                    <h4>⏱️ 예상 시간</h4>
+                    <p>25분</p>
+                </div>
+                <div class="meta-card">
+                    <h4>👥 팀 규모</h4>
+                    <p>5명</p>
+                </div>
+                <div class="meta-card">
+                    <h4>🔧 프로젝트</h4>
+                    <p>movie-mlops</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="container">
+            <ul class="nav-list">
+                <li><a href="#overview" class="nav-link">📋 개요</a></li>
+                <li><a href="#setup" class="nav-link">⚙️ 설정</a></li>
+                <li><a href="#workflow" class="nav-link">🔄 워크플로우</a></li>
+                <li><a href="#team-work" class="nav-link">👥 팀 작업</a></li>
+                <li><a href="#daily-routine" class="nav-link">📅 일일 루틴</a></li>
+                <li><a href="#advanced" class="nav-link">🎯 고급 기능</a></li>
+                <li><a href="#troubleshooting" class="nav-link">🔧 문제해결</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Overview Section -->
+            <section id="overview" class="section fade-in">
+                <div class="section-header">
+                    <h2><span class="emoji">📋</span>전체 워크플로우 개요</h2>
+                </div>
+                <div class="section-content">
+                    <div class="workflow-diagram">
+                        <h3>🎯 워크플로우 핵심 구조</h3>
+                        <div class="workflow-steps">
+                            <div class="workflow-step">
+                                <h4>🏢 upstream</h4>
+                                <p>팀 계정<br>(AIBootcamp13)</p>
+                            </div>
+                            <div class="workflow-step">
+                                <h4>👤 origin</h4>
+                                <p>개인 계정<br>(YOUR_USERNAME)</p>
+                            </div>
+                            <div class="workflow-step">
+                                <h4>💻 local</h4>
+                                <p>로컬 작업<br>환경</p>
+                            </div>
+                            <div class="workflow-step">
+                                <h4>🔀 PR</h4>
+                                <p>Pull Request<br>코드 기여</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>💡 핵심 포인트:</strong> Fork 기반 워크플로우를 통해 안전하고 체계적인 팀 협업을 구현합니다.
+                    </div>
+
+                    <div class="card-grid">
+                        <div class="card">
+                            <div class="card-icon">🎬</div>
+                            <h3>프로젝트 정보</h3>
+                            <p><strong>프로젝트명:</strong> movie-mlops</p>
+                            <p><strong>타입:</strong> MLOps Pipeline</p>
+                            <p><strong>기술 스택:</strong> Python, Docker, TMDB API, React</p>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon">🔗</div>
+                            <h3>저장소 구조</h3>
+                            <p><strong>팀 계정:</strong> AIBootcamp13/mlops-cloud-project-mlops_11</p>
+                            <p><strong>개인 계정:</strong> YOUR_USERNAME/mlops-cloud-project-mlops_11</p>
+                        </div>
+                        <div class="card">
+                            <div class="card-icon">🎯</div>
+                            <h3>학습 목표</h3>
+                            <ul class="custom-list">
+                                <li>Fork 기반 워크플로우 이해</li>
+                                <li>개인 작업을 팀에 기여하는 방법</li>
+                                <li>팀원 작업 진행상황 확인</li>
+                                <li>Git 원격 저장소 관리</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Setup Section -->
+            <section id="setup" class="section fade-in">
+                <div class="section-header">
+                    <h2><span class="emoji">⚙️</span>Git 원격 저장소 설정</h2>
+                </div>
+                <div class="section-content">
+                    <div class="alert alert-warning">
+                        <strong>⚠️ 주의:</strong> 이 단계는 movie-mlops 폴더에서 실행해야 합니다.
+                    </div>
+
+                    <h3>📍 현재 Git 상태 확인</h3>
+                    <div class="code-block" data-language="bash">
+<code># movie-mlops 폴더에서 실행
+git remote -v</code>
+                    </div>
+
+                    <h3>🔧 원격 저장소 재설정</h3>
+                    <div class="code-block" data-language="bash">
+<code># 기존 origin 제거 (있다면)
+git remote remove origin
+
+# 내 개인 계정을 origin으로 설정
+git remote add origin https://github.com/YOUR_USERNAME/mlops-cloud-project-mlops_11.git
+
+# 팀 계정을 upstream으로 설정  
+git remote add upstream https://github.com/AIBootcamp13/mlops-cloud-project-mlops_11.git
+
+# 설정 확인
+git remote -v</code>
+                    </div>
+
+                    <div class="alert alert-success">
+                        <strong>✅ 예상 출력:</strong><br>
+                        origin &nbsp;&nbsp;&nbsp;&nbsp;https://github.com/YOUR_USERNAME/mlops-cloud-project-mlops_11.git (fetch)<br>
+                        origin &nbsp;&nbsp;&nbsp;&nbsp;https://github.com/YOUR_USERNAME/mlops-cloud-project-mlops_11.git (push)<br>
+                        upstream &nbsp;&nbsp;https://github.com/AIBootcamp13/mlops-cloud-project-mlops_11.git (fetch)<br>
+                        upstream &nbsp;&nbsp;https://github.com/AIBootcamp13/mlops-cloud-project-mlops_11.git (push)
+                    </div>
+
+                    <h3>🔄 최신 코드로 동기화</h3>
+                    <div class="code-block" data-language="bash">
+<code># 팀 계정에서 최신 코드 가져오기
+git fetch upstream
+
+# 현재 브랜치 확인
+git branch
+
+# main 브랜치로 이동 (없다면 생성)
+git checkout main
+# 또는 git checkout -b main
+
+# 팀 계정의 main을 내 로컬에 반영
+git reset --hard upstream/main
+
+# 내 개인 계정에도 최신 상태로 푸시
+git push origin main --force</code>
+                    </div>
+
+                    <div class="alert alert-error">
+                        <strong>⚠️ 주의사항:</strong> --force 옵션은 첫 설정 시에만 사용하세요. 이후에는 git merge upstream/main을 사용하는 것이 안전합니다.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Workflow Section -->
+            <section id="workflow" class="section fade-in">
+                <div class="section-header">
+                    <h2><span class="emoji">🔄</span>개인 작업 → PR 워크플로우</h2>
+                </div>
+                <div class="section-content">
+                    <h3>🌿 작업 브랜치 생성</h3>
+                    <div class="code-block" data-language="bash">
+<code># 새로운 기능 브랜치 생성 (예: feature/data-pipeline)
+git checkout -b feature/data-pipeline
+
+# 또는 이슈 기반 브랜치 (예: issue-15-api-connector)
+git checkout -b issue-15-api-connector</code>
+                    </div>
+
+                    <div class="card">
+                        <h3>📝 브랜치 명명 규칙</h3>
+                        <ul class="custom-list">
+                            <li><strong>feature/기능명:</strong> 새로운 기능 개발</li>
+                            <li><strong>fix/버그명:</strong> 버그 수정</li>
+                            <li><strong>docs/문서명:</strong> 문서 작성/수정</li>
+                            <li><strong>refactor/모듈명:</strong> 코드 리팩토링</li>
+                            <li><strong>test/테스트명:</strong> 테스트 코드 작성</li>
+                        </ul>
+                    </div>
+
+                    <h3>✏️ 코드 작업 후 개인 계정에 푸시</h3>
+                    <div class="code-block" data-language="bash">
+<code># 변경된 파일 확인
+git status
+
+# 모든 변경 사항 스테이징
+git add .
+
+# 또는 특정 파일만
+git add src/data_processing/new_feature.py
+
+# 의미있는 커밋 메시지로 커밋
+git commit -m "feat: TMDB API 연동 기능 구현
+
+- TMDBConnector 클래스 추가
+- Rate limiting 처리 로직 구현
+- 환경변수 기반 설정 관리
+- 단위 테스트 코드 작성
+
+Closes #15"
+
+# 내 개인 계정에 푸시
+git push origin feature/data-pipeline</code>
+                    </div>
+
+                    <div class="card">
+                        <h3>📋 커밋 메시지 컨벤션</h3>
+                        <div class="code-block" data-language="text">
+<code>타입: 간단한 설명
+
+상세 설명 (선택사항)
+- 변경사항 1
+- 변경사항 2
+- 변경사항 3
+
+Closes #이슈번호</code>
+                        </div>
+                        <p><strong>커밋 타입:</strong></p>
+                        <ul class="custom-list">
+                            <li><strong>feat:</strong> 새로운 기능</li>
+                            <li><strong>fix:</strong> 버그 수정</li>
+                            <li><strong>docs:</strong> 문서 변경</li>
+                            <li><strong>style:</strong> 코드 포맷팅</li>
+                            <li><strong>refactor:</strong> 코드 리팩토링</li>
+                            <li><strong>test:</strong> 테스트 추가/수정</li>
+                            <li><strong>chore:</strong> 빌드 과정 또는 보조 도구 변경</li>
+                        </ul>
+                    </div>
+
+                    <h3>🔀 팀 계정에 Pull Request 생성</h3>
+                    <div class="alert alert-info">
+                        <strong>GitHub 웹에서 PR 생성 단계:</strong><br>
+                        1. 내 개인 계정 저장소로 이동<br>
+                        2. "Contribute" → "Open pull request" 클릭<br>
+                        3. Base repository: AIBootcamp13/mlops-cloud-project-mlops_11<br>
+                        4. Base branch: main<br>
+                        5. Head repository: YOUR_USERNAME/mlops-cloud-project-mlops_11<br>
+                        6. Compare branch: feature/data-pipeline
+                    </div>
+
+                    <div class="card">
+                        <h3>📝 PR 제목 및 설명 템플릿</h3>
+                        <div class="code-block" data-language="markdown">
+<code>feat: TMDB API 연동 기능 구현
+
+## 📋 변경 사항
+- TMDBConnector 클래스 추가
+- Rate limiting 처리 로직 구현
+- 환경변수 기반 설정 관리
+
+## 🧪 테스트
+- [x] 단위 테스트 통과
+- [x] 통합 테스트 실행
+- [x] 코드 품질 검사 통과
+
+## 📝 체크리스트
+- [x] 코드 리뷰 준비 완료
+- [x] 문서 업데이트 완료
+- [x] 테스트 커버리지 80% 이상
+
+## 🔗 관련 이슈
+Closes #15
+
+## 👀 리뷰어
+@teammate1 @teammate2</code>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Team Work Section -->
+            <section id="team-work" class="section fade-in">
+                <div class="section-header">
+                    <h2><span class="emoji">👥</span>팀원 작업 확인 시스템</h2>
+                </div>
+                <div class="section-content">
+                    <h3>📁 팀원별 폴더 생성 구조</h3>
+                    <div class="code-block" data-language="bash">
+<code># 상위 폴더로 이동
+cd ..
+
+# 팀원별 폴더 생성
+mkdir teammate1-work teammate2-work teammate3-work teammate4-work
+
+# 폴더 구조 확인
+ls -la</code>
+                    </div>
+
+                    <div class="card">
+                        <h3>🗂️ 최종 폴더 구조</h3>
+                        <div class="code-block" data-language="text">
+<code>dev/
+├── movie-mlops/                    # 내 주요 작업 폴더
+├── teammate1-work/                 # 팀원1 작업 확인용
+├── teammate2-work/                 # 팀원2 작업 확인용
+├── teammate3-work/                 # 팀원3 작업 확인용
+└── teammate4-work/                 # 팀원4 작업 확인용</code>
+                        </div>
+                    </div>
+
+                    <h3>🔗 각 팀원 작업 확인 방법</h3>
+                    <div class="code-block" data-language="bash">
+<code># teammate1 작업 확인
+cd teammate1-work
+
+# 팀 계정에서 클론
+git clone https://github.com/AIBootcamp13/mlops-cloud-project-mlops_11.git .
+
+# teammate1이 만든 PR 브랜치 확인
+git fetch origin
+
+# 모든 브랜치 조회 (원격 포함)
+git branch -a
+
+# teammate1의 PR 브랜치로 전환
+git checkout -b teammate1-feature origin/teammate1-feature
+
+# teammate1의 작업 내용 확인
+git log --oneline -10
+ls -la</code>
+                    </div>
+
+                    <h3>🔍 PR 브랜치 찾는 유용한 명령어</h3>
+                    <div class="code-block" data-language="bash">
+<code># 팀 계정의 모든 브랜치 확인
+git ls-remote --heads origin
+
+# 특정 패턴으로 브랜치 찾기
+git branch -r | grep feature
+git branch -r | grep fix
+git branch -r | grep docs
+
+# 최근 생성된 브랜치들 확인
+git for-each-ref --sort=-committerdate refs/remotes --format='%(refname:short) %(committerdate:short)'
+
+# 브랜치별 최근 커밋 확인
+git for-each-ref --sort=-committerdate refs/remotes --format='%(refname:short) %(subject)'</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Daily Routine Section -->
+            <section id="daily-routine" class="section fade-in">
+                <div class="section-header">
+                    <h2><span class="emoji">📅</span>일일 워크플로우 루틴</h2>
+                </div>
+                <div class="section-content">
+                    <div class="card-grid">
+                        <div class="card">
+                            <div class="card-icon">🌅</div>
+                            <h3>작업 시작 전 루틴</h3>
+                            <div class="code-block" data-language="bash">
+<code># 1. 팀 계정에서 최신 변경사항 가져오기
+git fetch upstream
+
+# 2. main 브랜치로 이동
+git checkout main
+
+# 3. 팀 계정의 최신 코드와 동기화
+git merge upstream/main
+
+# 4. 내 개인 계정에도 동기화
+git push origin main
+
+# 5. 현재 상태 확인
+git status
+git log --oneline -5</code>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-icon">🛠️</div>
+                            <h3>새로운 작업 시작</h3>
+                            <div class="code-block" data-language="bash">
+<code># 1. 새로운 기능 브랜치 생성
+git checkout -b feature/new-functionality
+
+# 2. 작업 수행
+# ... 코딩 작업 ...
+
+# 3. 변경사항 확인
+git status
+git diff
+
+# 4. 스테이징 및 커밋
+git add .
+git commit -m "feat: 새로운 기능 구현"
+
+# 5. 개인 계정에 푸시
+git push origin feature/new-functionality</code>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-icon">👥</div>
+                            <h3>팀원 작업 확인</h3>
+                            <div class="code-block" data-language="bash">
+<code># teammate1 최신 작업 확인
+cd ../teammate1-work
+git fetch origin
+
+# 새로운 브랜치 확인
+git branch -r --sort=-committerdate | head -5
+
+# 특정 브랜치로 전환
+git checkout -b latest-work origin/feature/teammate1-latest</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Advanced Section -->
+            <section id="advanced" class="section fade-in">
+                <div class="section-header">
+                    <h2><span class="emoji">🎯</span>고급 Git 명령어 및 팁</h2>
+                </div>
+                <div class="section-content">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>카테고리</th>
+                                    <th>명령어</th>
+                                    <th>설명</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>동기화</td>
+                                    <td><code>git fetch upstream && git merge upstream/main</code></td>
+                                    <td>정기적 Fork 동기화</td>
+                                </tr>
+                                <tr>
+                                    <td>브랜치 관리</td>
+                                    <td><code>git branch -d feature/completed</code></td>
+                                    <td>완료된 브랜치 삭제</td>
+                                </tr>
+                                <tr>
+                                    <td>변경사항 확인</td>
+                                    <td><code>git diff upstream/main..HEAD</code></td>
+                                    <td>팀 계정과 차이점 확인</td>
+                                </tr>
+                                <tr>
+                                    <td>히스토리</td>
+                                    <td><code>git log --graph --oneline --all</code></td>
+                                    <td>그래프로 커밋 히스토리 보기</td>
+                                </tr>
+                                <tr>
+                                    <td>설정</td>
+                                    <td><code>git config --global alias.st status</code></td>
+                                    <td>유용한 Git aliases 설정</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <strong>💡 Pro Tip:</strong> Git aliases를 설정하면 자주 사용하는 명령어를 짧게 만들 수 있습니다. 예: git st, git co, git br 등
+                    </div>
+                </div>
+            </section>
+
+            <!-- Troubleshooting Section -->
+            <section id="troubleshooting" class="section fade-in">
+                <div class="section-header">
+                    <h2><span class="emoji">🔧</span>트러블슈팅 가이드</h2>
+                </div>
+                <div class="section-content">
+                    <h3>🚨 자주 발생하는 문제들</h3>
+                    
+                    <div class="card-grid">
+                        <div class="card">
+                            <div class="card-icon">🔒</div>
+                            <h3>Push 권한 거부</h3>
+                            <p><strong>문제:</strong> Permission denied (publickey)</p>
+                            <div class="code-block" data-language="bash">
+<code># 해결: HTTPS 사용으로 변경
+git remote set-url origin https://github.com/YOUR_USERNAME/mlops-cloud-project-mlops_11.git</code>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-icon">⏰</div>
+                            <h3>브랜치가 뒤처져 있음</h3>
+                            <p><strong>문제:</strong> Your branch is behind 'origin/main'</p>
+                            <div class="code-block" data-language="bash">
+<code># 해결: 최신 코드와 동기화
+git pull upstream main
+git push origin main</code>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-icon">✏️</div>
+                            <h3>커밋 메시지 수정</h3>
+                            <p><strong>문제:</strong> 잘못된 커밋 메시지</p>
+                            <div class="code-block" data-language="bash">
+<code># 마지막 커밋 메시지 수정
+git commit --amend -m "새로운 커밋 메시지"
+
+# 이미 푸시한 경우 (주의: force push)
+git push origin feature/branch-name --force</code>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-icon">🗑️</div>
+                            <h3>잘못된 파일 커밋</h3>
+                            <p><strong>문제:</strong> 불필요한 파일이 커밋됨</p>
+                            <div class="code-block" data-language="bash">
+<code># 마지막 커밋에서 파일 제거
+git reset --soft HEAD~1
+git reset HEAD unwanted-file.txt
+git commit -m "올바른 커밋 메시지"</code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3>🆘 응급 복구 명령어</h3>
+                    <div class="alert alert-error">
+                        <strong>⚠️ 위험:</strong> 다음 명령어들은 신중하게 사용하세요. 데이터 손실이 발생할 수 있습니다.
+                    </div>
+
+                    <div class="code-block" data-language="bash">
+<code># 로컬 변경사항 모두 버리고 원격과 동일하게
+git reset --hard upstream/main
+
+# 특정 커밋으로 되돌리기
+git reset --hard &lt;commit-hash&gt;
+
+# 실수로 삭제한 브랜치 복구
+git reflog
+git checkout -b recovered-branch &lt;commit-hash&gt;</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Best Practices Section -->
+            <section class="section fade-in">
+                <div class="section-header">
+                    <h2><span class="emoji">✅</span>팀 협업 베스트 프랙티스</h2>
+                </div>
+                <div class="section-content">
+                    <div class="card-grid">
+                        <div class="card">
+                            <div class="card-icon">✅</div>
+                            <h3>Do's (해야 할 것들)</h3>
+                            <ul class="custom-list">
+                                <li>의미있는 커밋 메시지 작성</li>
+                                <li>작은 단위로 자주 커밋</li>
+                                <li>PR 전에 코드 자체 리뷰</li>
+                                <li>테스트 코드 함께 작성</li>
+                                <li>문서 업데이트</li>
+                                <li>브랜치명 규칙 준수</li>
+                            </ul>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-icon">❌</div>
+                            <h3>Don'ts (하지 말아야 할 것들)</h3>
+                            <ul class="custom-list">
+                                <li>main 브랜치에 직접 푸시</li>
+                                <li>의미없는 커밋 메시지</li>
+                                <li>거대한 커밋 생성</li>
+                                <li>테스트 없이 PR</li>
+                                <li>코드 리뷰 없이 병합</li>
+                                <li>force push 남발</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3>📋 PR 체크리스트</h3>
+                        <div class="alert alert-info">
+                            <strong>제출 전 확인사항:</strong><br>
+                            □ 코드가 정상적으로 동작하는가?<br>
+                            □ 테스트가 모두 통과하는가?<br>
+                            □ 코드 스타일이 일관적인가?<br>
+                            □ 문서가 업데이트되었는가?<br>
+                            □ 불필요한 파일이 포함되지 않았는가?<br>
+                            □ 커밋 메시지가 명확한가?<br>
+                            □ 관련 이슈가 링크되었는가?
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Conclusion Section -->
+            <section class="section fade-in">
+                <div class="section-header">
+                    <h2><span class="emoji">🎯</span>결론</h2>
+                </div>
+                <div class="section-content">
+                    <div class="workflow-diagram">
+                        <h3>🏆 이 워크플로우의 이점</h3>
+                        <div class="workflow-steps">
+                            <div class="workflow-step">
+                                <h4>🛡️ 안전성</h4>
+                                <p>개인 계정에서 자유롭게 실험 가능</p>
+                            </div>
+                            <div class="workflow-step">
+                                <h4>🤝 협업</h4>
+                                <p>체계적인 코드 리뷰 프로세스</p>
+                            </div>
+                            <div class="workflow-step">
+                                <h4>📈 학습</h4>
+                                <p>팀원들의 코드에서 학습 기회</p>
+                            </div>
+                            <div class="workflow-step">
+                                <h4>🔍 투명성</h4>
+                                <p>모든 변경사항 추적 가능</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-success">
+                        <strong>🚀 성공적인 협업을 위한 핵심:</strong> 일관된 워크플로우 준수가 가장 중요합니다!
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>📚 추가 학습 자료</h4>
+                    <p><a href="https://git-scm.com/docs" class="footer-link">Git 공식 문서</a></p>
+                    <p><a href="https://guides.github.com/introduction/flow/" class="footer-link">GitHub Flow 가이드</a></p>
+                    <p><a href="https://www.conventionalcommits.org/" class="footer-link">Conventional Commits</a></p>
+                </div>
+                <div class="footer-section">
+                    <h4>🎬 프로젝트 정보</h4>
+                    <p>프로젝트: movie-mlops</p>
+                    <p>타입: MLOps Pipeline</p>
+                    <p>팀 규모: 5명</p>
+                </div>
+                <div class="footer-section">
+                    <h4>📝 문서 정보</h4>
+                    <p>작성일: 2025-06-04</p>
+                    <p>버전: 1.0</p>
+                    <p>상태: Active</p>
+                </div>
+            </div>
+            <div style="border-top: 1px solid #374151; padding-top: 2rem; margin-top: 2rem;">
+                <p>&copy; 2025 MLOps Team. 팀 협업을 위한 Git 워크플로우 가이드</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Progress Bar
+        window.addEventListener('scroll', () => {
+            const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+            document.getElementById('progressBar').style.width = scrolled + '%';
+        });
+
+        // Smooth scroll for navigation links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Add fade-in animation to sections when they come into view
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(30px)';
+            el.style.transition = 'opacity 0.6s ease-out, transform 0.6s ease-out';
+            observer.observe(el);
+        });
+
+        // Copy code functionality
+        document.querySelectorAll('.code-block').forEach(block => {
+            block.addEventListener('click', () => {
+                const code = block.querySelector('code').textContent;
+                navigator.clipboard.writeText(code).then(() => {
+                    const originalBg = block.style.background;
+                    block.style.background = '#10b981';
+                    block.style.color = 'white';
+                    setTimeout(() => {
+                        block.style.background = originalBg;
+                        block.style.color = '';
+                    }, 200);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps 프로젝트 디렉터리 구조 및 파일 네이밍 규칙</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            border-radius: 12px;
+            background: #f8f9fa;
+            border-left: 5px solid #667eea;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        
+        .section h3 {
+            color: #333;
+            margin: 20px 0 15px 0;
+            font-size: 1.3em;
+        }
+        
+        .directory-tree {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.4;
+            overflow-x: auto;
+            margin: 15px 0;
+            white-space: pre;
+        }
+        
+        .directory-tree .folder {
+            color: #4FC1FF;
+            font-weight: bold;
+        }
+        
+        .directory-tree .file {
+            color: #9CDCFE;
+        }
+        
+        .directory-tree .script {
+            color: #C3E88D;
+        }
+        
+        .directory-tree .comment {
+            color: #5C6370;
+        }
+        
+        .naming-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .naming-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        .naming-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .naming-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .naming-table tr:hover {
+            background: #e3f2fd;
+        }
+        
+        .code-snippet {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #ffd700 0%, #ffed4e 100%);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .tip-box {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .tip-box h3 {
+            margin-bottom: 10px;
+            color: white;
+        }
+        
+        .rule-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .rule-list li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        
+        .rule-list li.do:before {
+            content: "✅";
+            position: absolute;
+            left: 0;
+            top: 8px;
+            font-size: 1.2em;
+        }
+        
+        .rule-list li.dont:before {
+            content: "❌";
+            position: absolute;
+            left: 0;
+            top: 8px;
+            font-size: 1.2em;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+        
+        .badge.new {
+            background: #28a745;
+        }
+        
+        .badge.updated {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            margin-top: 40px;
+        }
+        
+        .checklist {
+            background: #f8f9fa;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .checklist h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .checklist ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .checklist li {
+            padding: 5px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .checklist li:before {
+            content: "☐";
+            position: absolute;
+            left: 0;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📁 MLOps 프로젝트 디렉터리 구조 및 파일 네이밍 규칙</h1>
+            <p>MLOps 프로젝트의 표준화된 디렉터리 구조와 파일 네이밍 컨벤션</p>
+        </header>
+
+        <!-- 개요 -->
+        <div class="section">
+            <h2>🎯 개요</h2>
+            <p>이 문서는 MLOps 프로젝트 전체에서 사용할 표준화된 디렉터리 구조와 파일 네이밍 규칙을 정의합니다. 
+            모든 단계(1.1부터 9.x까지)에서 일관성 있게 적용되어야 합니다.</p>
+            
+            <div class="tip-box">
+                <h3>🎯 목표</h3>
+                <ul>
+                    <li><strong>용도별 명확한 분리</strong>: 일회성 vs 지속적 사용</li>
+                    <li><strong>깔끔한 루트 디렉터리</strong>: 핵심 파일만 루트에 배치</li>
+                    <li><strong>직관적인 경로</strong>: 기능별로 논리적 그룹화</li>
+                    <li><strong>확장 가능한 설계</strong>: 새로운 단계와 기능에 대응</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 표준 디렉터리 구조 -->
+        <div class="section">
+            <h2>📁 표준 디렉터리 구조</h2>
+            
+            <h3>🏗️ 루트 레벨 구조</h3>
+            <div class="directory-tree">
+C:\dev\movie-mlops\
+├── <span class="file">📄 .env</span>                        <span class="comment"># 환경 변수 (실제 값)</span>
+├── <span class="file">📄 .env.template</span>               <span class="comment"># 환경 변수 템플릿</span>
+├── <span class="file">📄 .gitignore</span>                  <span class="comment"># Git 무시 목록</span>
+├── <span class="file">📄 .pre-commit-config.yaml</span>     <span class="comment"># Pre-commit 훅 설정</span>
+├── <span class="file">📄 README.md</span>                   <span class="comment"># 프로젝트 메인 문서</span>
+├── <span class="file">📄 requirements.txt</span>            <span class="comment"># 운영 의존성</span>
+├── <span class="file">📄 requirements-dev.txt</span>        <span class="comment"># 개발 의존성</span>
+├── <span class="file">📄 pyproject.toml</span>              <span class="comment"># Python 프로젝트 설정</span>
+├── <span class="file">📄 pytest.ini</span>                  <span class="comment"># 테스트 설정</span>
+├── <span class="file">📄 mypy.ini</span>                    <span class="comment"># 타입 체크 설정</span>
+├── <span class="file">📄 Dockerfile.dev</span>              <span class="comment"># 개발용 Docker 이미지</span>
+├── <span class="script">🚀 run_tests.sh</span>                <span class="comment"># 메인 테스트 실행기</span>
+├── <span class="script">🚀 run_docker_tests.sh</span>         <span class="comment"># Docker 테스트 실행기</span>
+├── <span class="folder">📁 .git/</span>                       <span class="comment"># Git 저장소</span>
+├── <span class="folder">📁 .github/</span>                    <span class="comment"># GitHub 워크플로우</span>
+├── <span class="folder">📁 scripts/</span>                    <span class="comment"># 스크립트 디렉터리</span>
+├── <span class="folder">📁 tests/</span>                      <span class="comment"># 테스트 디렉터리</span>
+├── <span class="folder">📁 src/</span>                        <span class="comment"># 소스 코드</span>
+├── <span class="folder">📁 docker/</span>                     <span class="comment"># Docker 설정들</span>
+├── <span class="folder">📁 config/</span>                     <span class="comment"># 설정 파일들</span>
+├── <span class="folder">📁 data/</span>                       <span class="comment"># 데이터 디렉터리</span>
+├── <span class="folder">📁 docs/</span>                       <span class="comment"># 문서</span>
+├── <span class="folder">📁 airflow/</span>                    <span class="comment"># 워크플로우 (4단계+)</span>
+├── <span class="folder">📁 logs/</span>                       <span class="comment"># 로그 파일들</span>
+├── <span class="folder">📁 models/</span>                     <span class="comment"># 모델 파일들 (5단계+)</span>
+├── <span class="folder">📁 experiments/</span>                <span class="comment"># 실험 디렉터리</span>
+├── <span class="folder">📁 reports/</span>                    <span class="comment"># 리포트 파일들</span>
+└── <span class="folder">📁 temp-cleanup/</span>               <span class="comment"># 임시/삭제 예정 파일들</span>
+            </div>
+        </div>
+
+        <!-- 세부 디렉터리 구조 -->
+        <div class="section">
+            <h2>🗂️ 세부 디렉터리 구조</h2>
+            
+            <h3>📁 scripts/ - 스크립트 디렉터리</h3>
+            <div class="directory-tree">
+scripts/
+├── <span class="folder">🔧 setup/</span>                      <span class="comment"># 일회성 설정 스크립트들</span>
+│   ├── <span class="script">setup_mlops_git.sh</span>         <span class="comment"># Git 환경 자동 설정</span>
+│   ├── <span class="script">setup_docker_network.sh</span>    <span class="comment"># Docker 네트워크 설정</span>
+│   ├── <span class="script">setup_stage_X.sh</span>           <span class="comment"># X단계 전용 설정</span>
+│   └── <span class="folder">legacy/</span>                    <span class="comment"># 레거시 스크립트 보관</span>
+├── <span class="folder">🧪 test/</span>                       <span class="comment"># 테스트 실행 스크립트들</span>
+│   ├── <span class="script">run_X_Y_tests.sh</span>           <span class="comment"># X.Y 단계 테스트 실행기</span>
+│   ├── <span class="script">run_integration_tests.sh</span>   <span class="comment"># 통합 테스트 실행기</span>
+│   └── <span class="script">run_performance_tests.sh</span>   <span class="comment"># 성능 테스트 실행기</span>
+├── <span class="folder">🚀 deploy/</span>                     <span class="comment"># 배포 스크립트들 (5단계+)</span>
+│   ├── <span class="script">deploy_stage_5.sh</span>          <span class="comment"># 5단계 배포</span>
+│   ├── <span class="script">deploy_production.sh</span>       <span class="comment"># 운영 환경 배포</span>
+│   └── <span class="script">rollback.sh</span>                <span class="comment"># 롤백 스크립트</span>
+├── <span class="folder">🔍 monitoring/</span>                 <span class="comment"># 모니터링 스크립트들 (6단계+)</span>
+│   ├── <span class="script">check_health.sh</span>            <span class="comment"># 헬스체크</span>
+│   ├── <span class="script">collect_metrics.sh</span>         <span class="comment"># 메트릭 수집</span>
+│   └── <span class="script">alert_manager.sh</span>           <span class="comment"># 알림 관리</span>
+├── <span class="folder">🛡️ security/</span>                   <span class="comment"># 보안 스크립트들 (7단계+)</span>
+│   ├── <span class="script">security_scan.sh</span>           <span class="comment"># 보안 스캔</span>
+│   ├── <span class="script">update_secrets.sh</span>          <span class="comment"># 시크릿 업데이트</span>
+│   └── <span class="script">access_audit.sh</span>            <span class="comment"># 접근 감사</span>
+└── <span class="script">validate_branch_name.sh</span>        <span class="comment"># 브랜치명 검증 (전 단계 공통)</span>
+            </div>
+
+            <h3>📁 tests/ - 테스트 디렉터리</h3>
+            <div class="directory-tree">
+tests/
+├── <span class="folder">unit/</span>                          <span class="comment"># 단위 테스트</span>
+│   ├── <span class="file">test_X_Y_&lt;기능명&gt;.py</span>       <span class="comment"># X.Y 단계 단위 테스트</span>
+│   └── <span class="file">__init__.py</span>
+├── <span class="folder">integration/</span>                   <span class="comment"># 통합 테스트</span>
+│   ├── <span class="file">test_X_Y_&lt;시스템명&gt;.py</span>     <span class="comment"># X.Y 단계 통합 테스트</span>
+│   ├── <span class="script">test_X_Y_&lt;시스템명&gt;.sh</span>     <span class="comment"># Bash 통합 테스트</span>
+│   └── <span class="file">__init__.py</span>
+├── <span class="folder">e2e/</span>                          <span class="comment"># End-to-End 테스트</span>
+│   ├── <span class="file">test_X_Y_complete_workflow.py</span>  <span class="comment"># X.Y 단계 E2E 테스트</span>
+│   └── <span class="file">__init__.py</span>
+├── <span class="folder">performance/</span>                   <span class="comment"># 성능 테스트 (8단계+)</span>
+│   ├── <span class="file">test_scalability.py</span>       <span class="comment"># 확장성 테스트</span>
+│   ├── <span class="file">test_load.py</span>              <span class="comment"># 부하 테스트</span>
+│   └── <span class="file">__init__.py</span>
+├── <span class="folder">security/</span>                     <span class="comment"># 보안 테스트 (7단계+)</span>
+│   ├── <span class="file">test_auth.py</span>              <span class="comment"># 인증 테스트</span>
+│   ├── <span class="file">test_encryption.py</span>        <span class="comment"># 암호화 테스트</span>
+│   └── <span class="file">__init__.py</span>
+└── <span class="folder">fixtures/</span>                     <span class="comment"># 테스트 데이터</span>
+    ├── <span class="folder">stage_X/</span>                  <span class="comment"># X단계 테스트 데이터</span>
+    └── <span class="folder">common/</span>                   <span class="comment"># 공통 테스트 데이터</span>
+            </div>
+        </div>
+
+        <!-- 파일 네이밍 규칙 -->
+        <div class="section">
+            <h2>📝 파일 네이밍 규칙</h2>
+            
+            <h3>🚀 실행 스크립트 네이밍</h3>
+            <table class="naming-table">
+                <thead>
+                    <tr>
+                        <th>유형</th>
+                        <th>패턴</th>
+                        <th>예시</th>
+                        <th>설명</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>메인 실행기</strong></td>
+                        <td><code>run_&lt;기능&gt;.sh</code></td>
+                        <td><code>run_tests.sh</code></td>
+                        <td>루트 레벨 메인 실행기</td>
+                    </tr>
+                    <tr>
+                        <td><strong>단계별 실행기</strong></td>
+                        <td><code>run_&lt;stage&gt;_&lt;substage&gt;_&lt;기능&gt;.sh</code></td>
+                        <td><code>run_3_1_tests.sh</code></td>
+                        <td>특정 단계 실행기</td>
+                    </tr>
+                    <tr>
+                        <td><strong>설정 스크립트</strong></td>
+                        <td><code>setup_&lt;기능&gt;.sh</code></td>
+                        <td><code>setup_mlops_git.sh</code></td>
+                        <td>일회성 설정</td>
+                    </tr>
+                    <tr>
+                        <td><strong>배포 스크립트</strong></td>
+                        <td><code>deploy_&lt;환경&gt;.sh</code></td>
+                        <td><code>deploy_production.sh</code></td>
+                        <td>배포 관련</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>🧪 테스트 파일 네이밍</h3>
+            <table class="naming-table">
+                <thead>
+                    <tr>
+                        <th>유형</th>
+                        <th>패턴</th>
+                        <th>예시</th>
+                        <th>설명</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>단위 테스트</strong></td>
+                        <td><code>test_&lt;stage&gt;_&lt;substage&gt;_&lt;기능명&gt;.py</code></td>
+                        <td><code>test_3_1_git_config.py</code></td>
+                        <td>단위 테스트</td>
+                    </tr>
+                    <tr>
+                        <td><strong>통합 테스트</strong></td>
+                        <td><code>test_&lt;stage&gt;_&lt;substage&gt;_&lt;시스템명&gt;.py</code></td>
+                        <td><code>test_3_1_docker_workflow.py</code></td>
+                        <td>통합 테스트</td>
+                    </tr>
+                    <tr>
+                        <td><strong>E2E 테스트</strong></td>
+                        <td><code>test_&lt;stage&gt;_&lt;substage&gt;_complete_workflow.py</code></td>
+                        <td><code>test_3_1_complete_workflow.py</code></td>
+                        <td>E2E 테스트</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Bash 테스트</strong></td>
+                        <td><code>test_&lt;stage&gt;_&lt;substage&gt;_&lt;기능명&gt;.sh</code></td>
+                        <td><code>test_3_1_docker_workflow.sh</code></td>
+                        <td>Bash 테스트</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 용도별 파일 분류 규칙 -->
+        <div class="section">
+            <h2>🎯 용도별 파일 분류 규칙</h2>
+            
+            <div class="tip-box">
+                <h3>🔧 일회성 설정 파일들 (scripts/setup/)</h3>
+                <p><strong>특징</strong>: 프로젝트 초기 설정이나 새로운 단계 시작 시 한 번만 실행</p>
+                <ul>
+                    <li><code>setup_mlops_git.sh</code> - Git 환경 설정</li>
+                    <li><code>setup_docker_network.sh</code> - Docker 네트워크 생성</li>
+                    <li><code>setup_stage_5.sh</code> - 5단계 환경 설정</li>
+                </ul>
+            </div>
+            
+            <div class="tip-box">
+                <h3>🚀 지속적 사용 파일들 (루트 + scripts/)</h3>
+                <p><strong>특징</strong>: 개발 과정에서 반복적으로 사용</p>
+                <ul>
+                    <li><code>run_tests.sh</code> - 메인 테스트 실행기 (루트)</li>
+                    <li><code>scripts/validate_branch_name.sh</code> - 브랜치명 검증</li>
+                    <li><code>scripts/test/run_3_1_tests.sh</code> - 3.1 테스트 실행기</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 규칙 준수 체크리스트 -->
+        <div class="checklist">
+            <h3>✅ 규칙 준수 체크리스트</h3>
+            
+            <h4>📁 디렉터리 구조</h4>
+            <ul>
+                <li>일회성 설정은 <code>scripts/setup/</code>에 배치</li>
+                <li>지속적 사용 스크립트는 기능별 하위 폴더에 배치</li>
+                <li>Docker 관련 파일은 <code>docker/</code>에 집중</li>
+                <li>테스트는 타입별로 <code>tests/</code> 하위에 분리</li>
+            </ul>
+            
+            <h4>📝 네이밍 컨벤션</h4>
+            <ul>
+                <li>스크립트: <code>&lt;동사&gt;_&lt;대상&gt;_&lt;기능&gt;.sh</code> 형식</li>
+                <li>테스트: <code>test_&lt;stage&gt;_&lt;substage&gt;_&lt;기능&gt;.py</code> 형식</li>
+                <li>Docker: <code>docker-compose.&lt;용도&gt;.yml</code> 형식</li>
+                <li>문서: <code>&lt;stage&gt;.&lt;substage&gt;-&lt;제목&gt;-&lt;타입&gt;.md</code> 형식</li>
+            </ul>
+            
+            <h4>🎯 기능별 분리</h4>
+            <ul>
+                <li>용도별 명확한 분리 (설정/실행/테스트/배포)</li>
+                <li>단계별 독립성 유지</li>
+                <li>확장 가능한 구조</li>
+                <li>직관적인 경로 구조</li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <h2>🎯 표준의 가치</h2>
+            <p><strong>일관성 있는 구조로 팀 협업 효율성 극대화</strong></p>
+            <p style="margin-top: 15px;">
+                <span class="badge">확장성</span>
+                <span class="badge">유지보수성</span>
+                <span class="badge">협업 효율성</span>
+                <span class="badge">표준화</span>
+            </p>
+            <p style="margin-top: 20px;">
+                이 표준을 통해 모든 MLOps 단계에서 일관성 있는 개발이 가능합니다!
+            </p>
+        </footer>
+    </div>
+</body>
+</html>

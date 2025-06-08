@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 의존성 패키지 분석 및 적용 가이드</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .overview-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .file-structure {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .requirement-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .requirement-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .requirement-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .requirement-card h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .package-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 60px;
+            height: 30px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .package-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .package-category {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .package-category h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .package-list {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85em;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            white-space: pre-wrap;
+        }
+
+        .compatibility-matrix {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .compatibility-matrix h3 {
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .matrix-code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 1.1em;
+            margin: 15px 0;
+        }
+
+        .analysis-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .feature-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+        }
+
+        .feature-item h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            overflow-x: auto;
+        }
+
+        .install-guide {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .install-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin: 25px 0;
+        }
+
+        .install-step {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .install-step h4 {
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .conclusion {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .conclusion h3 {
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .conclusion-points {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 25px 0;
+        }
+
+        .conclusion-point {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            display: none;
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .requirement-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .package-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .install-steps {
+                grid-template-columns: 1fr;
+            }
+
+            .conclusion-points {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔧 Python 의존성 패키지 분석</h1>
+            <p>MLOps 프로젝트를 위한 완벽한 Python 패키지 구성과 설치 방법입니다.</p>
+        </div>
+
+        <div class="overview-section">
+            <h2>📦 패키지 구성 개요</h2>
+            
+            <div class="file-structure">mlops-cloud-project-mlops_11/
+├── requirements.txt         # 프로덕션 환경 패키지 (51개 핵심 패키지)
+└── requirements-dev.txt     # 개발 환경 패키지 (기본 + 개발용 41개 = 총 92개)</div>
+
+            <div class="compatibility-matrix">
+                <h3>🔗 의존성 관계</h3>
+                <div class="matrix-code"># requirements-dev.txt 구조
+-r requirements.txt          # 프로덕션 패키지 전체 포함
++ 개발용 추가 패키지          # 테스팅, 디버깅, 문서화 등</div>
+                <p><strong>중요:</strong> <code>requirements-dev.txt</code>를 설치하면 <code>requirements.txt</code>의 모든 패키지가 자동으로 함께 설치됩니다!</p>
+            </div>
+        </div>
+
+        <div class="requirement-cards">
+            <div class="requirement-card">
+                <h2>🎯 requirements.txt <span class="package-count">51개</span></h2>
+                <p><strong>프로덕션 환경용 핵심 패키지</strong></p>
+                
+                <div class="compatibility-matrix">
+                    <h3>핵심 호환성 매트릭스</h3>
+                    <div class="matrix-code">Python 3.11 + NumPy 1.26.x + PyTorch 2.4.x + pandas 2.2.x</div>
+                    <p>실제 프로덕션에서 검증된 안정적인 조합</p>
+                </div>
+
+                <div class="package-grid">
+                    <div class="package-category">
+                        <h4>1. 기본 데이터 처리 (3개)</h4>
+                        <div class="package-list">numpy>=1.26.4,<2.0.0         # 수치 계산
+pandas>=2.2.3,<3.0.0         # 데이터 프레임
+scipy>=1.14.0,<2.0.0         # 과학 계산</div>
+                    </div>
+
+                    <div class="package-category">
+                        <h4>2. 머신러닝 & 딥러닝 (9개)</h4>
+                        <div class="package-list">scikit-learn>=1.6.1,<2.0.0
+torch>=2.4.0,<3.0.0          # PyTorch
+torchvision>=0.19.0,<1.0.0
+transformers>=4.45.0,<5.0.0  # HuggingFace
+tokenizers>=0.20.0,<1.0.0
+datasets>=3.2.0,<4.0.0</div>
+                    </div>
+
+                    <div class="package-category">
+                        <h4>3. API 서버 (4개)</h4>
+                        <div class="package-list">fastapi>=0.115.6,<1.0.0
+uvicorn[standard]>=0.32.1,<1.0.0
+python-multipart>=0.0.20,<1.0.0
+pydantic>=2.10.3,<3.0.0</div>
+                    </div>
+
+                    <div class="package-category">
+                        <h4>4. MLOps 도구 (2개)</h4>
+                        <div class="package-list">mlflow>=2.22.0,<3.0.0        # 실험 추적
+evidently>=0.4.40,<1.0.0     # 데이터 드리프트</div>
+                    </div>
+
+                    <div class="package-category">
+                        <h4>5. 데이터베이스 (2개)</h4>
+                        <div class="package-list">sqlalchemy>=2.0.36,<3.0.0    # ORM
+alembic>=1.14.0,<2.0.0       # 마이그레이션</div>
+                    </div>
+
+                    <div class="package-category">
+                        <h4>6. 유틸리티 (5개)</h4>
+                        <div class="package-list">python-dotenv>=1.0.1,<2.0.0  # 환경변수
+requests>=2.32.3,<3.0.0      # HTTP 클라이언트
+boto3>=1.35.95,<2.0.0        # AWS SDK
+psutil>=6.1.1,<7.0.0         # 시스템 모니터링
+memory-profiler>=0.61.0,<1.0.0</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="requirement-card">
+                <h2>🔬 requirements-dev.txt <span class="package-count">92개</span></h2>
+                <p><strong>개발 환경용 (프로덕션 51 + 개발 41)</strong></p>
+                
+                <div class="code-block">-r requirements.txt           # 프로덕션 51개 포함
++ 개발용 41개 패키지          # 총 92개 패키지</div>
+
+                <div class="package-grid">
+                    <div class="package-category">
+                        <h4>1. 테스팅 프레임워크 (4개)</h4>
+                        <div class="package-list">pytest>=8.3.4,<9.0.0
+pytest-cov>=6.0.0,<7.0.0     # 커버리지
+pytest-mock>=3.14.0,<4.0.0   # 모킹
+pytest-asyncio>=0.25.0,<1.0.0</div>
+                    </div>
+
+                    <div class="package-category">
+                        <h4>2. 코드 품질 (5개)</h4>
+                        <div class="package-list">black>=24.10.0,<25.0.0       # 포맷터
+isort>=5.13.2,<6.0.0         # import 정렬
+flake8>=7.1.1,<8.0.0         # 스타일 검사
+mypy>=1.14.0,<2.0.0          # 타입 체킹
+bandit>=1.8.0,<2.0.0         # 보안 검사</div>
+                    </div>
+
+                    <div class="package-category">
+                        <h4>3. 개발 환경 (5개)</h4>
+                        <div class="package-list">jupyter>=1.1.1,<2.0.0
+jupyterlab>=4.3.3,<5.0.0
+ipykernel>=6.29.5,<7.0.0
+ipython>=8.30.0,<9.0.0
+notebook>=7.3.1,<8.0.0</div>
+                    </div>
+
+                    <div class="package-category">
+                        <h4>4. MLOps 개발 도구 (4개)</h4>
+                        <div class="package-list">tensorboard>=2.18.0,<3.0.0
+wandb>=0.19.1,<1.0.0         # 실험 추적
+optuna>=4.1.0,<5.0.0         # 하이퍼파라미터
+shap>=0.46.0,<1.0.0          # 모델 해석</div>
+                    </div>
+
+                    <div class="package-category">
+                        <h4>5. 프로토타이핑 (3개)</h4>
+                        <div class="package-list">streamlit>=1.41.1,<2.0.0     # 웹 앱
+gradio>=5.12.0,<6.0.0        # ML 데모 UI
+lime>=0.2.0.1,<1.0.0         # 로컬 해석</div>
+                    </div>
+
+                    <div class="package-category">
+                        <h4>6. 고급 시각화 (3개)</h4>
+                        <div class="package-list">plotly>=5.24.1,<6.0.0        # 인터랙티브
+bokeh>=3.6.2,<4.0.0          # 웹 시각화
+ydata-profiling>=4.10.0,<5.0.0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-section">
+            <h2>🎯 우리 프로젝트 적용 분석</h2>
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <h4>TMDB 크롤러 지원</h4>
+                    <div class="code-block">requests                     # API 호출
+python-dotenv               # .env 파일 관리</div>
+                </div>
+
+                <div class="feature-item">
+                    <h4>데이터 처리 파이프라인</h4>
+                    <div class="code-block">pandas, numpy               # 데이터 처리
+scikit-learn               # 머신러닝</div>
+                </div>
+
+                <div class="feature-item">
+                    <h4>FastAPI 서버</h4>
+                    <div class="code-block">fastapi                    # API 프레임워크
+uvicorn                    # 서버
+pydantic                   # 데이터 검증</div>
+                </div>
+
+                <div class="feature-item">
+                    <h4>MLOps 워크플로우</h4>
+                    <div class="code-block">mlflow                     # 실험 추적
+evidently                  # 모델 모니터링</div>
+                </div>
+
+                <div class="feature-item">
+                    <h4>React 연동</h4>
+                    <div class="code-block">fastapi + uvicorn          # API 서버
+python-multipart           # 파일 업로드</div>
+                </div>
+
+                <div class="feature-item">
+                    <h4>개발 환경</h4>
+                    <div class="code-block">jupyter                    # 데이터 분석
+pytest                     # 테스팅
+streamlit, gradio          # 프로토타입</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="install-guide">
+            <h2>🚀 설치 가이드</h2>
+            <div class="install-steps">
+                <div class="install-step">
+                    <h4>1. 가상환경 생성</h4>
+                    <div class="code-block"># Python 3.11 가상환경 생성
+python -m venv venv
+
+# 활성화 (Windows)
+venv\Scripts\activate
+
+# 활성화 (macOS/Linux)
+source venv/bin/activate</div>
+                </div>
+
+                <div class="install-step">
+                    <h4>2. 프로덕션 환경 (51개)</h4>
+                    <div class="code-block">pip install -r requirements.txt</div>
+                    <p>서버 배포용, 핵심 패키지만 설치</p>
+                </div>
+
+                <div class="install-step">
+                    <h4>3. 개발 환경 (92개)</h4>
+                    <div class="code-block">pip install -r requirements-dev.txt
+# 자동으로 requirements.txt도 함께 설치됨!</div>
+                    <p>개발자용, 모든 도구 포함</p>
+                </div>
+
+                <div class="install-step">
+                    <h4>4. 설치 확인</h4>
+                    <div class="code-block"># 주요 패키지 확인
+python -c "import torch, fastapi, mlflow, pandas; print('✅ 설치 완료')"
+
+# Jupyter 실행 (개발 환경)
+jupyter lab</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="conclusion">
+            <h3>✅ 결론</h3>
+            <h4>완벽한 MLOps 패키지 구성</h4>
+            <div class="conclusion-points">
+                <div class="conclusion-point">
+                    <h4>🎯 100% 적합</h4>
+                    <p>우리 프로젝트 요구사항을 완벽하게 충족</p>
+                </div>
+                <div class="conclusion-point">
+                    <h4>🔒 안정성 보장</h4>
+                    <p>프로덕션 검증된 버전 조합</p>
+                </div>
+                <div class="conclusion-point">
+                    <h4>🏗️ 완전 지원</h4>
+                    <p>개발부터 배포까지 모든 단계</p>
+                </div>
+                <div class="conclusion-point">
+                    <h4>📊 엔터프라이즈급</h4>
+                    <p>실제 기업 수준의 패키지 관리</p>
+                </div>
+            </div>
+            <p style="margin-top: 20px; font-size: 1.2em; font-weight: bold;">
+                이 requirements.txt 구성은 엔터프라이즈급 MLOps 프로젝트의 모범 사례로, 그대로 적용하여 즉시 개발을 시작할 수 있습니다!
+            </p>
+        </div>
+    </div>
+
+    <button class="scroll-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        ↑
+    </button>
+
+    <script>
+        // 스크롤 시 버튼 표시/숨김
+        window.addEventListener('scroll', function() {
+            const scrollButton = document.querySelector('.scroll-to-top');
+            if (window.pageYOffset > 300) {
+                scrollButton.style.display = 'block';
+            } else {
+                scrollButton.style.display = 'none';
+            }
+        });
+
+        // 부드러운 스크롤 효과
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.requirement-card, .feature-item, .install-step');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>

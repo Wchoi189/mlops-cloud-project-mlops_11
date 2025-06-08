@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLOps 구현 단계별 상세 분석 및 통합 계획</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .stage-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .stage-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .stage-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .stage-card h2 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stage-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .stage-card h3 {
+            color: #34495e;
+            margin: 20px 0 10px 0;
+            font-size: 1.3em;
+            border-left: 4px solid #667eea;
+            padding-left: 15px;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .feature-list li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feature-list li:before {
+            content: "✅";
+            font-size: 1.2em;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            line-height: 1.4;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            white-space: pre-wrap;
+        }
+
+        .file-structure {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        .implementation-plan {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .phase {
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 10px;
+            color: white;
+        }
+
+        .phase h4 {
+            font-size: 1.4em;
+            margin-bottom: 15px;
+        }
+
+        .phase ol {
+            margin-left: 20px;
+        }
+
+        .phase li {
+            margin: 8px 0;
+            font-weight: 500;
+        }
+
+        .highlight-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .highlight-box h3 {
+            color: white;
+            border-left: 4px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .tag {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin: 2px;
+            font-weight: 500;
+        }
+
+        .progress-indicator {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            flex: 1;
+        }
+
+        .progress-step:not(:last-child):after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .progress-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .progress-label {
+            font-size: 0.9em;
+            text-align: center;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .stage-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .progress-indicator {
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .progress-step:after {
+                display: none;
+            }
+        }
+
+        .scroll-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .scroll-to-top:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 MLOps 구현 단계별 상세 분석 및 통합 계획</h1>
+            <p><code>mlops-cloud-project-mlops_11</code> 구현을 위한 <strong>1, 2, 3, 7단계</strong> 상세 분석입니다.</p>
+            
+            <div class="progress-indicator">
+                <div class="progress-step">
+                    <div class="progress-circle">1</div>
+                    <div class="progress-label">데이터 처리</div>
+                </div>
+                <div class="progress-step">
+                    <div class="progress-circle">2</div>
+                    <div class="progress-label">피처 스토어</div>
+                </div>
+                <div class="progress-step">
+                    <div class="progress-circle">3</div>
+                    <div class="progress-label">버전 관리</div>
+                </div>
+                <div class="progress-step">
+                    <div class="progress-circle">7</div>
+                    <div class="progress-label">모델 서빙</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stage-grid">
+            <!-- 1단계: 데이터 처리 -->
+            <div class="stage-card">
+                <h2><span class="stage-number">1</span>데이터 처리 및 분석 도구들</h2>
+                
+                <h3>📋 이론적 프레임워크 요구사항</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0;">
+                    <span class="tag">Apache Airflow</span>
+                    <span class="tag">Apache Kafka</span>
+                    <span class="tag">Python</span>
+                    <span class="tag">Apache Spark</span>
+                </div>
+                <p><strong>목표:</strong> 안정적인 데이터 파이프라인 구축</p>
+
+                <h3>✅ my-mlops에서 구현된 부분</h3>
+                <div class="code-block">class TMDBCrawler:
+    def __init__(self, region="KR", language="ko-KR"):
+        self._base_url = os.environ.get("TMDB_BASE_URL")
+        self._api_key = os.environ.get("TMDB_API_KEY")
+    
+    def get_popular_movies(self, page):
+        # TMDB API 호출
+    
+    def get_bulk_popular_movies(self, start_page, end_page):
+        # 페이지별 데이터 수집</div>
+
+                <h3>핵심 기능들</h3>
+                <ul class="feature-list">
+                    <li>API 연동: TMDB API 호출 및 데이터 수집</li>
+                    <li>페이지네이션: start_page ~ end_page 범위 처리</li>
+                    <li>요청 제어: 0.4초 간격으로 API 제한 준수</li>
+                    <li>지역화: 한국 지역(KR), 한국어(ko-KR) 설정</li>
+                    <li>데이터 저장: JSON 형태로 결과 저장</li>
+                    <li>환경 변수: .env 파일로 API 키 관리</li>
+                </ul>
+
+                <h3>🔄 통합 계획</h3>
+                <div class="file-structure">mlops-cloud-project-mlops_11/
+├── src/
+│   ├── data/
+│   │   ├── crawlers/
+│   │   │   ├── tmdb_crawler.py          # TMDBCrawler 이식
+│   │   │   └── base_crawler.py # 확장 가능한 베이스 클래스
+│   │   ├── processors/
+│   │   │   └── tmdb_processor.py    # TMDBPreProcessor 이식
+│   │   ├── validators/
+│   │   │   └── data_validator.py        # 데이터 검증
+│   │   └── __init__.py
+│   ├── config.py                        # 전역 설정
+│   └── utils/
+│       └── helpers.py                   # 유틸리티 함수
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── CardGrid.jsx             # 영화 포스터 그리드
+│   │   │   └── MovieCard.jsx            # 개별 영화 카드
+│   │   ├── services/
+│   │   │   └── api.js                   # API 통신
+│   │   └── App.jsx                      # 메인 애플리케이션
+│   └── public/
+│       └── poster/                      # 58개 영화 포스터
+├── airflow/
+│   ├── dags/
+│   │   └── data_pipeline_dag.py     # 데이터 파이프라인 DAG
+│   └── scripts/
+│       └── init.sh                      # 초기화 스크립트
+├── mlflow/
+│   ├── models/                          # 저장된 모델
+│   └── runs/                            # 실험 기록
+├── docker/
+│   ├── Dockerfile.api                   # API 서버용
+│   └── Dockerfile.airflow               # Airflow용
+├── k8s/
+│   ├── dev-cluster-config.yaml          # 개발 환경
+│   ├── staging-cluster-config.yaml      # 스테이징 환경
+│   └── prod-cluster-config.yaml         # 프로덕션 환경
+├── configs/
+│   ├── development.yaml                 # 개발 설정
+│   └── production.yaml                  # 프로덕션 설정
+├── tests/
+│   ├── unit/                            # 단위 테스트
+│   └── integration/                     # 통합 테스트
+├── notebooks/
+│   └── data_exploration.ipynb           # 데이터 분석
+├── scripts/
+│   ├── setup.sh                         # 환경 설정
+│   └── data_pipeline.py                 # 파이프라인 실행
+├── data/
+│   ├── raw/                             # 원본 데이터
+│   └── processed/                       # 처리된 데이터
+├── logs/                                # 로그 파일
+├── models/                              # 모델 저장소
+├── requirements.txt                     # Python 의존성
+├── docker-compose.yml                   # Docker 환경
+└── README.md                            # 프로젝트 가이드</div>
+            </div>
+
+            <!-- 2단계: 피처 스토어 -->
+            <div class="stage-card">
+                <h2><span class="stage-number">2</span>피처 스토어 및 ML 플랫폼</h2>
+                
+                <h3>📋 이론적 프레임워크 요구사항</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0;">
+                    <span class="tag">Feast</span>
+                    <span class="tag">Hopsworks</span>
+                </div>
+                <p><strong>목표:</strong> 재사용 가능한 피처 관리 체계 구축</p>
+
+                <h3>✅ my-mlops에서 구현된 부분</h3>
+                <div class="code-block">class TMDBPreProcessor:
+    def __init__(self, movies: list, user_count=100):
+        # 설정 초기화
+    
+    @staticmethod
+    def augmentation(movie):
+        # 영화 평점 기반 데이터 증강: pow(2, rating)
+        
+    def generate_watch_second(self, rating):
+        # 평점 기반 시청 시간 생성 로직
+        
+    def selection(self, user_id, features):
+        # 사용자별 영화 선택 시뮬레이션</div>
+
+                <h3>핵심 피처 생성 로직</h3>
+                <ul class="feature-list">
+                    <li>데이터 증강: count = int(pow(2, rating))</li>
+                    <li>시청 시간 생성: 평점과 상관관계가 있는 시청 시간</li>
+                    <li>사용자 시뮬레이션: 100명 사용자, 최대 20개 영화</li>
+                    <li>피처 조합: user_id, content_id, watch_seconds</li>
+                    <li>시각화: rating과 watch_seconds 관계 그래프</li>
+                </ul>
+
+                <div class="file-structure">mlops-cloud-project-mlops_11/
+├── src/
+│   ├── features/
+│   │   ├── engineering/
+│   │   │   ├── movie_features.py        # 영화 관련 피처
+│   │   │   ├── user_features.py         # 사용자 관련 피처  
+│   │   │   └── interaction_features.py  # 상호작용 피처
+│   │   ├── store/
+│   │   │   ├── feature_store.py         # 간단한 피처 저장소
+│   │   │   └── feature_registry.py    # 피처 메타데이터 관리
+│   │   └── processors/
+│   │       ├── tmdb_processor.py      # TMDBPreProcessor 이식
+│   │       └── feature_pipeline.py     # 피처 파이프라인
+├── configs/
+│   └── feature_config.yaml              # 피처 설정
+├── notebooks/
+│   └── feature_analysis.ipynb           # 피처 분석
+├── mlflow/
+│   ├── experiments/                     # 실험 추적
+│   └── artifacts/                       # 아티팩트 저장
+└── tests/
+    └── test_features/                   # 피처 테스트</div>
+            </div>
+
+            <!-- 3단계: 버전 관리 -->
+            <div class="stage-card">
+                <h2><span class="stage-number">3</span>버전 관리 시스템</h2>
+                
+                <h3>📋 이론적 프레임워크 요구사항</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0;">
+                    <span class="tag">Git</span>
+                    <span class="tag">GitHub</span>
+                </div>
+                <p><strong>목표:</strong> 코드, 데이터, 모델의 체계적 버전 관리</p>
+
+                <h3>✅ my-mlops에서 구현된 부분</h3>
+                <ul class="feature-list">
+                    <li>Git 저장소: .git 폴더 존재</li>
+                    <li>커밋 히스토리: 개발 과정 추적 가능</li>
+                    <li>파일 관리: .gitignore, .gitattributes 설정</li>
+                    <li>브랜치: main 브랜치 사용</li>
+                </ul>
+
+                <h3>🔄 버전 관리 전략</h3>
+                <ul class="feature-list">
+                    <li>브랜치 전략: GitFlow 또는 GitHub Flow 적용</li>
+                    <li>커밋 컨벤션: Conventional Commits 형식</li>
+                    <li>태그 관리: 버전별 릴리스 태그</li>
+                    <li>데이터 버전 관리: DVC(Data Version Control) 고려</li>
+                </ul>
+
+                <div class="code-block">class DataVersionManager:
+    def __init__(self, base_path):
+        self.base_path = base_path
+        
+    def create_data_snapshot(self, version_tag):
+        # 데이터 스냅샷 생성
+        
+    def restore_data_version(self, version_tag):
+        # 특정 버전으로 데이터 복원</div>
+            </div>
+
+            <!-- 7단계: 모델 서빙 -->
+            <div class="stage-card">
+                <h2><span class="stage-number">7</span>고도화된 ML 프레임워크와 모델 서빙</h2>
+                
+                <h3>📋 이론적 프레임워크 요구사항</h3>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0;">
+                    <span class="tag">PyTorch/TensorFlow</span>
+                    <span class="tag">KServe/BentoML</span>
+                </div>
+                <p><strong>목표:</strong> 다양한 ML 프레임워크와 모델 서빙 플랫폼 통합</p>
+
+                <h3>✅ my-mlops에서 구현된 부분</h3>
+                <div class="code-block">// React 프론트엔드
+export async function getRecommendContents(k) {
+  const response = await axios.get(`${API_ENDPOINT}`, {
+    params: { k: k }
+  });
+  return response.data.recommended_content_id;
+}
+
+# FastAPI 백엔드 (추정)
+@app.post("/batch-predict")
+async def predict(request: PredictionRequest):
+    # numpy 기반 MoviePredictor 모델 추론
+    # 영화 추천 결과 반환</div>
+
+                <h3>핵심 구현 요소</h3>
+                <ul class="feature-list">
+                    <li>모델 추론: numpy 기반 MoviePredictor</li>
+                    <li>API 서버: FastAPI 기반 RESTful API</li>
+                    <li>웹 인터페이스: React 19.1.0 기반 SPA</li>
+                    <li>클라우드 배포: AWS EC2에 실제 배포</li>
+                    <li>영화 포스터: 58개 영화 이미지 자산</li>
+                    <li>반응형 UI: CSS Grid 기반 카드 레이아웃</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="implementation-plan">
+            <h2>📋 단계별 우선순위 및 구현 순서</h2>
+
+            <div class="phase">
+                <h4>Phase 1: 핵심 구현</h4>
+                <ol>
+                    <li><strong>1단계:</strong> 데이터 처리 파이프라인 이식</li>
+                    <li><strong>2단계:</strong> 피처 생성 로직 모듈화</li>
+                    <li><strong>3단계:</strong> Git 워크플로우 설정</li>
+                </ol>
+            </div>
+
+            <div class="phase">
+                <h4>Phase 2: 서빙 시스템</h4>
+                <ol>
+                    <li><strong>7단계:</strong> FastAPI + React 통합 및 개선</li>
+                </ol>
+            </div>
+
+            <div class="phase">
+                <h4>Phase 3: 통합 및 문서화</h4>
+                <ol>
+                    <li>전체 시스템 통합 테스트</li>
+                    <li>상세 문서 작성 및 README 업데이트</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="highlight-box">
+            <h3>🎯 기대 효과</h3>
+            <h4>완성된 MLOps 학습 프로젝트</h4>
+            <ul class="feature-list" style="color: rgba(255, 255, 255, 0.9);">
+                <li>실제 데이터 파이프라인: TMDB API → 피처 생성 → 모델 서빙</li>
+                <li>완전한 추천 시스템: 영화 데이터 기반 실제 작동하는 서비스</li>
+                <li>실무급 아키텍처: API 서버 + 웹 프론트엔드 + 클라우드 배포</li>
+                <li>점진적 확장: 기본 구현 → 엔터프라이즈급 MLOps 도구 도입</li>
+            </ul>
+            
+            <p style="margin-top: 20px; font-size: 1.2em; font-weight: bold;">
+                완성된 MLOps 학습 프로젝트로 실무급 경험을 쌓아보세요!
+            </p>
+        </div>
+    </div>
+
+    <button class="scroll-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        ↑
+    </button>
+
+    <script>
+        // 스크롤 시 버튼 표시/숨김
+        window.addEventListener('scroll', function() {
+            const scrollButton = document.querySelector('.scroll-to-top');
+            if (window.pageYOffset > 300) {
+                scrollButton.style.display = 'block';
+            } else {
+                scrollButton.style.display = 'none';
+            }
+        });
+
+        // 부드러운 스크롤 효과
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.stage-card');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mlops-cloud-project"
+version = "1.0.0"
+description = "MLOps Cloud Project - 9단계 체계적 구축"
+authors = [{name = "MLOps Project Team"}]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "requests>=2.31.0,<3.0.0",
+    "python-dotenv>=1.0.0,<2.0.0",
+    "pandas>=2.1.0,<3.0.0",
+    "numpy>=1.25.0,<2.0.0",
+    "python-dateutil>=2.8.2,<3.0.0",
+    "typing-extensions>=4.8.0,<5.0.0",
+    "pydantic>=2.4.0,<3.0.0",
+    "structlog>=23.2.0,<24.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.3,<8.0.0",
+    "pytest-cov>=4.1.0,<5.0.0",
+    "black>=23.11.0,<24.0.0",
+    "ruff>=0.1.6,<1.0.0",
+    "mypy>=1.7.0,<2.0.0",
+    "pre-commit>=3.6.0,<4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/your-org/mlops-cloud-project"
+Repository = "https://github.com/your-org/mlops-cloud-project.git"
+Documentation = "https://your-org.github.io/mlops-cloud-project"
+
+# =================================================================
+# 도구 설정 (Python 3.11 최적화)
+# =================================================================
+
+[tool.black]
+target-version = ['py311']
+line-length = 88
+skip-string-normalization = true
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "C",  # flake8-comprehensions
+    "B",  # flake8-bugbear
+    "UP", # pyupgrade
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+"test_*.py" = ["E501", "F401", "F811"]
+
+[tool.isort]
+profile = "black"
+target_version = "py311"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+line_length = 88
+known_first_party = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+show_error_context = true
+show_column_numbers = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "requests.*",
+    "dotenv",
+    "pytest.*",
+    "setuptools",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "--cov=src",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov-fail-under=80",
+    "--verbose",
+    "--tb=short",
+    "--strict-markers",
+]
+testpaths = ["src", "tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*"]
+markers = [
+    "slow: 느린 테스트 (실제 API 호출 등)",
+    "integration: 통합 테스트",
+    "unit: 단위 테스트",
+    "api: API 관련 테스트",
+]
+
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__init__.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.bandit]
+exclude_dirs = ["tests", "test_*"]
+skips = ["B101", "B601"]
+
+[tool.vulture]
+exclude = ["tests/", "test_*.py"]
+ignore_decorators = ["@app.route", "@require_*"]
+ignore_names = ["setUp", "tearDown", "test_*"]
+make_whitelist = true
+min_confidence = 60
+paths = ["src/"]
+sort_by_size = true

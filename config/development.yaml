@@ -1,0 +1,38 @@
+# 개발 환경 설정
+environment: development
+
+# TMDB API 설정
+tmdb:
+  region: "KR"
+  language: "ko-KR"
+  request_delay: 0.25
+  max_retries: 3
+  timeout: 30
+  batch_size: 20
+
+# 데이터 설정
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  backup_dir: "data/backup"
+  max_file_age_days: 30
+  compression_enabled: true
+
+# 로깅 설정
+logging:
+  level: "INFO"
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+
+# 스케줄링 설정
+scheduler:
+  enabled: true
+  daily_collection_time: "02:00"
+  weekly_collection_day: "sunday"
+  hourly_trending_enabled: true
+
+# 성능 설정
+performance:
+  max_concurrent_requests: 5
+  connection_pool_size: 10
+  retry_backoff_factor: 2
