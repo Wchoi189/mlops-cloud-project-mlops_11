@@ -39,9 +39,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # pip install -r requirements.txt
-          # pip install -r requirements-enhanced.txt
-          pip install -r requirements-resolved.txt # ✅ Exact versions
+          pip install -r requirements-resolved.txt
 
       - name: Validate Docker Compose files
         run: |

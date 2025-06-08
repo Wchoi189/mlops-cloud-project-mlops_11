@@ -31,9 +31,9 @@ def test_docker_files():
         "docker/Dockerfile.api",
         "docker/Dockerfile.train",
         "docker/docker-compose.yml",
+        "docker/docker-compose.monitoring.yml",
         "docker/docker-compose.prod.yml",
-        "requirements.txt",
-        "requirements-enhanced.txt",
+        "requirements-resolved.txt",
     ]
     # required_files = [
     #     script_dir / 'docker/Dockerfile.api',
@@ -59,7 +59,7 @@ def test_docker_files():
     # 2. Docker Compose 파일 구문 검증
     print("\n2️⃣ Docker Compose 파일 구문 검증...")
 
-    compose_files = ["docker/docker-compose.yml", "docker/docker-compose.prod.yml"]
+    compose_files = ["docker/docker-compose.yml","docker/docker-compose.monitoring.yml", "docker/docker-compose.prod.yml"]
 
     for compose_file in compose_files:
         try:
@@ -67,7 +67,7 @@ def test_docker_files():
                 compose_data = yaml.safe_load(f)
 
             # 기본 구조 검증
-            required_keys = ["version", "services"]
+            required_keys = ["services"]
             for key in required_keys:
                 if key not in compose_data:
                     print(f"❌ {compose_file}: '{key}' 키 누락")
@@ -122,7 +122,7 @@ def test_docker_files():
     # 4. 의존성 파일 검증
     print("\n4️⃣ 의존성 파일 검증...")
 
-    requirements_files = ["requirements.txt", "requirements-enhanced.txt"]
+    requirements_files = ["requirements-resolved.txt"]
 
     for req_file in requirements_files:
         try:

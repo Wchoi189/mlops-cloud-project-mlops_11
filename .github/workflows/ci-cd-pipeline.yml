@@ -173,6 +173,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-resolved.txt
 
+      - name: Ensure logs directory exists
+        run: mkdir -p logs
+        
       - name: Create test data
         run: |
           mkdir -p data/processed models logs
@@ -211,6 +214,7 @@ jobs:
           }
           joblib.dump(model_info, 'models/integration_test_model.joblib')
           print('✅ Integration test data created')
+
           "
 
       - name: Build Docker images
