@@ -149,8 +149,8 @@ jobs:
           pip install black pylint bandit safety mypy
           
           # Install additional requirements if available
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt || echo "⚠️ Some optional requirements failed"
+          if [ -f requirements-resolved.txt ]; then
+            pip install -r requirements-resolved.txt || echo "⚠️ Some optional requirements failed"
           fi
           
           echo "✅ Dependencies installed successfully"
@@ -215,8 +215,8 @@ jobs:
           pip install tqdm icecream rich fire
           pip install pytest pytest-cov pytest-mock
           
-          if [ -f requirements.txt ]; then
-            pip install -r requirements.txt || echo "⚠️ Some requirements failed"
+          if [ -f requirements-resolved.txt ]; then
+            pip install -r requirements-resolved.txt || echo "⚠️ Some requirements failed"
           fi
 
       - name: Create test data
