@@ -3,29 +3,30 @@ Enhanced FastAPI application with Prometheus metrics integration
 Monitoring-ready MLOps API with comprehensive observability
 """
 
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Any, Dict, Union
+
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import PlainTextResponse
-from contextlib import asynccontextmanager
-import logging
-import asyncio
-from typing import Dict, Any, Union
-from datetime import datetime
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.responses import JSONResponse, PlainTextResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # Monitoring imports
 try:
     from prometheus_client import (
         CONTENT_TYPE_LATEST,
+        CollectorRegistry,
         generate_latest,
         multiprocess,
-        CollectorRegistry,
     )
+
     from ..monitoring.metrics import (
-        metrics,
         PrometheusMiddleware,
+        metrics,
         metrics_collector,
         update_health_metrics,
     )
@@ -93,7 +94,7 @@ app = FastAPI(
     title="MLOps IMDB Movie Rating Prediction API (Monitoring Edition)",
     description="""
     🎬 IMDB 영화 평점 예측 MLOps API with Comprehensive Monitoring
-    
+
     ## 기능
     - 영화 평점 예측 (Random Forest 모델)
     - 배치 예측 지원
@@ -102,17 +103,17 @@ app = FastAPI(
     - **📊 Prometheus 메트릭스 수집**
     - **🚨 실시간 알림 시스템**
     - **📈 성능 모니터링**
-    
+
     ## 모니터링 엔드포인트
     - `/metrics` - Prometheus 메트릭스
     - `/health` - 상세 헬스 체크
     - `/monitoring/status` - 모니터링 시스템 상태
-    
+
     ## 사용되는 피처
     - startYear: 개봉 연도
     - runtimeMinutes: 상영 시간
     - numVotes: 투표 수
-    
+
     ## 모델 성능
     - RMSE: ~0.69
     - R²: ~0.31
@@ -270,8 +271,9 @@ async def enhanced_health_check():
 
         if HAS_MONITORING:
             try:
-                import psutil
                 import os
+
+                import psutil
 
                 process = psutil.Process(os.getpid())
                 memory_info = process.memory_info()

@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional, List, Dict, Any, Union, Annotated
+from typing import Annotated, Any, Dict, List, Optional, Union
+
+from pydantic import BaseModel, Field
 
 
 class PredictionRequest(BaseModel):

@@ -1,11 +1,12 @@
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from pathlib import Path
-import pickle
 import logging
-from typing import Tuple, List, Dict, Optional
+import pickle
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)

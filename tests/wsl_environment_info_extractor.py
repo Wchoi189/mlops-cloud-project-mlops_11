@@ -1,8 +1,8 @@
-import subprocess
-import platform
-import sys
-import os
 import json
+import os
+import platform
+import subprocess
+import sys
 from pathlib import Path
 
 

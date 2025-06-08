@@ -4,13 +4,13 @@ Section 5 시뮬레이션 테스트 - Docker 없이 구성 검증
 Docker configuration validation without actually running Docker
 """
 
+import json
 import os
 import sys
-import yaml
-import json
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
+import yaml
 
 # 프로젝트 루트를 Python 경로에 추가
 script_dir = Path(__file__).resolve().parent
@@ -209,10 +209,10 @@ def test_docker_files():
         # enhanced.py 임포트 테스트
         # sys.path.append('src')
         from src.utils.enhanced import (
-            EnhancedLogger,
-            display_table,
             HAS_ICECREAM,
             HAS_RICH,
+            EnhancedLogger,
+            display_table,
         )
 
         logger = EnhancedLogger("테스트")
@@ -238,8 +238,8 @@ def test_docker_files():
 
     try:
         # API 모듈 임포트 테스트 (실제 실행 없이)
-        from src.api.main import app
         from src.api.endpoints import router
+        from src.api.main import app
 
         print("✅ API 모듈 임포트 성공")
         print(f"   FastAPI 앱: {type(app)}")

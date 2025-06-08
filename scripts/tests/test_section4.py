@@ -4,14 +4,15 @@ Section 4 (API 서빙 파이프라인) 테스트 스크립트
 API Serving Pipeline Test
 """
 
+import json
 import os
+import subprocess
 import sys
 import time
-import requests
-import json
-import subprocess
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
+import requests
 
 # 프로젝트 루트를 Python 경로에 추가
 project_root = Path(__file__).parent.parent.parent

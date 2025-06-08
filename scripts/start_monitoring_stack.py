@@ -4,14 +4,15 @@ Monitoring Stack Quick Start Script
 One-click deployment for Prometheus + Grafana + AlertManager
 """
 
+import json
 import os
+import subprocess
 import sys
 import time
-import subprocess
-import requests
-import json
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
+import requests
 
 # 프로젝트 루트 설정
 project_root = Path(__file__).parent.parent
@@ -90,6 +91,7 @@ def install_prometheus_client():
 
     try:
         import prometheus_client
+
         from utils.enhanced import get_package_version
 
         prometheus_version = get_package_version("prometheus-client")

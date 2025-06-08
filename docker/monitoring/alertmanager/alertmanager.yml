@@ -1,59 +1,59 @@
 ---
 global:
-  smtp_smarthost: 'localhost:587'
-  smtp_from: 'alerts@mlops-imdb.local'
+  smtp_smarthost: "localhost:587"
+  smtp_from: "alerts@mlops-imdb.local"
   resolve_timeout: 5m
 
 # Email templates
 templates:
-  - '/etc/alertmanager/templates/*.tmpl'
+  - "/etc/alertmanager/templates/*.tmpl"
 
 # Routing rules
 route:
-  group_by: ['alertname', 'service']
+  group_by: ["alertname", "service"]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 12h
-  receiver: 'web.hook'
+  receiver: "web.hook"
   routes:
     # Critical alerts - immediate notification
     - match:
         severity: critical
-      receiver: 'critical-alerts'
+      receiver: "critical-alerts"
       group_wait: 10s
       repeat_interval: 5m
 
     # API-specific alerts
     - match:
         service: api
-      receiver: 'api-team'
+      receiver: "api-team"
       group_interval: 2m
 
     # Model-specific alerts
     - match:
         service: model
-      receiver: 'ml-team'
+      receiver: "ml-team"
 
     # System alerts
     - match:
         service: system
-      receiver: 'devops-team'
+      receiver: "devops-team"
 
 # Alert receivers
 receivers:
   # Default webhook (for development)
-  - name: 'web.hook'
+  - name: "web.hook"
     webhook_configs:
-      - url: 'http://host.docker.internal:8001/alertmanager-webhook'
+      - url: "http://host.docker.internal:8001/alertmanager-webhook"
         send_resolved: true
 
   # Critical alerts - multiple channels
-  - name: 'critical-alerts'
+  - name: "critical-alerts"
     slack_configs:
-      - api_url: 'https://hooks.slack.com/services/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'
-        channel: '#mlops-critical'
-        title: '🚨 Critical MLOps Alert'
-        icon_emoji: ':fire:'  # For critical alerts
+      - api_url: "https://hooks.slack.com/services/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"
+        channel: "#mlops-critical"
+        title: "🚨 Critical MLOps Alert"
+        icon_emoji: ":fire:" # For critical alerts
         text: |
           {{ range .Alerts }}
           **Alert:** {{ .Annotations.summary }}
@@ -64,11 +64,11 @@ receivers:
         send_resolved: true
 
   # API team notifications
-  - name: 'api-team'
+  - name: "api-team"
     slack_configs:
-      - api_url: 'https://hooks.slack.com/services/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'
-        channel: '#api-alerts'
-        title: '🔧 API Alert'
+      - api_url: "https://hooks.slack.com/services/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"
+        channel: "#api-alerts"
+        title: "🔧 API Alert"
         text: |
           {{ range .Alerts }}
           **Alert:** {{ .Annotations.summary }}
@@ -77,11 +77,11 @@ receivers:
           {{ end }}
 
   # ML team notifications
-  - name: 'ml-team'
+  - name: "ml-team"
     slack_configs:
-      - api_url: 'https://hooks.slack.com/services/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'
-        channel: '#ml-alerts'
-        title: '🤖 Model Alert'
+      - api_url: "https://hooks.slack.com/services/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"
+        channel: "#ml-alerts"
+        title: "🤖 Model Alert"
         text: |
           {{ range .Alerts }}
           **Model Alert:** {{ .Annotations.summary }}
@@ -89,11 +89,11 @@ receivers:
           {{ end }}
 
   # DevOps team notifications
-  - name: 'devops-team'
+  - name: "devops-team"
     slack_configs:
-      - api_url: 'https://hooks.slack.com/services/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'
-        channel: '#infrastructure'
-        title: '🖥️ System Alert'
+      - api_url: "https://hooks.slack.com/services/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"
+        channel: "#infrastructure"
+        title: "🖥️ System Alert"
         text: |
           {{ range .Alerts }}
           **System Alert:** {{ .Annotations.summary }}
@@ -105,13 +105,13 @@ receivers:
 inhibit_rules:
   # Inhibit warning if critical alert is firing
   - source_match:
-      severity: 'critical'
+      severity: "critical"
     target_match:
-      severity: 'warning'
-    equal: ['alertname', 'service']
+      severity: "warning"
+    equal: ["alertname", "service"]
 
   # Inhibit API alerts if API is down
   - source_match:
-      alertname: 'MLOpsAPIDown'
+      alertname: "MLOpsAPIDown"
     target_match_re:
-      alertname: 'API.*'
+      alertname: "API.*"

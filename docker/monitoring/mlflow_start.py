@@ -3,24 +3,30 @@
 MLflow server with integrated Prometheus metrics
 """
 
+import logging
+import os
+import subprocess
+import sys
+import threading
+import time
+from pathlib import Path
+
 import mlflow
 from mlflow.tracking import MlflowClient
-import os
-import sys
-import subprocess
-import time
-import logging
-import threading
-from pathlib import Path
-from prometheus_client import start_http_server, Gauge, Counter, Info
-
+from prometheus_client import Counter, Gauge, Info, start_http_server
 
 # Prometheus imports
 try:
-    from prometheus_client import start_http_server, Gauge, Counter, Histogram
-    from prometheus_client import multiprocess
-    from prometheus_client import generate_latest
-    from prometheus_client import CollectorRegistry, CONTENT_TYPE_LATEST
+    from prometheus_client import (
+        CONTENT_TYPE_LATEST,
+        CollectorRegistry,
+        Counter,
+        Gauge,
+        Histogram,
+        generate_latest,
+        multiprocess,
+        start_http_server,
+    )
 
     PROMETHEUS_AVAILABLE = True
 except ImportError:

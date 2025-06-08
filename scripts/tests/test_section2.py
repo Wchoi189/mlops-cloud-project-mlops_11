@@ -4,8 +4,8 @@ Section 2 (데이터 전처리 파이프라인 구현) 테스트 스크립트
 Data Preprocessing Pipeline Test
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # 프로젝트 루트를 Python 경로에 추가

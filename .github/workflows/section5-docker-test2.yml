@@ -4,277 +4,277 @@ name: Section 5 - Docker Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
-      - 'docker/**'
-      - 'src/**'
-      - 'requirements*.txt'
+      - "docker/**"
+      - "src/**"
+      - "requirements*.txt"
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
-      - 'docker/**'
-      - 'src/**'
-  workflow_dispatch:  # Allow manual triggering
+      - "docker/**"
+      - "src/**"
+  workflow_dispatch: # Allow manual triggering
 
 env:
-  PYTHON_VERSION: '3.11'
+  PYTHON_VERSION: "3.11"
 
 jobs:
   docker-test:
     name: 🐳 Docker Build & Test
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Create test data and models
-      run: |
-        mkdir -p data/processed models logs
-        python -c "
-        import pandas as pd
-        import numpy as np
-        import joblib
-        from sklearn.ensemble import RandomForestRegressor
-        
-        # Create test dataset
-        np.random.seed(42)
-        n_movies = 1000
-        df = pd.DataFrame({
-            'tconst': [f'tt{i:07d}' for i in range(n_movies)],
-            'primaryTitle': [f'Movie {i}' for i in range(n_movies)],
-            'startYear': np.random.randint(1990, 2024, n_movies),
-            'runtimeMinutes': np.random.randint(80, 180, n_movies),
-            'numVotes': np.random.randint(100, 100000, n_movies),
-            'averageRating': np.random.uniform(1.0, 10.0, n_movies),
-            'genres': ['Drama,Action'] * n_movies
-        })
-        df.to_csv('data/processed/movies_with_ratings.csv', index=False)
-        
-        # Create test model
-        model = RandomForestRegressor(n_estimators=10, random_state=42)
-        X_dummy = np.random.random((100, 3))
-        y_dummy = np.random.random(100) * 9 + 1
-        model.fit(X_dummy, y_dummy)
-        
-        model_info = {
-            'model': model,
-            'feature_names': ['startYear', 'runtimeMinutes', 'numVotes'],
-            'model_type': 'RandomForestRegressor',
-            'timestamp': '20250601_120000'
-        }
-        joblib.dump(model_info, 'models/docker_test_model.joblib')
-        print('✅ Test data and model created')
-        "
-    
-    - name: Build API Docker image
-      run: |
-        echo "🔨 Building API Docker image..."
-        docker build -f docker/Dockerfile.api -t mlops-api:test .
-    
-    - name: Build Trainer Docker image
-      run: |
-        echo "🔨 Building Trainer Docker image..."
-        docker build -f docker/Dockerfile.train -t mlops-trainer:test .
-    
-    - name: Test Docker images
-      run: |
-        echo "🧪 Testing Docker images..."
-        
-        # Test API image
-        echo "Testing API image..."
-        docker run --rm mlops-api:test python -c "
-        import src.api.main
-        print('✅ API image works')
-        "
-        
-        # Test Trainer image  
-        echo "Testing Trainer image..."
-        docker run --rm mlops-trainer:test python -c "
-        import src.models.trainer
-        print('✅ Trainer image works')
-        "
-    
-    - name: Start Docker Compose stack
-      run: |
-        echo "🚀 Starting Docker Compose stack..."
-        cd docker
-        
-        # Start services
-        docker compose up -d
-        
-        # Wait for services to be ready
-        echo "⏳ Waiting for services to be ready..."
-        sleep 30
-        
-        # Check service status
-        docker compose ps
-    
-    - name: Test API endpoints
-      run: |
-        echo "🔍 Testing API endpoints..."
-        
-        # Test health endpoint
-        curl -f http://localhost:8000/health || {
-          echo "❌ Health endpoint failed"
-          docker compose -C docker logs api
-          exit 1
-        }
-        echo "✅ Health endpoint working"
-        
-        # Test MLflow
-        curl -f http://localhost:5000/health || {
-          echo "❌ MLflow endpoint failed"
-          docker compose -C docker logs mlflow
-          exit 1
-        }
-        echo "✅ MLflow endpoint working"
-        
-        # Test movie prediction
-        curl -X POST "http://localhost:8000/predict/movie" \
-             -H "Content-Type: application/json" \
-             -d '{"title":"Docker Test","startYear":2020,"runtimeMinutes":120,"numVotes":5000}' || {
-          echo "❌ Movie prediction failed"
-          docker compose -C docker logs api
-          exit 1
-        }
-        echo "✅ Movie prediction working"
-    
-    - name: Cleanup
-      if: always()
-      run: |
-        echo "🧹 Cleaning up..."
-        cd docker
-        docker compose down --volumes --remove-orphans
-        docker image prune -f
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Create test data and models
+        run: |
+          mkdir -p data/processed models logs
+          python -c "
+          import pandas as pd
+          import numpy as np
+          import joblib
+          from sklearn.ensemble import RandomForestRegressor
+
+          # Create test dataset
+          np.random.seed(42)
+          n_movies = 1000
+          df = pd.DataFrame({
+              'tconst': [f'tt{i:07d}' for i in range(n_movies)],
+              'primaryTitle': [f'Movie {i}' for i in range(n_movies)],
+              'startYear': np.random.randint(1990, 2024, n_movies),
+              'runtimeMinutes': np.random.randint(80, 180, n_movies),
+              'numVotes': np.random.randint(100, 100000, n_movies),
+              'averageRating': np.random.uniform(1.0, 10.0, n_movies),
+              'genres': ['Drama,Action'] * n_movies
+          })
+          df.to_csv('data/processed/movies_with_ratings.csv', index=False)
+
+          # Create test model
+          model = RandomForestRegressor(n_estimators=10, random_state=42)
+          X_dummy = np.random.random((100, 3))
+          y_dummy = np.random.random(100) * 9 + 1
+          model.fit(X_dummy, y_dummy)
+
+          model_info = {
+              'model': model,
+              'feature_names': ['startYear', 'runtimeMinutes', 'numVotes'],
+              'model_type': 'RandomForestRegressor',
+              'timestamp': '20250601_120000'
+          }
+          joblib.dump(model_info, 'models/docker_test_model.joblib')
+          print('✅ Test data and model created')
+          "
+
+      - name: Build API Docker image
+        run: |
+          echo "🔨 Building API Docker image..."
+          docker build -f docker/Dockerfile.api -t mlops-api:test .
+
+      - name: Build Trainer Docker image
+        run: |
+          echo "🔨 Building Trainer Docker image..."
+          docker build -f docker/Dockerfile.train -t mlops-trainer:test .
+
+      - name: Test Docker images
+        run: |
+          echo "🧪 Testing Docker images..."
+
+          # Test API image
+          echo "Testing API image..."
+          docker run --rm mlops-api:test python -c "
+          import src.api.main
+          print('✅ API image works')
+          "
+
+          # Test Trainer image
+          echo "Testing Trainer image..."
+          docker run --rm mlops-trainer:test python -c "
+          import src.models.trainer
+          print('✅ Trainer image works')
+          "
+
+      - name: Start Docker Compose stack
+        run: |
+          echo "🚀 Starting Docker Compose stack..."
+          cd docker
+
+          # Start services
+          docker compose up -d
+
+          # Wait for services to be ready
+          echo "⏳ Waiting for services to be ready..."
+          sleep 30
+
+          # Check service status
+          docker compose ps
+
+      - name: Test API endpoints
+        run: |
+          echo "🔍 Testing API endpoints..."
+
+          # Test health endpoint
+          curl -f http://localhost:8000/health || {
+            echo "❌ Health endpoint failed"
+            docker compose -C docker logs api
+            exit 1
+          }
+          echo "✅ Health endpoint working"
+
+          # Test MLflow
+          curl -f http://localhost:5000/health || {
+            echo "❌ MLflow endpoint failed"
+            docker compose -C docker logs mlflow
+            exit 1
+          }
+          echo "✅ MLflow endpoint working"
+
+          # Test movie prediction
+          curl -X POST "http://localhost:8000/predict/movie" \
+               -H "Content-Type: application/json" \
+               -d '{"title":"Docker Test","startYear":2020,"runtimeMinutes":120,"numVotes":5000}' || {
+            echo "❌ Movie prediction failed"
+            docker compose -C docker logs api
+            exit 1
+          }
+          echo "✅ Movie prediction working"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "🧹 Cleaning up..."
+          cd docker
+          docker compose down --volumes --remove-orphans
+          docker image prune -f
 
   monitoring-integration:
     name: 📊 Monitoring Integration Test
     runs-on: ubuntu-latest
     needs: docker-test
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Create test data
-      run: |
-        mkdir -p data/processed models logs
-        python -c "
-        import pandas as pd
-        import numpy as np
-        import joblib
-        from sklearn.ensemble import RandomForestRegressor
-        
-        # Create test dataset
-        np.random.seed(42)
-        df = pd.DataFrame({
-            'tconst': ['tt0000001'] * 100,
-            'primaryTitle': ['Test Movie'] * 100,
-            'startYear': [2020] * 100,
-            'runtimeMinutes': [120] * 100,
-            'numVotes': [5000] * 100,
-            'averageRating': np.random.uniform(1.0, 10.0, 100),
-            'genres': ['Drama'] * 100
-        })
-        df.to_csv('data/processed/movies_with_ratings.csv', index=False)
-        
-        # Create test model
-        model = RandomForestRegressor(n_estimators=5, random_state=42)
-        X = np.random.random((50, 3))
-        y = np.random.random(50) * 9 + 1
-        model.fit(X, y)
-        
-        model_info = {
-            'model': model,
-            'feature_names': ['startYear', 'runtimeMinutes', 'numVotes'],
-            'model_type': 'RandomForestRegressor',
-            'timestamp': '20250601_120000'
-        }
-        joblib.dump(model_info, 'models/monitoring_test_model.joblib')
-        "
-    
-    - name: Test monitoring stack
-      run: |
-        echo "📊 Testing monitoring integration..."
-        
-        # Start monitoring stack
-        cd docker
-        docker compose -f docker-compose.monitoring.yml up -d
-        
-        # Wait for services
-        echo "⏳ Waiting for monitoring services..."
-        sleep 60
-        
-        # Check Prometheus
-        curl -f http://localhost:9090/-/ready || {
-          echo "❌ Prometheus not ready"
-          docker compose -f docker-compose.monitoring.yml logs prometheus
-          exit 1
-        }
-        echo "✅ Prometheus ready"
-        
-        # Check Grafana
-        curl -f http://localhost:3000/api/health || {
-          echo "❌ Grafana not ready" 
-          docker compose -f docker-compose.monitoring.yml logs grafana
-          exit 1
-        }
-        echo "✅ Grafana ready"
-        
-        # Check AlertManager
-        curl -f http://localhost:9093/-/ready || {
-          echo "❌ AlertManager not ready"
-          docker compose -f docker-compose.monitoring.yml logs alertmanager
-          exit 1
-        }
-        echo "✅ AlertManager ready"
-        
-        # Test API metrics endpoint (if API is running)
-        if curl -f http://localhost:8000/metrics 2>/dev/null; then
-          echo "✅ API metrics endpoint working"
-        else
-          echo "ℹ️ API metrics endpoint not available (API not running)"
-        fi
-    
-    - name: Cleanup monitoring stack
-      if: always()
-      run: |
-        echo "🧹 Cleaning up monitoring stack..."
-        cd docker
-        docker compose -f docker-compose.monitoring.yml down --volumes --remove-orphans
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create test data
+        run: |
+          mkdir -p data/processed models logs
+          python -c "
+          import pandas as pd
+          import numpy as np
+          import joblib
+          from sklearn.ensemble import RandomForestRegressor
+
+          # Create test dataset
+          np.random.seed(42)
+          df = pd.DataFrame({
+              'tconst': ['tt0000001'] * 100,
+              'primaryTitle': ['Test Movie'] * 100,
+              'startYear': [2020] * 100,
+              'runtimeMinutes': [120] * 100,
+              'numVotes': [5000] * 100,
+              'averageRating': np.random.uniform(1.0, 10.0, 100),
+              'genres': ['Drama'] * 100
+          })
+          df.to_csv('data/processed/movies_with_ratings.csv', index=False)
+
+          # Create test model
+          model = RandomForestRegressor(n_estimators=5, random_state=42)
+          X = np.random.random((50, 3))
+          y = np.random.random(50) * 9 + 1
+          model.fit(X, y)
+
+          model_info = {
+              'model': model,
+              'feature_names': ['startYear', 'runtimeMinutes', 'numVotes'],
+              'model_type': 'RandomForestRegressor',
+              'timestamp': '20250601_120000'
+          }
+          joblib.dump(model_info, 'models/monitoring_test_model.joblib')
+          "
+
+      - name: Test monitoring stack
+        run: |
+          echo "📊 Testing monitoring integration..."
+
+          # Start monitoring stack
+          cd docker
+          docker compose -f docker-compose.monitoring.yml up -d
+
+          # Wait for services
+          echo "⏳ Waiting for monitoring services..."
+          sleep 60
+
+          # Check Prometheus
+          curl -f http://localhost:9090/-/ready || {
+            echo "❌ Prometheus not ready"
+            docker compose -f docker-compose.monitoring.yml logs prometheus
+            exit 1
+          }
+          echo "✅ Prometheus ready"
+
+          # Check Grafana
+          curl -f http://localhost:3000/api/health || {
+            echo "❌ Grafana not ready"
+            docker compose -f docker-compose.monitoring.yml logs grafana
+            exit 1
+          }
+          echo "✅ Grafana ready"
+
+          # Check AlertManager
+          curl -f http://localhost:9093/-/ready || {
+            echo "❌ AlertManager not ready"
+            docker compose -f docker-compose.monitoring.yml logs alertmanager
+            exit 1
+          }
+          echo "✅ AlertManager ready"
+
+          # Test API metrics endpoint (if API is running)
+          if curl -f http://localhost:8000/metrics 2>/dev/null; then
+            echo "✅ API metrics endpoint working"
+          else
+            echo "ℹ️ API metrics endpoint not available (API not running)"
+          fi
+
+      - name: Cleanup monitoring stack
+        if: always()
+        run: |
+          echo "🧹 Cleaning up monitoring stack..."
+          cd docker
+          docker compose -f docker-compose.monitoring.yml down --volumes --remove-orphans
 
   summary:
     name: 📋 Test Summary
     runs-on: ubuntu-latest
     needs: [docker-test, monitoring-integration]
     if: always()
-    
+
     steps:
-    - name: Test Results Summary
-      run: |
-        echo "📋 Section 5 Docker Test Results"
-        echo "================================"
-        
-        docker_status="${{ needs.docker-test.result }}"
-        monitoring_status="${{ needs.monitoring-integration.result }}"
-        
-        echo "🐳 Docker Build & Test: $docker_status"
-        echo "📊 Monitoring Integration: $monitoring_status"
-        
-        if [[ "$docker_status" == "success" && "$monitoring_status" == "success" ]]; then
-          echo ""
-          echo "🎉 All Section 5 tests passed!"
-          echo "✅ Docker containerization working"
-          echo "✅ Monitoring integration working"
-          echo "✅ Ready for Section 6.2 CI/CD Pipeline"
-        else
-          echo ""
-          echo "❌ Some tests failed. Please check the logs."
-          exit 1
-        fi
+      - name: Test Results Summary
+        run: |
+          echo "📋 Section 5 Docker Test Results"
+          echo "================================"
+
+          docker_status="${{ needs.docker-test.result }}"
+          monitoring_status="${{ needs.monitoring-integration.result }}"
+
+          echo "🐳 Docker Build & Test: $docker_status"
+          echo "📊 Monitoring Integration: $monitoring_status"
+
+          if [[ "$docker_status" == "success" && "$monitoring_status" == "success" ]]; then
+            echo ""
+            echo "🎉 All Section 5 tests passed!"
+            echo "✅ Docker containerization working"
+            echo "✅ Monitoring integration working"
+            echo "✅ Ready for Section 6.2 CI/CD Pipeline"
+          else
+            echo ""
+            echo "❌ Some tests failed. Please check the logs."
+            exit 1
+          fi

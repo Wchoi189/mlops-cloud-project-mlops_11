@@ -3,8 +3,9 @@
 현재 처리된 데이터의 컬럼 구조 확인
 """
 
-import pandas as pd
 import os
+
+import pandas as pd
 
 
 def check_data_structure():

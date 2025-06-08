@@ -1,7 +1,8 @@
 import os
-import yaml
-from typing import Dict, Any
 from pathlib import Path
+from typing import Any, Dict
+
+import yaml
 
 
 class Config:

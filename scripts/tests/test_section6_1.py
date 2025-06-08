@@ -4,15 +4,16 @@ Section 6.1 (Monitoring & Observability) 테스트 스크립트
 Monitoring Stack Testing Script
 """
 
+import json
 import os
+import subprocess
 import sys
 import time
-import requests
-import json
-import subprocess
-import yaml
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import requests
+import yaml
 
 # 프로젝트 루트를 Python 경로에 추가
 project_root = Path(__file__).parent.parent.parent
@@ -264,8 +265,8 @@ def test_section61():
 
     try:
         # Enhanced API 모듈 import
-        from src.api.main_with_metrics import app as monitoring_app
         from src.api.endpoints_with_metrics import router as monitoring_router
+        from src.api.main_with_metrics import app as monitoring_app
 
         print("✅ 모니터링 API 모듈 import 성공")
 

@@ -21,10 +21,10 @@ cd docker && docker-compose up -d
 
 | 서비스 | URL | 설명 |
 |---------|-----|-------------|
-| **API** | http://localhost:8000 | FastAPI 서비스 |
-| **API 문서** | http://localhost:8000/docs | Swagger 문서 |
-| **상태 확인** | http://localhost:8000/health | 헬스 체크 |
-| **MLflow** | http://localhost:5000 | 실험 추적 UI |
+| **API** | <http://localhost:8000> | FastAPI 서비스 |
+| **API 문서** | <http://localhost:8000/docs> | Swagger 문서 |
+| **상태 확인** | <http://localhost:8000/health> | 헬스 체크 |
+| **MLflow** | <http://localhost:5000> | 실험 추적 UI |
 
 ## 🎨 향상된 라이브러리 데모
 
@@ -45,11 +45,12 @@ python src/models/enhanced_trainer.py
 ## 🔧 필수 명령어
 
 ### Docker 관리
+
 ```bash
 # 시작
 docker-compose up -d
 
-# 중지  
+# 중지
 docker-compose down
 
 # 로그
@@ -63,6 +64,7 @@ docker-compose down --volumes --remove-orphans
 ```
 
 ### 향상된 Makefile
+
 ```bash
 make -f Makefile.docker docker-run      # 서비스 시작
 make -f Makefile.docker docker-logs     # 로그 보기
@@ -112,8 +114,8 @@ pip install -r requirements-enhanced.txt
 
 - [ ] Docker 이미지가 성공적으로 빌드됨
 - [ ] `docker-compose up -d`로 서비스 시작됨
-- [ ] API가 http://localhost:8000/health 에서 응답함
-- [ ] MLflow UI가 http://localhost:5000 에서 접근 가능함
+- [ ] API가 <http://localhost:8000/health> 에서 응답함
+- [ ] MLflow UI가 <http://localhost:5000> 에서 접근 가능함
 - [ ] 영화 예측 API가 작동함
 - [ ] 향상된 CLI 명령어가 작동함
 - [ ] 모든 테스트 통과: `python scripts/tests/test_section5.py`

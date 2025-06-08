@@ -1,11 +1,12 @@
-from pyexpat import model
+import logging
+from contextlib import asynccontextmanager
+from datetime import datetime
+from typing import Any, Dict
+
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-import logging
-from typing import Dict, Any
-from datetime import datetime
 from fastapi.responses import JSONResponse
+from pyexpat import model
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 # 로깅 설정
@@ -42,18 +43,18 @@ app = FastAPI(
     title="MLOps IMDB Movie Rating Prediction API",
     description="""
     🎬 IMDB 영화 평점 예측 MLOps API
-    
+
     ## 기능
     - 영화 평점 예측 (Random Forest 모델)
     - 배치 예측 지원
     - 모델 정보 조회
     - 헬스 체크
-    
+
     ## 사용되는 피처
     - startYear: 개봉 연도
     - runtimeMinutes: 상영 시간
     - numVotes: 투표 수
-    
+
     ## 모델 성능
     - RMSE: ~0.69
     - R²: ~0.31

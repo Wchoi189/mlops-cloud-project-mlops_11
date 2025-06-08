@@ -3,12 +3,12 @@ Enhanced utilities with icecream, tqdm, fire, and rich
 Better debugging, progress tracking, and CLI interfaces
 """
 
+import importlib
 import os
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
-import importlib
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 # Force reload of logging module if there's a conflict
 if "logging" in sys.modules:
@@ -17,7 +17,8 @@ import logging
 
 # Enhanced libraries
 try:
-    from icecream import ic, install as ic_install
+    from icecream import ic
+    from icecream import install as ic_install
 
     HAS_ICECREAM = True
     # Setup icecream for better debugging
@@ -56,17 +57,17 @@ except ImportError:
     HAS_FIRE = False
 
 try:
+    from rich import print as rprint
     from rich.console import Console
+    from rich.panel import Panel
     from rich.progress import (
+        BarColumn,
         Progress,
         SpinnerColumn,
-        TextColumn,
-        BarColumn,
         TaskProgressColumn,
+        TextColumn,
     )
     from rich.table import Table
-    from rich.panel import Panel
-    from rich import print as rprint
 
     HAS_RICH = True
     console = Console()
@@ -142,14 +143,14 @@ class ProgressTracker:
         """Rich progress context manager"""
         if self.use_rich and HAS_RICH:
             # Only use Progress when Rich is available
+            from rich.console import Console
             from rich.progress import (
+                BarColumn,
                 Progress,
                 SpinnerColumn,
-                TextColumn,
-                BarColumn,
                 TaskProgressColumn,
+                TextColumn,
             )
-            from rich.console import Console
 
             if isinstance(console, Console):
                 return Progress(

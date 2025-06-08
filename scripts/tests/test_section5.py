@@ -4,14 +4,15 @@ Section 5 (Docker 컨테이너화) 테스트 스크립트
 Docker Containerization Test
 """
 
+import json
 import os
+import subprocess
 import sys
 import time
-import subprocess
-import requests
-import json
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import requests
 
 # 프로젝트 루트를 Python 경로에 추가
 project_root = Path(__file__).parent.parent.parent

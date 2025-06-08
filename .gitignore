@@ -93,3 +93,13 @@ tmp/
 credentials.json
 secrets.yaml
 config/secrets/
+
+.github/workflows/deploy.yml
+.pre-commit-config.yaml
+docker/scripts/
+node_modules/
+docker/debug.sh
+requirements-enhanced-full.txt
+requirements-minimal.txt
+section5_simulation_test_report.json
+tests/*

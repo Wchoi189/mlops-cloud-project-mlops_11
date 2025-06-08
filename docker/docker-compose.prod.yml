@@ -7,7 +7,7 @@ services:
   # MLflow 추적 서버 - 모델 버전 관리 및 실험 추적
   mlflow:
     build:
-      context: ..                           # 프로젝트 루트 디렉토리
+      context: .. # 프로젝트 루트 디렉토리
       dockerfile: docker/Dockerfile.mlflow
     image: mlops-mlflow:latest
     container_name: mlops-mlflow-prod
@@ -15,8 +15,8 @@ services:
       - "${MLFLOW_PORT:-5000}:5000"
       - "${MLFLOW_METRICS_PORT:-9091}:9090"
     volumes:
-      - ./mlruns:/mlruns                    # MLflow 실행 기록 저장
-      - ./mlartifacts:/mlartifacts          # 모델 아티팩트 저장
+      - ./mlruns:/mlruns # MLflow 실행 기록 저장
+      - ./mlartifacts:/mlartifacts # 모델 아티팩트 저장
       - prometheus_multiproc:/tmp/prometheus_multiproc
     environment:
       - MLFLOW_BACKEND_STORE_URI=${MLFLOW_BACKEND_STORE_URI:-sqlite:////mlruns/mlflow.db}
@@ -25,7 +25,7 @@ services:
       - MLFLOW_HOST=${MLFLOW_HOST:-0.0.0.0}
       - MLFLOW_PORT=${MLFLOW_PORT:-5000}
     env_file:
-      - production.env                      # 프로덕션 환경 변수 파일
+      - production.env # 프로덕션 환경 변수 파일
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
@@ -37,17 +37,17 @@ services:
       resources:
         limits:
           memory: ${MLFLOW_MEMORY_LIMIT:-1G}
-          cpus: '${MLFLOW_CPU_LIMIT:-1.0}'
+          cpus: "${MLFLOW_CPU_LIMIT:-1.0}"
         reservations:
           memory: ${MLFLOW_MEMORY_RESERVATION:-512M}
-          cpus: '${MLFLOW_CPU_RESERVATION:-0.5}'
+          cpus: "${MLFLOW_CPU_RESERVATION:-0.5}"
     networks:
       - mlops-network-prod
 
   # API 서비스 - 모델 추론 및 예측 서비스
   api:
     build:
-      context: ..                           # 프로젝트 루트 디렉토리
+      context: .. # 프로젝트 루트 디렉토리
       dockerfile: docker/Dockerfile.api
     container_name: mlops-api-prod
     ports:
@@ -56,21 +56,21 @@ services:
       - MLFLOW_TRACKING_URI=${MLFLOW_TRACKING_URI:-http://mlflow:5000}
       - MODEL_PATH=${MODEL_PATH:-/app/models}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - DEBUG=${DEBUG:-false}               # 프로덕션에서는 디버그 모드 비활성화
-      - WORKERS=${API_WORKERS:-4}           # API 워커 프로세스 수
-      - MAX_WORKERS=${API_MAX_WORKERS:-8}   # 최대 워커 수
+      - DEBUG=${DEBUG:-false} # 프로덕션에서는 디버그 모드 비활성화
+      - WORKERS=${API_WORKERS:-4} # API 워커 프로세스 수
+      - MAX_WORKERS=${API_MAX_WORKERS:-8} # 최대 워커 수
       - PROMETHEUS_MULTIPROC_DIR=${PROMETHEUS_MULTIPROC_DIR:-/tmp/prometheus_multiproc}
       - PYTHONPATH=${PYTHONPATH:-/app}
       - ENABLE_MONITORING=${ENABLE_MONITORING:-true}
     env_file:
-      - production.env                      # 프로덕션 환경 변수 파일
+      - production.env # 프로덕션 환경 변수 파일
     depends_on:
       mlflow:
         condition: service_healthy
     volumes:
-      - ../models:/app/models:ro            # 모델 파일 (읽기 전용)
-      - ../logs:/app/logs                   # 로그 파일
-      - ../data:/app/data:ro                # 데이터 파일 (읽기 전용)
+      - ../models:/app/models:ro # 모델 파일 (읽기 전용)
+      - ../logs:/app/logs # 로그 파일
+      - ../data:/app/data:ro # 데이터 파일 (읽기 전용)
       - prometheus_multiproc:/tmp/prometheus_multiproc
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -83,10 +83,10 @@ services:
       resources:
         limits:
           memory: ${API_MEMORY_LIMIT:-2G}
-          cpus: '${API_CPU_LIMIT:-2.0}'
+          cpus: "${API_CPU_LIMIT:-2.0}"
         reservations:
           memory: ${API_MEMORY_RESERVATION:-1G}
-          cpus: '${API_CPU_RESERVATION:-1.0}'
+          cpus: "${API_CPU_RESERVATION:-1.0}"
     networks:
       - mlops-network-prod
 
@@ -99,30 +99,30 @@ services:
       - "${NGINX_HTTPS_PORT:-443}:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro       # SSL 인증서
+      - ./nginx/ssl:/etc/nginx/ssl:ro # SSL 인증서
     environment:
       - NGINX_HOST=${NGINX_HOST:-localhost}
       - NGINX_PORT=${NGINX_PORT:-80}
       - API_UPSTREAM=${API_UPSTREAM:-api:8000}
     env_file:
-      - production.env                      # 프로덕션 환경 변수 파일
+      - production.env # 프로덕션 환경 변수 파일
     depends_on:
       - api
     restart: unless-stopped
     profiles:
-      - production                          # 프로덕션 프로파일에서만 실행
+      - production # 프로덕션 프로파일에서만 실행
     deploy:
       resources:
         limits:
           memory: ${NGINX_MEMORY_LIMIT:-256M}
-          cpus: '${NGINX_CPU_LIMIT:-0.5}'
+          cpus: "${NGINX_CPU_LIMIT:-0.5}"
     networks:
       - mlops-network-prod
 
   # 훈련 서비스 - 모델 학습 및 재훈련 (배치 작업)
   trainer:
     build:
-      context: ..                           # 프로젝트 루트 디렉토리
+      context: .. # 프로젝트 루트 디렉토리
       dockerfile: docker/Dockerfile.train
     container_name: mlops-trainer-prod
     environment:
@@ -130,30 +130,30 @@ services:
       - MODEL_PATH=${MODEL_PATH:-/app/models}
       - DATA_PATH=${DATA_PATH:-/app/data}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
-      - DEBUG=${DEBUG:-false}               # 프로덕션에서는 디버그 모드 비활성화
+      - DEBUG=${DEBUG:-false} # 프로덕션에서는 디버그 모드 비활성화
       - TRAINING_BATCH_SIZE=${TRAINING_BATCH_SIZE:-32}
       - TRAINING_EPOCHS=${TRAINING_EPOCHS:-10}
       - MODEL_VERSION=${MODEL_VERSION:-latest}
     env_file:
-      - production.env                      # 프로덕션 환경 변수 파일
+      - production.env # 프로덕션 환경 변수 파일
     depends_on:
       mlflow:
         condition: service_healthy
     volumes:
-      - ../models:/app/models               # 모델 저장 (읽기/쓰기)
-      - ../data:/app/data                   # 훈련 데이터
-      - ../logs:/app/logs                   # 훈련 로그
+      - ../models:/app/models # 모델 저장 (읽기/쓰기)
+      - ../data:/app/data # 훈련 데이터
+      - ../logs:/app/logs # 훈련 로그
     profiles:
-      - training                            # 훈련 프로파일에서만 실행
-    restart: "no"                          # 배치 작업이므로 재시작 안함
+      - training # 훈련 프로파일에서만 실행
+    restart: "no" # 배치 작업이므로 재시작 안함
     deploy:
       resources:
         limits:
           memory: ${TRAINER_MEMORY_LIMIT:-4G}
-          cpus: '${TRAINER_CPU_LIMIT:-4.0}'
+          cpus: "${TRAINER_CPU_LIMIT:-4.0}"
         reservations:
           memory: ${TRAINER_MEMORY_RESERVATION:-2G}
-          cpus: '${TRAINER_CPU_RESERVATION:-2.0}'
+          cpus: "${TRAINER_CPU_RESERVATION:-2.0}"
     networks:
       - mlops-network-prod
 
@@ -167,28 +167,28 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./monitoring/rules:/etc/prometheus/rules:ro
 
-      - prometheus-storage:/prometheus      # 메트릭 데이터 영구 저장
+      - prometheus-storage:/prometheus # 메트릭 데이터 영구 저장
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
-      - '--web.enable-admin-api'
-      - '--web.external-url=http://${PROMETHEUS_EXTERNAL_HOST:-localhost}:${PROMETHEUS_PORT:-9090}'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+      - "--web.external-url=http://${PROMETHEUS_EXTERNAL_HOST:-localhost}:${PROMETHEUS_PORT:-9090}"
     environment:
       - PROMETHEUS_RETENTION=${PROMETHEUS_RETENTION:-15d}
     env_file:
-      - production.env                      # 프로덕션 환경 변수 파일
+      - production.env # 프로덕션 환경 변수 파일
     profiles:
-      - monitoring                          # 모니터링 프로파일에서만 실행
+      - monitoring # 모니터링 프로파일에서만 실행
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: ${PROMETHEUS_MEMORY_LIMIT:-2G}
-          cpus: '${PROMETHEUS_CPU_LIMIT:-1.0}'
+          cpus: "${PROMETHEUS_CPU_LIMIT:-1.0}"
     networks:
       - mlops-network-prod
 
@@ -208,24 +208,24 @@ services:
       - GF_DATABASE_TYPE=${GRAFANA_DB_TYPE:-sqlite3}
       - GF_DATABASE_PATH=${GRAFANA_DB_PATH:-/var/lib/grafana/grafana.db}
     env_file:
-      - production.env                      # 프로덕션 환경 변수 파일
+      - production.env # 프로덕션 환경 변수 파일
     volumes:
-      - grafana-storage:/var/lib/grafana    # Grafana 데이터 영구 저장
+      - grafana-storage:/var/lib/grafana # Grafana 데이터 영구 저장
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
     depends_on:
-      - prometheus                          # Prometheus 의존성
+      - prometheus # Prometheus 의존성
     profiles:
-      - monitoring                          # 모니터링 프로파일에서만 실행
+      - monitoring # 모니터링 프로파일에서만 실행
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: ${GRAFANA_MEMORY_LIMIT:-1G}
-          cpus: '${GRAFANA_CPU_LIMIT:-1.0}'
+          cpus: "${GRAFANA_CPU_LIMIT:-1.0}"
         reservations:
           memory: ${GRAFANA_MEMORY_RESERVATION:-512M}
-          cpus: '${GRAFANA_CPU_RESERVATION:-0.5}'
+          cpus: "${GRAFANA_CPU_RESERVATION:-0.5}"
     networks:
       - mlops-network-prod
 
@@ -238,35 +238,35 @@ services:
     volumes:
       - ./monitoring/alertmanager/alertmanager-template.yml:/etc/alertmanager/alertmanager-template.yml:ro
       - ./monitoring/alertmanager/logs:/var/log/alertmanager
-      - alertmanager-storage:/alertmanager  # AlertManager 데이터 영구 저장
+      - alertmanager-storage:/alertmanager # AlertManager 데이터 영구 저장
     command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
-      - '--web.external-url=http://${ALERTMANAGER_EXTERNAL_HOST:-localhost}:${ALERTMANAGER_PORT:-9093}'
-      - '--log.level=${ALERTMANAGER_LOG_LEVEL:-info}'
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
+      - "--web.external-url=http://${ALERTMANAGER_EXTERNAL_HOST:-localhost}:${ALERTMANAGER_PORT:-9093}"
+      - "--log.level=${ALERTMANAGER_LOG_LEVEL:-info}"
     environment:
       - SLACK_CRITICAL_WEBHOOK_URL=${SLACK_CRITICAL_WEBHOOK_URL}
       - SLACK_API_WEBHOOK_URL=${SLACK_API_WEBHOOK_URL}
       - SLACK_ML_WEBHOOK_URL=${SLACK_ML_WEBHOOK_URL}
       - SLACK_DEVOPS_WEBHOOK_URL=${SLACK_DEVOPS_WEBHOOK_URL}
-      - SMTP_HOST=${SMTP_HOST}              # 이메일 알림 설정
+      - SMTP_HOST=${SMTP_HOST} # 이메일 알림 설정
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_FROM=${SMTP_FROM}
       - SMTP_USERNAME=${SMTP_USERNAME}
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - WEBHOOK_URL=${WEBHOOK_URL}
     env_file:
-      - production.env                      # 프로덕션 환경 변수 파일
+      - production.env # 프로덕션 환경 변수 파일
     depends_on:
-      - prometheus                          # Prometheus 의존성
+      - prometheus # Prometheus 의존성
     profiles:
-      - monitoring                          # 모니터링 프로파일에서만 실행
+      - monitoring # 모니터링 프로파일에서만 실행
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: ${ALERTMANAGER_MEMORY_LIMIT:-512M}
-          cpus: '${ALERTMANAGER_CPU_LIMIT:-0.5}'
+          cpus: "${ALERTMANAGER_CPU_LIMIT:-0.5}"
     networks:
       - mlops-network-prod
 
@@ -277,25 +277,25 @@ services:
     ports:
       - "${NODE_EXPORTER_PORT:-9100}:9100"
     volumes:
-      - /proc:/host/proc:ro                 # 호스트 프로세스 정보
-      - /sys:/host/sys:ro                   # 호스트 시스템 정보
-      - /:/rootfs:ro                        # 호스트 루트 파일시스템
+      - /proc:/host/proc:ro # 호스트 프로세스 정보
+      - /sys:/host/sys:ro # 호스트 시스템 정보
+      - /:/rootfs:ro # 호스트 루트 파일시스템
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)|^/mnt/wsl'
-      - '--collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$$'
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)|^/mnt/wsl"
+      - "--collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$$"
     env_file:
-      - production.env                      # 프로덕션 환경 변수 파일
+      - production.env # 프로덕션 환경 변수 파일
     profiles:
-      - monitoring                          # 모니터링 프로파일에서만 실행
+      - monitoring # 모니터링 프로파일에서만 실행
     restart: unless-stopped
     deploy:
       resources:
         limits:
           memory: ${NODE_EXPORTER_MEMORY_LIMIT:-128M}
-          cpus: '${NODE_EXPORTER_CPU_LIMIT:-0.2}'
+          cpus: "${NODE_EXPORTER_CPU_LIMIT:-0.2}"
     networks:
       - mlops-network-prod
 
@@ -306,24 +306,24 @@ services:
     ports:
       - "${CADVISOR_PORT:-8080}:8080"
     volumes:
-      - /:/rootfs:ro                        # 호스트 루트 파일시스템
-      - /var/run:/var/run:rw                # Docker 소켓
-      - /sys:/sys:ro                        # 시스템 정보
+      - /:/rootfs:ro # 호스트 루트 파일시스템
+      - /var/run:/var/run:rw # Docker 소켓
+      - /sys:/sys:ro # 시스템 정보
       - /var/lib/docker/:/var/lib/docker:ro # Docker 데이터
-      - /dev/disk/:/dev/disk:ro             # 디스크 정보
+      - /dev/disk/:/dev/disk:ro # 디스크 정보
     devices:
-      - /dev/kmsg:/dev/kmsg                 # 커널 메시지
+      - /dev/kmsg:/dev/kmsg # 커널 메시지
     env_file:
-      - production.env                      # 프로덕션 환경 변수 파일
+      - production.env # 프로덕션 환경 변수 파일
     profiles:
-      - monitoring                          # 모니터링 프로파일에서만 실행
+      - monitoring # 모니터링 프로파일에서만 실행
     restart: unless-stopped
-    privileged: true                        # 시스템 메트릭 수집을 위해 권한 필요
+    privileged: true # 시스템 메트릭 수집을 위해 권한 필요
     deploy:
       resources:
         limits:
           memory: ${CADVISOR_MEMORY_LIMIT:-256M}
-          cpus: '${CADVISOR_CPU_LIMIT:-0.3}'
+          cpus: "${CADVISOR_CPU_LIMIT:-0.3}"
     networks:
       - mlops-network-prod
 
@@ -356,54 +356,54 @@ services:
 
   # PostgreSQL - 메타데이터 및 애플리케이션 데이터 저장소 (선택사항)
   # postgres:
-    # image: postgres:${POSTGRES_VERSION:-15-alpine}
-    # container_name: mlops-postgres-prod
-    # ports:
-    #   - "${DB_PORT:-5432}:5432"
-    # environment:
-    #   - POSTGRES_DB=${DB_NAME:-mlops_prod}
-    #   - POSTGRES_USER=${DB_USER:-mlops_user}
-    #   - POSTGRES_PASSWORD=${DB_PASSWORD:-secure-db-password}
-    #   - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --locale=C
-    # env_file:
-    #   - production.env                      # 프로덕션 환경 변수 파일
-    # volumes:
-    #   - postgres_data:/var/lib/postgresql/data  # PostgreSQL 데이터 영구 저장
-    #   - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
-    # profiles:
-    #   - database                            # 데이터베이스 프로파일에서만 실행
-    # restart: unless-stopped
-    # deploy:
-    #   resources:
-    #     limits:
-    #       memory: ${POSTGRES_MEMORY_LIMIT:-1G}
-    #       cpus: '${POSTGRES_CPU_LIMIT:-1.0}'
-    #     reservations:
-    #       memory: ${POSTGRES_MEMORY_RESERVATION:-512M}
-    #       cpus: '${POSTGRES_CPU_RESERVATION:-0.5}'
-    # networks:
-    #   - mlops-network-prod
-    # healthcheck:
-    #   test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mlops_user} -d ${DB_NAME:-mlops_prod}"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 5
-    #   start_period: 30s
+  # image: postgres:${POSTGRES_VERSION:-15-alpine}
+  # container_name: mlops-postgres-prod
+  # ports:
+  #   - "${DB_PORT:-5432}:5432"
+  # environment:
+  #   - POSTGRES_DB=${DB_NAME:-mlops_prod}
+  #   - POSTGRES_USER=${DB_USER:-mlops_user}
+  #   - POSTGRES_PASSWORD=${DB_PASSWORD:-secure-db-password}
+  #   - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --locale=C
+  # env_file:
+  #   - production.env                      # 프로덕션 환경 변수 파일
+  # volumes:
+  #   - postgres_data:/var/lib/postgresql/data  # PostgreSQL 데이터 영구 저장
+  #   - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+  # profiles:
+  #   - database                            # 데이터베이스 프로파일에서만 실행
+  # restart: unless-stopped
+  # deploy:
+  #   resources:
+  #     limits:
+  #       memory: ${POSTGRES_MEMORY_LIMIT:-1G}
+  #       cpus: '${POSTGRES_CPU_LIMIT:-1.0}'
+  #     reservations:
+  #       memory: ${POSTGRES_MEMORY_RESERVATION:-512M}
+  #       cpus: '${POSTGRES_CPU_RESERVATION:-0.5}'
+  # networks:
+  #   - mlops-network-prod
+  # healthcheck:
+  #   test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-mlops_user} -d ${DB_NAME:-mlops_prod}"]
+  #   interval: 30s
+  #   timeout: 10s
+  #   retries: 5
+  #   start_period: 30s
 
 # 볼륨 정의 - 데이터 영구 저장
 volumes:
   mlruns:
-    driver: local                           # MLflow 실행 기록 저장
+    driver: local # MLflow 실행 기록 저장
   mlartifacts:
-    driver: local                           # MLflow 모델 아티팩트 저장
+    driver: local # MLflow 모델 아티팩트 저장
   prometheus-storage:
-    driver: local                           # Prometheus 메트릭 데이터 저장
+    driver: local # Prometheus 메트릭 데이터 저장
   prometheus_multiproc:
-    driver: local                           # Prometheus 멀티프로세스 메트릭
+    driver: local # Prometheus 멀티프로세스 메트릭
   grafana-storage:
-    driver: local                           # Grafana 설정 및 대시보드 저장
+    driver: local # Grafana 설정 및 대시보드 저장
   alertmanager-storage:
-    driver: local                           # AlertManager 데이터 저장
+    driver: local # AlertManager 데이터 저장
   # postgres_data:
   #   driver: local                           # PostgreSQL 데이터베이스 저장
   # redis_data:
@@ -412,12 +412,12 @@ volumes:
 # 네트워크 정의 - 서비스 간 통신
 networks:
   mlops-network-prod:
-    driver: bridge                          # 브리지 네트워크 드라이버
+    driver: bridge # 브리지 네트워크 드라이버
     ipam:
       config:
-        - subnet: ${NETWORK_SUBNET:-172.20.0.0/16}  # 사용자 정의 서브넷
+        - subnet: ${NETWORK_SUBNET:-172.20.0.0/16} # 사용자 정의 서브넷
     labels:
-      - "com.mlops.environment=production"  # 프로덕션 환경 라벨
+      - "com.mlops.environment=production" # 프로덕션 환경 라벨
       - "com.mlops.project=movie-predictor" # 프로젝트 식별 라벨
 
 # 프로파일별 실행 가이드:
@@ -440,4 +440,4 @@ networks:
 #   docker compose -f docker-compose.prod.yml --profile training up trainer
 #
 # 전체 스택 (모든 서비스):
-#   docker compose -f docker-compose.prod.yml --profile production --profile monitoring --profile database --profile cache up -d    
+#   docker compose -f docker-compose.prod.yml --profile production --profile monitoring --profile database --profile cache up -d

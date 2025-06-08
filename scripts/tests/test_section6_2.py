@@ -4,15 +4,16 @@ Section 6.2 (CI/CD Pipeline) 테스트 스크립트
 CI/CD Pipeline Testing Script
 """
 
+import json
 import os
+import subprocess
 import sys
 import time
-import requests
-import json
-import subprocess
-import yaml
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import requests
+import yaml
 
 # 프로젝트 루트를 Python 경로에 추가
 project_root = Path(__file__).parent.parent.parent
@@ -526,7 +527,7 @@ def single_prediction_test(base_url="http://localhost:8000", timeout=10):
         "runtimeMinutes": 120,
         "numVotes": 5000
     }
-    
+
     start_time = time.time()
     try:
         response = requests.post(
@@ -535,7 +536,7 @@ def single_prediction_test(base_url="http://localhost:8000", timeout=10):
             timeout=timeout
         )
         end_time = time.time()
-        
+
         if response.status_code == 200:
             return end_time - start_time
         else:
@@ -546,25 +547,25 @@ def single_prediction_test(base_url="http://localhost:8000", timeout=10):
 def load_test(base_url="http://localhost:8000", num_requests=50, concurrent_requests=5):
     """부하 테스트"""
     print(f"🔥 부하 테스트 시작: {num_requests}개 요청, {concurrent_requests}개 동시 실행")
-    
+
     response_times = []
     errors = 0
-    
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=concurrent_requests) as executor:
         futures = [executor.submit(single_prediction_test, base_url) for _ in range(num_requests)]
-        
+
         for future in concurrent.futures.as_completed(futures):
             result = future.result()
             if result is not None:
                 response_times.append(result)
             else:
                 errors += 1
-    
+
     if response_times:
         avg_time = statistics.mean(response_times)
         p95_time = sorted(response_times)[int(len(response_times) * 0.95)]
         p99_time = sorted(response_times)[int(len(response_times) * 0.99)]
-        
+
         results = {
             "timestamp": datetime.now().isoformat(),
             "total_requests": num_requests,
@@ -576,13 +577,13 @@ def load_test(base_url="http://localhost:8000", num_requests=50, concurrent_requ
             "min_response_time": min(response_times),
             "max_response_time": max(response_times)
         }
-        
+
         print(f"📊 성능 테스트 결과:")
         print(f"   성공 요청: {len(response_times)}/{num_requests}")
         print(f"   평균 응답시간: {avg_time:.3f}초")
         print(f"   95th percentile: {p95_time:.3f}초")
         print(f"   99th percentile: {p99_time:.3f}초")
-        
+
         # 성능 기준 체크
         performance_ok = True
         if avg_time > 2.0:
@@ -591,10 +592,10 @@ def load_test(base_url="http://localhost:8000", num_requests=50, concurrent_requ
         if p95_time > 5.0:
             print(f"   ⚠️ 95th percentile 초과: {p95_time:.3f}s > 5.0s")
             performance_ok = False
-        
+
         if performance_ok:
             print("   ✅ 성능 기준 통과")
-        
+
         return results, performance_ok
     else:
         print("   ❌ 모든 요청 실패")
@@ -602,22 +603,22 @@ def load_test(base_url="http://localhost:8000", num_requests=50, concurrent_requ
 
 if __name__ == "__main__":
     import argparse
-    
+
     parser = argparse.ArgumentParser(description='MLOps API 성능 테스트')
     parser.add_argument('--url', default='http://localhost:8000', help='API URL')
     parser.add_argument('--requests', type=int, default=50, help='총 요청 수')
     parser.add_argument('--concurrent', type=int, default=5, help='동시 요청 수')
-    
+
     args = parser.parse_args()
-    
+
     results, success = load_test(args.url, args.requests, args.concurrent)
-    
+
     if results:
         # 결과를 JSON 파일로 저장
         with open('performance_test_results.json', 'w') as f:
             json.dump(results, f, indent=2)
         print(f"📄 결과 저장: performance_test_results.json")
-    
+
     exit(0 if success else 1)
 '''
 

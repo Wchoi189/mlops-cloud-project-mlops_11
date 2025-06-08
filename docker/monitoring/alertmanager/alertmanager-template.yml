@@ -1,59 +1,59 @@
 ---
 global:
-  smtp_smarthost: '${SMTP_HOST}'
-  smtp_from: '${SMTP_FROM}'
+  smtp_smarthost: "${SMTP_HOST}"
+  smtp_from: "${SMTP_FROM}"
   resolve_timeout: 5m
 
 # Email templates
 templates:
-  - '/etc/alertmanager/templates/*.tmpl'
+  - "/etc/alertmanager/templates/*.tmpl"
 
 # Routing rules
 route:
-  group_by: ['alertname', 'service']
+  group_by: ["alertname", "service"]
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 12h
-  receiver: 'web.hook'
+  receiver: "web.hook"
   routes:
     # Critical alerts - immediate notification
     - match:
         severity: critical
-      receiver: 'critical-alerts'
+      receiver: "critical-alerts"
       group_wait: 10s
       repeat_interval: 5m
-  
+
     # API-specific alerts
     - match:
         service: api
-      receiver: 'api-team'
+      receiver: "api-team"
       group_interval: 2m
 
     # Model-specific alerts
     - match:
         service: model
-      receiver: 'ml-team'
+      receiver: "ml-team"
 
     # System alerts
     - match:
         service: system
-      receiver: 'devops-team'
+      receiver: "devops-team"
 
 # Alert receivers
 receivers:
   # Default webhook (for development)
-  - name: 'web.hook'
+  - name: "web.hook"
     webhook_configs:
-      - url: '${WEBHOOK_URL}'
+      - url: "${WEBHOOK_URL}"
         send_resolved: true
 
   # Critical alerts - multiple channels
-  - name: 'critical-alerts'
+  - name: "critical-alerts"
     slack_configs:
       - api_url: "${SLACK_CRITICAL_WEBHOOK_URL}"
-        channel: '#mlops-critical'
-        title: '🚨 Critical MLOps Alert'
-        icon_emoji: ':fire:'
+        channel: "#mlops-critical"
+        title: "🚨 Critical MLOps Alert"
+        icon_emoji: ":fire:"
         text: |
           {{ range .Alerts }}
           **Alert:** {{ .Annotations.summary }}
@@ -64,11 +64,11 @@ receivers:
         send_resolved: true
 
   # API team notifications
-  - name: 'api-team'
+  - name: "api-team"
     slack_configs:
       - api_url: "${SLACK_API_WEBHOOK_URL}"
-        channel: '#api-alerts'
-        title: '🔧 API Alert'
+        channel: "#api-alerts"
+        title: "🔧 API Alert"
         text: |
           {{ range .Alerts }}
           **Alert:** {{ .Annotations.summary }}
@@ -77,11 +77,11 @@ receivers:
           {{ end }}
 
   # ML team notifications
-  - name: 'ml-team'
+  - name: "ml-team"
     slack_configs:
       - api_url: "${SLACK_ML_WEBHOOK_URL}"
-        channel: '#ml-alerts'
-        title: '🤖 Model Alert'
+        channel: "#ml-alerts"
+        title: "🤖 Model Alert"
         text: |
           {{ range .Alerts }}
           **Model Alert:** {{ .Annotations.summary }}
@@ -89,11 +89,11 @@ receivers:
           {{ end }}
 
   # DevOps team notifications
-  - name: 'devops-team'
+  - name: "devops-team"
     slack_configs:
       - api_url: "${SLACK_DEVOPS_WEBHOOK_URL}"
-        channel: '#infrastructure'
-        title: '🖥️ System Alert'
+        channel: "#infrastructure"
+        title: "🖥️ System Alert"
         text: |
           {{ range .Alerts }}
           **System Alert:** {{ .Annotations.summary }}
@@ -105,13 +105,13 @@ receivers:
 inhibit_rules:
   # Inhibit warning if critical alert is firing
   - source_match:
-      severity: 'critical'
+      severity: "critical"
     target_match:
-      severity: 'warning'
-    equal: ['alertname', 'service']
+      severity: "warning"
+    equal: ["alertname", "service"]
 
   # Inhibit API alerts if API is down
   - source_match:
-      alertname: 'MLOpsAPIDown'
+      alertname: "MLOpsAPIDown"
     target_match_re:
-      alertname: 'API.*'
+      alertname: "API.*"

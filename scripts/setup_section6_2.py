@@ -5,11 +5,11 @@ Automates the setup process for CI/CD pipeline
 """
 
 import os
-import sys
 import shutil
 import subprocess
+import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
 
 def run_command(cmd: str, cwd: Optional[str] = None) -> tuple[bool, str, str]:

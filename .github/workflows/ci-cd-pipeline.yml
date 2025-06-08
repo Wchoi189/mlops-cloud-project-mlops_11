@@ -4,418 +4,417 @@ name: MLOps CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop, feature/* ]
+    branches: [main, develop, feature/*]
     paths:
-      - 'src/**'
-      - 'docker/**'
-      - 'requirements*.txt'
-      - '.github/workflows/**'
+      - "src/**"
+      - "docker/**"
+      - "requirements*.txt"
+      - ".github/workflows/**"
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
-      - 'src/**'
-      - 'docker/**'
-      - 'requirements*.txt'
+      - "src/**"
+      - "docker/**"
+      - "requirements*.txt"
   release:
     types: [published]
 
 env:
-  PYTHON_VERSION: '3.11'
-  DOCKER_REGISTRY: 'ghcr.io'
-  IMAGE_NAME: 'mlops-imdb'
+  PYTHON_VERSION: "3.11"
+  DOCKER_REGISTRY: "ghcr.io"
+  IMAGE_NAME: "mlops-imdb"
 
 jobs:
   # ===================================================================
   # 🧪 STAGE 1: Testing & Quality Assurance
   # ===================================================================
-  
+
   code-quality:
     name: 🔍 Code Quality & Security
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Full history for SonarCloud
-    
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Cache dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    
-    - name: Install dependencies
-      run: |
-        echo "Installing dependencies..."
-        python -m pip install --upgrade pip
-        # pip install -r requirements.txt
-        pip install -r requirements-resolved.txt # ✅ Exact versions
-        pip install black flake8 pylint bandit safety mypy pytest-cov
-    
-    - name: Code formatting check (Black)
-      run: |
-        black --check --diff src/ scripts/ tests/ || {
-          echo "❌ 코드 포맷팅 실패. 다음 명령어로 수정하세요:"
-          echo "black src/ scripts/ tests/"
-          exit 1
-        }
-    
-    - name: Linting (Flake8)
-      run: |
-        flake8 src/ scripts/ tests/ --max-line-length=88 --extend-ignore=E203,W503
-    
-    - name: Advanced linting (Pylint)
-      run: |
-        pylint src/ --disable=C0114,C0115,C0116 --exit-zero
-    
-    - name: Type checking (MyPy)
-      run: |
-        mypy src/ --ignore-missing-imports --no-strict-optional
-    
-    - name: Security scan (Bandit)
-      run: |
-        bandit -r src/ -f json -o bandit-report.json || true
-        bandit -r src/ --exit-zero
-    
-    - name: Dependency vulnerability scan (Safety)
-      run: |
-        safety check --json --output safety-report.json || true
-        safety check --continue-on-error
-    
-    - name: Upload security reports
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: security-reports
-        path: |
-          bandit-report.json
-          safety-report.json
-        retention-days: 30
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Full history for SonarCloud
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          echo "Installing dependencies..."
+          python -m pip install --upgrade pip
+          # pip install -r requirements.txt
+          pip install -r requirements-resolved.txt # ✅ Exact versions
+          pip install black flake8 pylint bandit safety mypy pytest-cov
+
+      - name: Code formatting check (Black)
+        run: |
+          black --check --diff src/ scripts/ tests/ || {
+            echo "❌ 코드 포맷팅 실패. 다음 명령어로 수정하세요:"
+            echo "black src/ scripts/ tests/"
+            exit 1
+          }
+
+      - name: Linting (Flake8)
+        run: |
+          flake8 src/ scripts/ tests/ --max-line-length=88 --extend-ignore=E203,W503
+
+      - name: Advanced linting (Pylint)
+        run: |
+          pylint src/ --disable=C0114,C0115,C0116 --exit-zero
+
+      - name: Type checking (MyPy)
+        run: |
+          mypy src/ --ignore-missing-imports --no-strict-optional
+
+      - name: Security scan (Bandit)
+        run: |
+          bandit -r src/ -f json -o bandit-report.json || true
+          bandit -r src/ --exit-zero
+
+      - name: Dependency vulnerability scan (Safety)
+        run: |
+          safety check --json --output safety-report.json || true
+          safety check --continue-on-error
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+          retention-days: 30
 
   unit-tests:
     name: 🧪 Unit Tests
     runs-on: ubuntu-latest
     needs: code-quality
-    
+
     strategy:
       matrix:
-        python-version: ['3.11']
-    
+        python-version: ["3.11"]
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        # pip install -r requirements.txt
-        pip install -r requirements-resolved.txt # ✅ Exact versions
-        pip install pytest pytest-cov pytest-xdist pytest-mock
-    
-    - name: Create test data
-      run: |
-        mkdir -p data/processed models
-        python -c "
-        import pandas as pd
-        import numpy as np
-        import joblib
-        from sklearn.ensemble import RandomForestRegressor
-        
-        # Create test dataset
-        np.random.seed(42)
-        n_movies = 1000
-        df = pd.DataFrame({
-            'tconst': [f'tt{i:07d}' for i in range(n_movies)],
-            'primaryTitle': [f'Movie {i}' for i in range(n_movies)],
-            'startYear': np.random.randint(1990, 2024, n_movies),
-            'runtimeMinutes': np.random.randint(80, 180, n_movies),
-            'numVotes': np.random.randint(100, 100000, n_movies),
-            'averageRating': np.random.uniform(1.0, 10.0, n_movies),
-            'genres': ['Drama,Action'] * n_movies
-        })
-        df.to_csv('data/processed/movies_with_ratings.csv', index=False)
-        
-        # Create test model
-        model = RandomForestRegressor(n_estimators=10, random_state=42)
-        X_dummy = np.random.random((100, 3))
-        y_dummy = np.random.random(100) * 9 + 1
-        model.fit(X_dummy, y_dummy)
-        
-        model_info = {
-            'model': model,
-            'feature_names': ['startYear', 'runtimeMinutes', 'numVotes'],
-            'model_type': 'RandomForestRegressor',
-            'timestamp': '20250601_120000'
-        }
-        joblib.dump(model_info, 'models/test_model.joblib')
-        print('✅ Test data and model created')
-        "
-    
-    - name: Run Section Tests
-      run: |
-        # Section 1-4 tests
-        python scripts/tests/test_section1.py || echo "Section 1 test completed"
-        python scripts/tests/test_section2.py || echo "Section 2 test completed"
-        python scripts/tests/test_section3.py || echo "Section 3 test completed"
-        python scripts/tests/test_section4.py --manual || echo "Section 4 test completed"
-    
-    - name: Run Unit Tests with Coverage
-      run: |
-        pytest tests/ --cov=src --cov-report=xml --cov-report=html -v || true
-    
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # pip install -r requirements.txt
+          pip install -r requirements-resolved.txt # ✅ Exact versions
+          pip install pytest pytest-cov pytest-xdist pytest-mock
+
+      - name: Create test data
+        run: |
+          mkdir -p data/processed models
+          python -c "
+          import pandas as pd
+          import numpy as np
+          import joblib
+          from sklearn.ensemble import RandomForestRegressor
+
+          # Create test dataset
+          np.random.seed(42)
+          n_movies = 1000
+          df = pd.DataFrame({
+              'tconst': [f'tt{i:07d}' for i in range(n_movies)],
+              'primaryTitle': [f'Movie {i}' for i in range(n_movies)],
+              'startYear': np.random.randint(1990, 2024, n_movies),
+              'runtimeMinutes': np.random.randint(80, 180, n_movies),
+              'numVotes': np.random.randint(100, 100000, n_movies),
+              'averageRating': np.random.uniform(1.0, 10.0, n_movies),
+              'genres': ['Drama,Action'] * n_movies
+          })
+          df.to_csv('data/processed/movies_with_ratings.csv', index=False)
+
+          # Create test model
+          model = RandomForestRegressor(n_estimators=10, random_state=42)
+          X_dummy = np.random.random((100, 3))
+          y_dummy = np.random.random(100) * 9 + 1
+          model.fit(X_dummy, y_dummy)
+
+          model_info = {
+              'model': model,
+              'feature_names': ['startYear', 'runtimeMinutes', 'numVotes'],
+              'model_type': 'RandomForestRegressor',
+              'timestamp': '20250601_120000'
+          }
+          joblib.dump(model_info, 'models/test_model.joblib')
+          print('✅ Test data and model created')
+          "
+
+      - name: Run Section Tests
+        run: |
+          # Section 1-4 tests
+          python scripts/tests/test_section1.py || echo "Section 1 test completed"
+          python scripts/tests/test_section2.py || echo "Section 2 test completed"
+          python scripts/tests/test_section3.py || echo "Section 3 test completed"
+          python scripts/tests/test_section4.py --manual || echo "Section 4 test completed"
+
+      - name: Run Unit Tests with Coverage
+        run: |
+          pytest tests/ --cov=src --cov-report=xml --cov-report=html -v || true
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
 
   integration-tests:
     name: 🔗 Integration Tests
     runs-on: ubuntu-latest
     needs: unit-tests
-    
+
     services:
       docker:
         image: docker:dind
         options: --privileged
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        # pip install -r requirements.txt
-        pip install -r requirements-resolved.txt # ✅ Exact versions
-    
-    
-    - name: Create test data
-      run: |
-        mkdir -p data/processed models logs
-        python -c "
-        import pandas as pd
-        import numpy as np
-        import joblib
-        from sklearn.ensemble import RandomForestRegressor
-        
-        # Create larger test dataset for integration
-        np.random.seed(42)
-        n_movies = 5000
-        df = pd.DataFrame({
-            'tconst': [f'tt{i:07d}' for i in range(n_movies)],
-            'primaryTitle': [f'Movie {i}' for i in range(n_movies)],
-            'startYear': np.random.randint(1990, 2024, n_movies),
-            'runtimeMinutes': np.random.randint(80, 180, n_movies),
-            'numVotes': np.random.randint(100, 100000, n_movies),
-            'averageRating': np.random.uniform(1.0, 10.0, n_movies),
-            'genres': ['Drama,Action'] * n_movies
-        })
-        df.to_csv('data/processed/movies_with_ratings.csv', index=False)
-        
-        # Create production-like model
-        model = RandomForestRegressor(n_estimators=50, random_state=42)
-        X_dummy = np.random.random((1000, 3))
-        y_dummy = np.random.random(1000) * 9 + 1
-        model.fit(X_dummy, y_dummy)
-        
-        model_info = {
-            'model': model,
-            'feature_names': ['startYear', 'runtimeMinutes', 'numVotes'],
-            'model_type': 'RandomForestRegressor',
-            'timestamp': '20250601_120000',
-            'version': '1.0'
-        }
-        joblib.dump(model_info, 'models/integration_test_model.joblib')
-        print('✅ Integration test data created')
-        "
-    
-    - name: Build Docker images
-      run: |
-        docker build -f docker/Dockerfile.api -t mlops-api:test .
-        docker build -f docker/Dockerfile.train -t mlops-trainer:test .
-    
-    - name: Start test stack
-      run: |
-        cd docker
-        docker compose up -d
-        sleep 30  # Wait for services to be ready
-    
-    - name: Integration test suite
-      run: |
-        # Test API endpoints
-        curl -f http://localhost:8000/health || exit 1
-        curl -f http://localhost:5000/health || exit 1
-        
-        # Test movie prediction
-        curl -X POST "http://localhost:8000/predict/movie" \
-             -H "Content-Type: application/json" \
-             -d '{"title":"Integration Test","startYear":2020,"runtimeMinutes":120,"numVotes":5000}' \
-             | grep -q "predicted_rating" || exit 1
-        
-        echo "✅ Integration tests passed"
-    
-    - name: Cleanup test stack
-      if: always()
-      run: |
-        cd docker
-        docker compose down --volumes --remove-orphans
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # pip install -r requirements.txt
+          pip install -r requirements-resolved.txt # ✅ Exact versions
+
+      - name: Create test data
+        run: |
+          mkdir -p data/processed models logs
+          python -c "
+          import pandas as pd
+          import numpy as np
+          import joblib
+          from sklearn.ensemble import RandomForestRegressor
+
+          # Create larger test dataset for integration
+          np.random.seed(42)
+          n_movies = 5000
+          df = pd.DataFrame({
+              'tconst': [f'tt{i:07d}' for i in range(n_movies)],
+              'primaryTitle': [f'Movie {i}' for i in range(n_movies)],
+              'startYear': np.random.randint(1990, 2024, n_movies),
+              'runtimeMinutes': np.random.randint(80, 180, n_movies),
+              'numVotes': np.random.randint(100, 100000, n_movies),
+              'averageRating': np.random.uniform(1.0, 10.0, n_movies),
+              'genres': ['Drama,Action'] * n_movies
+          })
+          df.to_csv('data/processed/movies_with_ratings.csv', index=False)
+
+          # Create production-like model
+          model = RandomForestRegressor(n_estimators=50, random_state=42)
+          X_dummy = np.random.random((1000, 3))
+          y_dummy = np.random.random(1000) * 9 + 1
+          model.fit(X_dummy, y_dummy)
+
+          model_info = {
+              'model': model,
+              'feature_names': ['startYear', 'runtimeMinutes', 'numVotes'],
+              'model_type': 'RandomForestRegressor',
+              'timestamp': '20250601_120000',
+              'version': '1.0'
+          }
+          joblib.dump(model_info, 'models/integration_test_model.joblib')
+          print('✅ Integration test data created')
+          "
+
+      - name: Build Docker images
+        run: |
+          docker build -f docker/Dockerfile.api -t mlops-api:test .
+          docker build -f docker/Dockerfile.train -t mlops-trainer:test .
+
+      - name: Start test stack
+        run: |
+          cd docker
+          docker compose up -d
+          sleep 30  # Wait for services to be ready
+
+      - name: Integration test suite
+        run: |
+          # Test API endpoints
+          curl -f http://localhost:8000/health || exit 1
+          curl -f http://localhost:5000/health || exit 1
+
+          # Test movie prediction
+          curl -X POST "http://localhost:8000/predict/movie" \
+               -H "Content-Type: application/json" \
+               -d '{"title":"Integration Test","startYear":2020,"runtimeMinutes":120,"numVotes":5000}' \
+               | grep -q "predicted_rating" || exit 1
+
+          echo "✅ Integration tests passed"
+
+      - name: Cleanup test stack
+        if: always()
+        run: |
+          cd docker
+          docker compose down --volumes --remove-orphans
 
   # ===================================================================
   # 🐳 STAGE 2: Build & Registry
   # ===================================================================
-  
+
   build-and-push:
     name: 🔨 Build & Push Images
     runs-on: ubuntu-latest
     needs: [code-quality, unit-tests, integration-tests]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
-    
+
     outputs:
       api-image: ${{ steps.meta-api.outputs.tags }}
       trainer-image: ${{ steps.meta-trainer.outputs.tags }}
       api-digest: ${{ steps.build-api.outputs.digest }}
       trainer-digest: ${{ steps.build-trainer.outputs.digest }}
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-    
-    - name: Log in to Container Registry
-      uses: docker/login-action@v2
-      with:
-        registry: ${{ env.DOCKER_REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Extract API metadata
-      id: meta-api
-      uses: docker/metadata-action@v4
-      with:
-        images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}-api
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,prefix={{branch}}-
-          type=raw,value=latest,enable={{is_default_branch}}
-    
-    - name: Extract Trainer metadata
-      id: meta-trainer
-      uses: docker/metadata-action@v4
-      with:
-        images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}-trainer
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,prefix={{branch}}-
-          type=raw,value=latest,enable={{is_default_branch}}
-    
-    - name: Build and push API image
-      id: build-api
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        file: ./docker/Dockerfile.api
-        push: true
-        tags: ${{ steps.meta-api.outputs.tags }}
-        labels: ${{ steps.meta-api.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        platforms: linux/amd64,linux/arm64
-    
-    - name: Build and push Trainer image
-      id: build-trainer
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        file: ./docker/Dockerfile.train
-        push: true
-        tags: ${{ steps.meta-trainer.outputs.tags }}
-        labels: ${{ steps.meta-trainer.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        platforms: linux/amd64,linux/arm64
-    
-    - name: Generate SBOM
-      uses: anchore/sbom-action@v0
-      with:
-        image: ${{ steps.meta-api.outputs.tags }}
-        format: spdx-json
-        output-file: api-sbom.spdx.json
-    
-    - name: Security scan with Trivy
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{ steps.meta-api.outputs.tags }}
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-    
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v2
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract API metadata
+        id: meta-api
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}-api
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Extract Trainer metadata
+        id: meta-trainer
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}-trainer
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push API image
+        id: build-api
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./docker/Dockerfile.api
+          push: true
+          tags: ${{ steps.meta-api.outputs.tags }}
+          labels: ${{ steps.meta-api.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Build and push Trainer image
+        id: build-trainer
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./docker/Dockerfile.train
+          push: true
+          tags: ${{ steps.meta-trainer.outputs.tags }}
+          labels: ${{ steps.meta-trainer.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ steps.meta-api.outputs.tags }}
+          format: spdx-json
+          output-file: api-sbom.spdx.json
+
+      - name: Security scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta-api.outputs.tags }}
+          format: "sarif"
+          output: "trivy-results.sarif"
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        if: always()
+        with:
+          sarif_file: "trivy-results.sarif"
 
   # ===================================================================
   # 🚀 STAGE 3: Deployment
   # ===================================================================
-  
+
   deploy-staging:
     name: 🎭 Deploy to Staging
     runs-on: ubuntu-latest
     needs: build-and-push
     if: github.ref == 'refs/heads/develop'
     environment: staging
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Deploy to staging
-      run: |
-        echo "🎭 Deploying to staging environment..."
-        echo "API Image: ${{ needs.build-and-push.outputs.api-image }}"
-        echo "Trainer Image: ${{ needs.build-and-push.outputs.trainer-image }}"
-        
-        # In a real scenario, this would deploy to staging infrastructure
-        # For example: kubectl, docker compose, helm, terraform, etc.
-        
-        # Simulate staging deployment
-        echo "✅ Staging deployment completed"
-    
-    - name: Run smoke tests on staging
-      run: |
-        echo "🧪 Running smoke tests on staging..."
-        
-        # Simulate staging tests
-        sleep 5
-        echo "✅ Staging smoke tests passed"
-    
-    - name: Notify staging deployment
-      run: |
-        echo "📢 Staging deployment notification sent"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          echo "🎭 Deploying to staging environment..."
+          echo "API Image: ${{ needs.build-and-push.outputs.api-image }}"
+          echo "Trainer Image: ${{ needs.build-and-push.outputs.trainer-image }}"
+
+          # In a real scenario, this would deploy to staging infrastructure
+          # For example: kubectl, docker compose, helm, terraform, etc.
+
+          # Simulate staging deployment
+          echo "✅ Staging deployment completed"
+
+      - name: Run smoke tests on staging
+        run: |
+          echo "🧪 Running smoke tests on staging..."
+
+          # Simulate staging tests
+          sleep 5
+          echo "✅ Staging smoke tests passed"
+
+      - name: Notify staging deployment
+        run: |
+          echo "📢 Staging deployment notification sent"
 
   deploy-production:
     name: 🌟 Deploy to Production
@@ -423,286 +422,286 @@ jobs:
     needs: build-and-push
     if: github.ref == 'refs/heads/main'
     environment: production
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Create deployment
-      id: deployment
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const deployment = await github.rest.repos.createDeployment({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            ref: context.sha,
-            environment: 'production',
-            description: 'MLOps production deployment',
-            auto_merge: false,
-            required_contexts: []
-          });
-          return deployment.data.id;
-    
-    - name: Deploy to production
-      run: |
-        echo "🌟 Deploying to production environment..."
-        echo "API Image: ${{ needs.build-and-push.outputs.api-image }}"
-        echo "Trainer Image: ${{ needs.build-and-push.outputs.trainer-image }}"
-        
-        # In a real scenario, this would deploy to production infrastructure
-        # Examples:
-        # - Kubernetes: kubectl apply -f k8s/
-        # - Docker Swarm: docker stack deploy
-        # - Cloud services: AWS ECS, GCP Cloud Run, Azure Container Instances
-        # - Infrastructure as Code: Terraform, Pulumi
-        
-        # Simulate production deployment
-        echo "✅ Production deployment completed"
-    
-    - name: Run production health checks
-      run: |
-        echo "🏥 Running production health checks..."
-        
-        # In a real scenario, this would check:
-        # - API endpoints are responding
-        # - Database connections are working
-        # - Monitoring systems are collecting metrics
-        # - Load balancers are routing traffic
-        
-        sleep 10
-        echo "✅ Production health checks passed"
-    
-    - name: Update deployment status
-      if: always()
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const deploymentId = ${{ steps.deployment.outputs.result }};
-          const state = '${{ job.status }}' === 'success' ? 'success' : 'failure';
-          
-          await github.rest.repos.createDeploymentStatus({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            deployment_id: deploymentId,
-            state: state,
-            description: state === 'success' ? 'Deployment successful' : 'Deployment failed',
-            environment_url: 'https://your-production-url.com'
-          });
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create deployment
+        id: deployment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const deployment = await github.rest.repos.createDeployment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              environment: 'production',
+              description: 'MLOps production deployment',
+              auto_merge: false,
+              required_contexts: []
+            });
+            return deployment.data.id;
+
+      - name: Deploy to production
+        run: |
+          echo "🌟 Deploying to production environment..."
+          echo "API Image: ${{ needs.build-and-push.outputs.api-image }}"
+          echo "Trainer Image: ${{ needs.build-and-push.outputs.trainer-image }}"
+
+          # In a real scenario, this would deploy to production infrastructure
+          # Examples:
+          # - Kubernetes: kubectl apply -f k8s/
+          # - Docker Swarm: docker stack deploy
+          # - Cloud services: AWS ECS, GCP Cloud Run, Azure Container Instances
+          # - Infrastructure as Code: Terraform, Pulumi
+
+          # Simulate production deployment
+          echo "✅ Production deployment completed"
+
+      - name: Run production health checks
+        run: |
+          echo "🏥 Running production health checks..."
+
+          # In a real scenario, this would check:
+          # - API endpoints are responding
+          # - Database connections are working
+          # - Monitoring systems are collecting metrics
+          # - Load balancers are routing traffic
+
+          sleep 10
+          echo "✅ Production health checks passed"
+
+      - name: Update deployment status
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const deploymentId = ${{ steps.deployment.outputs.result }};
+            const state = '${{ job.status }}' === 'success' ? 'success' : 'failure';
+
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: deploymentId,
+              state: state,
+              description: state === 'success' ? 'Deployment successful' : 'Deployment failed',
+              environment_url: 'https://your-production-url.com'
+            });
 
   # ===================================================================
   # 📊 STAGE 4: Post-Deployment Monitoring
   # ===================================================================
-  
+
   post-deployment-tests:
     name: 📊 Post-Deployment Monitoring
     runs-on: ubuntu-latest
     needs: [deploy-staging, deploy-production]
     if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-    
-    - name: Install monitoring tools
-      run: |
-        pip install requests prometheus-client psutil
-    
-    - name: Performance benchmarks
-      run: |
-        python -c "
-        import time
-        import requests
-        import statistics
-        
-        # Performance benchmark script
-        def benchmark_api(url, num_requests=10):
-            response_times = []
-            
-            for i in range(num_requests):
-                start_time = time.time()
-                try:
-                    response = requests.get(url, timeout=10)
-                    end_time = time.time()
-                    
-                    if response.status_code == 200:
-                        response_times.append(end_time - start_time)
-                    else:
-                        print(f'❌ Request {i+1} failed: {response.status_code}')
-                except Exception as e:
-                    print(f'❌ Request {i+1} error: {e}')
-                
-                time.sleep(0.1)  # Small delay between requests
-            
-            if response_times:
-                avg_time = statistics.mean(response_times)
-                p95_time = sorted(response_times)[int(len(response_times) * 0.95)]
-                
-                print(f'📊 Performance Results:')
-                print(f'   Average response time: {avg_time:.3f}s')
-                print(f'   95th percentile: {p95_time:.3f}s')
-                print(f'   Successful requests: {len(response_times)}/{num_requests}')
-                
-                # Performance thresholds
-                if avg_time > 2.0:
-                    print('⚠️ Average response time exceeds 2 seconds')
-                    exit(1)
-                if p95_time > 5.0:
-                    print('⚠️ 95th percentile exceeds 5 seconds')
-                    exit(1)
-                
-                print('✅ Performance benchmarks passed')
-            else:
-                print('❌ No successful requests')
-                exit(1)
-        
-        # Note: In real deployment, this would test actual staging/production URLs
-        print('📊 Performance benchmark simulation completed')
-        "
-    
-    - name: Monitoring integration check
-      run: |
-        echo "📊 Checking monitoring integration..."
-        
-        # In real scenario, this would:
-        # - Verify Prometheus is scraping metrics
-        # - Check Grafana dashboards are updating
-        # - Ensure AlertManager rules are active
-        # - Validate log aggregation is working
-        
-        echo "✅ Monitoring integration verified"
-    
-    - name: Generate deployment report
-      run: |
-        python -c "
-        import json
-        from datetime import datetime
-        
-        report = {
-            'deployment_time': datetime.now().isoformat(),
-            'git_sha': '${{ github.sha }}',
-            'branch': '${{ github.ref_name }}',
-            'environment': 'staging' if '${{ github.ref }}' == 'refs/heads/develop' else 'production',
-            'api_image': '${{ needs.build-and-push.outputs.api-image }}',
-            'trainer_image': '${{ needs.build-and-push.outputs.trainer-image }}',
-            'tests_passed': True,
-            'performance_ok': True,
-            'monitoring_active': True
-        }
-        
-        with open('deployment-report.json', 'w') as f:
-            json.dump(report, f, indent=2)
-        
-        print('📄 Deployment report generated')
-        print(json.dumps(report, indent=2))
-        "
-    
-    - name: Upload deployment artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: deployment-report
-        path: deployment-report.json
-        retention-days: 90
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install monitoring tools
+        run: |
+          pip install requests prometheus-client psutil
+
+      - name: Performance benchmarks
+        run: |
+          python -c "
+          import time
+          import requests
+          import statistics
+
+          # Performance benchmark script
+          def benchmark_api(url, num_requests=10):
+              response_times = []
+
+              for i in range(num_requests):
+                  start_time = time.time()
+                  try:
+                      response = requests.get(url, timeout=10)
+                      end_time = time.time()
+
+                      if response.status_code == 200:
+                          response_times.append(end_time - start_time)
+                      else:
+                          print(f'❌ Request {i+1} failed: {response.status_code}')
+                  except Exception as e:
+                      print(f'❌ Request {i+1} error: {e}')
+
+                  time.sleep(0.1)  # Small delay between requests
+
+              if response_times:
+                  avg_time = statistics.mean(response_times)
+                  p95_time = sorted(response_times)[int(len(response_times) * 0.95)]
+
+                  print(f'📊 Performance Results:')
+                  print(f'   Average response time: {avg_time:.3f}s')
+                  print(f'   95th percentile: {p95_time:.3f}s')
+                  print(f'   Successful requests: {len(response_times)}/{num_requests}')
+
+                  # Performance thresholds
+                  if avg_time > 2.0:
+                      print('⚠️ Average response time exceeds 2 seconds')
+                      exit(1)
+                  if p95_time > 5.0:
+                      print('⚠️ 95th percentile exceeds 5 seconds')
+                      exit(1)
+
+                  print('✅ Performance benchmarks passed')
+              else:
+                  print('❌ No successful requests')
+                  exit(1)
+
+          # Note: In real deployment, this would test actual staging/production URLs
+          print('📊 Performance benchmark simulation completed')
+          "
+
+      - name: Monitoring integration check
+        run: |
+          echo "📊 Checking monitoring integration..."
+
+          # In real scenario, this would:
+          # - Verify Prometheus is scraping metrics
+          # - Check Grafana dashboards are updating
+          # - Ensure AlertManager rules are active
+          # - Validate log aggregation is working
+
+          echo "✅ Monitoring integration verified"
+
+      - name: Generate deployment report
+        run: |
+          python -c "
+          import json
+          from datetime import datetime
+
+          report = {
+              'deployment_time': datetime.now().isoformat(),
+              'git_sha': '${{ github.sha }}',
+              'branch': '${{ github.ref_name }}',
+              'environment': 'staging' if '${{ github.ref }}' == 'refs/heads/develop' else 'production',
+              'api_image': '${{ needs.build-and-push.outputs.api-image }}',
+              'trainer_image': '${{ needs.build-and-push.outputs.trainer-image }}',
+              'tests_passed': True,
+              'performance_ok': True,
+              'monitoring_active': True
+          }
+
+          with open('deployment-report.json', 'w') as f:
+              json.dump(report, f, indent=2)
+
+          print('📄 Deployment report generated')
+          print(json.dumps(report, indent=2))
+          "
+
+      - name: Upload deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-report
+          path: deployment-report.json
+          retention-days: 90
 
   # ===================================================================
   # 🚨 STAGE 5: Notifications & Cleanup
   # ===================================================================
-  
+
   notifications:
     name: 📢 Notifications
     runs-on: ubuntu-latest
     needs: [deploy-staging, deploy-production, post-deployment-tests]
     if: always()
-    
+
     steps:
-    - name: Determine deployment status
-      id: status
-      run: |
-        if [[ "${{ needs.deploy-production.result }}" == "success" ]]; then
-          echo "environment=production" >> $GITHUB_OUTPUT
-          echo "status=success" >> $GITHUB_OUTPUT
-        elif [[ "${{ needs.deploy-staging.result }}" == "success" ]]; then
-          echo "environment=staging" >> $GITHUB_OUTPUT
-          echo "status=success" >> $GITHUB_OUTPUT
-        else
-          echo "environment=none" >> $GITHUB_OUTPUT
-          echo "status=failure" >> $GITHUB_OUTPUT
-        fi
-    
-    - name: Slack notification
-      if: always()
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ steps.status.outputs.status }}
-        channel: '#mlops-deployments'
-        fields: repo,message,commit,author,action,eventName,ref,workflow
-        text: |
-          MLOps Pipeline ${{ steps.status.outputs.status }}!
-          Environment: ${{ steps.status.outputs.environment }}
-          Commit: ${{ github.sha }}
-          Branch: ${{ github.ref_name }}
-      env:
-        SLACK_ML_WEBHOOK_URL: ${{ secrets.SLACK_ML_WEBHOOK_URL }}
-    
-    - name: Email notification
-      if: failure()
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 587
-        username: ${{ vars.EMAIL_USERNAME }}
-        password: ${{ secrets.EMAIL_PASSWORD }}
-        subject: "MLOps Pipeline Failed - ${{ github.ref_name }}"
-        to: ${{ vars.NOTIFICATION_EMAIL }}
-        from: MLOps CI/CD
-        body: |
-          MLOps pipeline failed for branch ${{ github.ref_name }}
-          
-          Commit: ${{ github.sha }}
-          Actor: ${{ github.actor }}
-          Workflow: ${{ github.workflow }}
-          
-          Please check the workflow logs for details.
+      - name: Determine deployment status
+        id: status
+        run: |
+          if [[ "${{ needs.deploy-production.result }}" == "success" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "status=success" >> $GITHUB_OUTPUT
+          elif [[ "${{ needs.deploy-staging.result }}" == "success" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "status=success" >> $GITHUB_OUTPUT
+          else
+            echo "environment=none" >> $GITHUB_OUTPUT
+            echo "status=failure" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Slack notification
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ steps.status.outputs.status }}
+          channel: "#mlops-deployments"
+          fields: repo,message,commit,author,action,eventName,ref,workflow
+          text: |
+            MLOps Pipeline ${{ steps.status.outputs.status }}!
+            Environment: ${{ steps.status.outputs.environment }}
+            Commit: ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
+        env:
+          SLACK_ML_WEBHOOK_URL: ${{ secrets.SLACK_ML_WEBHOOK_URL }}
+
+      - name: Email notification
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ vars.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "MLOps Pipeline Failed - ${{ github.ref_name }}"
+          to: ${{ vars.NOTIFICATION_EMAIL }}
+          from: MLOps CI/CD
+          body: |
+            MLOps pipeline failed for branch ${{ github.ref_name }}
+
+            Commit: ${{ github.sha }}
+            Actor: ${{ github.actor }}
+            Workflow: ${{ github.workflow }}
+
+            Please check the workflow logs for details.
 
   cleanup:
     name: 🧹 Cleanup
     runs-on: ubuntu-latest
     needs: [notifications]
     if: always()
-    
+
     steps:
-    - name: Clean up old artifacts
-      uses: actions/github-script@v6
-      with:
-        script: |
-          const artifacts = await github.rest.actions.listArtifactsForRepo({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            per_page: 100
-          });
-          
-          const oneWeekAgo = new Date();
-          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-          
-          for (const artifact of artifacts.data.artifacts) {
-            const createdAt = new Date(artifact.created_at);
-            if (createdAt < oneWeekAgo) {
-              console.log(`Deleting artifact: ${artifact.name} (${artifact.created_at})`);
-              await github.rest.actions.deleteArtifact({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                artifact_id: artifact.id
-              });
+      - name: Clean up old artifacts
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+            for (const artifact of artifacts.data.artifacts) {
+              const createdAt = new Date(artifact.created_at);
+              if (createdAt < oneWeekAgo) {
+                console.log(`Deleting artifact: ${artifact.name} (${artifact.created_at})`);
+                await github.rest.actions.deleteArtifact({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id
+                });
+              }
             }
-          }
-    
-    - name: Clean up old container images
-      run: |
-        echo "🧹 Container image cleanup would run here"
-        # In a real scenario, this would clean up old images from the registry
-        # to save storage space and reduce costs
+
+      - name: Clean up old container images
+        run: |
+          echo "🧹 Container image cleanup would run here"
+          # In a real scenario, this would clean up old images from the registry
+          # to save storage space and reduce costs

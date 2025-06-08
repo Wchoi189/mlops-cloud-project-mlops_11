@@ -3,34 +3,35 @@ icecream, tqdm, rich 통합이 포함된 향상된 트레이너
 더 나은 디버깅, 진행률 추적, 시각적 피드백
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from datetime import datetime
-import joblib
 import logging
-from typing import Tuple, Dict, Any, List, Union
+import warnings
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Tuple, Union
+
+import joblib
 import mlflow
 import mlflow.sklearn
-from sklearn.model_selection import train_test_split
+import numpy as np
+import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-import warnings
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
 
 warnings.filterwarnings("ignore")
 
 # 향상된 유틸리티
 from ..utils.enhanced import (
-    ic,
+    HAS_ICECREAM,
+    HAS_RICH,
+    HAS_TQDM,
     EnhancedLogger,
     ProgressTracker,
-    tools,
     display_table,
     enhanced_print,
-    HAS_ICECREAM,
-    HAS_TQDM,
-    HAS_RICH,
+    ic,
+    tools,
 )
 
 

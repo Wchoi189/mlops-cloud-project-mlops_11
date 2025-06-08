@@ -4,14 +4,15 @@ Docker 빠른 시작 스크립트
 Quick Docker deployment and testing script
 """
 
+import json
 import os
+import subprocess
 import sys
 import time
-import subprocess
-import requests
-import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
+import requests
 
 # 프로젝트 루트 설정
 project_root = Path(__file__).parent.parent

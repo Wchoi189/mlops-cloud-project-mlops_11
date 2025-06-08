@@ -3,14 +3,15 @@
 데이터 전처리 파이프라인 테스트 스크립트
 """
 
-import sys
 import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.data.preprocessing import IMDbPreprocessor
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+from src.data.preprocessing import IMDbPreprocessor
 
 
 def test_preprocessing_pipeline():

@@ -4,8 +4,8 @@
 Enhanced Model Training Script for API Serving
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # 프로젝트 루트를 Python 경로에 추가
@@ -109,6 +109,7 @@ def quick_test():
     try:
         # 작은 샘플로 빠른 훈련
         import pandas as pd
+
         from src.models.trainer import MovieRatingTrainer
 
         # 데이터 로드

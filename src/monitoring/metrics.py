@@ -3,26 +3,24 @@ MLOps Prometheus Metrics Collection
 Custom metrics for API, models, and data monitoring
 """
 
-from functools import wraps
 import time
-from typing import Callable, Any, Optional
-import time
-import numpy as np
 from datetime import datetime
-from typing import Dict, Any, Optional, Union
 from functools import wraps
+from typing import Any, Callable, Dict, Optional, Union
+
+import numpy as np
 
 try:
     from prometheus_client import (
-        Counter,
-        Histogram,
-        Gauge,
-        Summary,
-        Info,
-        CollectorRegistry,
-        multiprocess,
-        generate_latest,
         CONTENT_TYPE_LATEST,
+        CollectorRegistry,
+        Counter,
+        Gauge,
+        Histogram,
+        Info,
+        Summary,
+        generate_latest,
+        multiprocess,
         start_http_server,
     )
 
@@ -218,8 +216,8 @@ class MLOpsMetrics:
             return
 
         try:
-            import sys
             import platform
+            import sys
 
             self.app_info.info(
                 {
@@ -683,8 +681,9 @@ def update_health_metrics():
         return
 
     try:
-        import psutil
         import os
+
+        import psutil
 
         # Get current process
         process = psutil.Process(os.getpid())

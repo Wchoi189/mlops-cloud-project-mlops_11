@@ -1,10 +1,11 @@
-import pandas as pd
-import os
 import gzip
-import requests
+import logging
+import os
 from pathlib import Path
 from typing import Dict, List, Optional
-import logging
+
+import pandas as pd
+import requests
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)

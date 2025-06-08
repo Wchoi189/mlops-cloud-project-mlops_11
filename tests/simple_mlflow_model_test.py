@@ -1,7 +1,7 @@
 import mlflow
 import mlflow.sklearn
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
 
 # Set tracking URI
 mlflow.set_tracking_uri("http://localhost:5000")

@@ -3,13 +3,14 @@
 IMDb 영화 데이터 검증 스크립트 - MLOps 파이프라인용
 """
 
-import sys
 import os
+import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.data.data_loader import IMDbDataLoader
 import pandas as pd
+
+from src.data.data_loader import IMDbDataLoader
 
 
 def validate_imdb_data():

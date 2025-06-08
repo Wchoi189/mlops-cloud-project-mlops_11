@@ -18,13 +18,15 @@ NOTIFICATION_EMAIL=team@your-company.com
 
 ### 2. Setup Instructions
 
-#### Slack Webhook URL:
+#### Slack Webhook URL
+
 1. Go to your Slack workspace
 2. Apps → Incoming Webhooks → Add to Slack
 3. Choose channel and copy webhook URL
 4. Add as `SLACK_ML_WEBHOOK_URL` secret
 
-#### Email Notifications:
+#### Email Notifications
+
 1. Use Gmail with App Password (recommended)
 2. Enable 2FA on Gmail account
 3. Generate App Password in Gmail settings
@@ -33,11 +35,13 @@ NOTIFICATION_EMAIL=team@your-company.com
 ### 3. Auto-Provided Secrets
 
 These are automatically available:
+
 - `GITHUB_TOKEN` - Automatically provided by GitHub Actions
 
 ### 4. Verification
 
 Test your secrets by triggering a pipeline:
+
 ```bash
 git add .
 git commit -m "test: Trigger CI/CD pipeline"
