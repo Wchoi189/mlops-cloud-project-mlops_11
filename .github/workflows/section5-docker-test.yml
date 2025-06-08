@@ -39,18 +39,17 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-enhanced.txt
+        # pip install -r requirements.txt
+        # pip install -r requirements-enhanced.txt
+        pip install -r requirements-resolved.txt # ✅ Exact versions
     
     - name: Validate Docker Compose files
       run: |
-        # Install docker-compose
-        sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-        sudo chmod +x /usr/local/bin/docker-compose
-        
+        # No installation needed - use built-in Docker Compose V2
+        docker compose --version
         # Validate compose files
-        docker-compose -f docker/docker-compose.yml config --quiet
-        docker-compose -f docker/docker-compose.prod.yml config --quiet
+        docker compose -f docker/docker-compose.yml config --quiet
+        docker compose -f docker/docker-compose.prod.yml config --quiet
         echo "✅ Docker Compose files are valid"
     
     - name: Build Docker images
@@ -71,7 +70,7 @@ jobs:
       run: |
         # Start services
         cd docker
-        docker-compose up -d
+        docker compose up -d
         
         # Wait for services
         sleep 30
@@ -94,7 +93,7 @@ jobs:
       if: always()
       run: |
         cd docker
-        docker-compose down --volumes --remove-orphans
+        docker compose down --volumes --remove-orphans
 
   enhanced-features-test:
     runs-on: ubuntu-latest
@@ -163,7 +162,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        # pip install -r requirements.txt
+        pip install -r requirements-resolved.txt # ✅ Exact versions
         pip install pytest pytest-benchmark
     
     - name: Create dummy model for testing
@@ -291,8 +291,9 @@ jobs:
     - name: Install all dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install -r requirements-enhanced.txt
+        # pip install -r requirements.txt
+        # pip install -r requirements-enhanced.txt
+        pip install -r requirements-resolved.txt # ✅ Exact versions
     
     - name: Create test data
       run: |
@@ -339,7 +340,7 @@ jobs:
       run: |
         # Start full stack
         cd docker
-        docker-compose up -d
+        docker compose up -d
         sleep 45  # Wait for everything to be ready
         
         # Test with real prediction
@@ -358,7 +359,7 @@ jobs:
         fi
         
         # Cleanup
-        docker-compose down --volumes --remove-orphans
+        docker compose down --volumes --remove-orphans
     
     - name: Generate test report
       if: always()

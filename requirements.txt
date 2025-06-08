@@ -1,100 +1,41 @@
-# 데이터 사이언스 핵심
-pandas>=1.5.0
-numpy>=1.21.0
-scikit-learn>=1.1.0
-matplotlib>=3.5.0
-seaborn>=0.11.0
+# requirements.txt (CLEANED)
+# ===========================================
+# Data Science Core
+# ===========================================
+pandas>=2.2.0
+numpy>=2.0.0
+scikit-learn>=1.7.0
+matplotlib>=3.10.0
+seaborn>=0.13.0
 
-# 환경 관리
-dotenv==0.9.9
-# 자연어 처리
-# nltk>=3.7
+# ===========================================
+# API Framework
+# ===========================================
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+pydantic>=2.11.0
 
-# 딥러닝 - PyTorch (CPU 버전, GPU 필요시 아래 주석 해제)
-# torch>=2.0.0,<2.2.0
-# torchvision>=0.15.0,<0.17.0
-# torchaudio>=2.0.0,<2.2.0
-
-# GPU 버전이 필요한 경우 위의 torch 라인들을 주석처리하고 아래 사용:
-# --index-url https://download.pytorch.org/whl/cu118
-# torch>=2.0.0,<2.2.0
-# torchvision>=0.15.0,<0.17.0
-# torchaudio>=2.0.0,<2.2.0
-
-# API 프레임워크
-fastapi>=0.85.0
-uvicorn>=0.18.0
-# python-multipart>=0.0.5
-
+# ===========================================
 # MLOps
-mlflow>=2.0.0
-
-# 데이터 검증
-pydantic>=1.10.0
-
-# ML 모니터링 및 데이터 드리프트 감지
-evidently>=0.4.0
-
-# 데이터베이스 (SQLite 유틸리티)
-sqlalchemy>=1.4.0
-alembic>=1.8.0
-
-# 추가 유틸리티
-python-dotenv>=1.0.0
-requests>=2.28.0
-
-# 메트릭 수집 (Metrics Collection)
-prometheus-client>=0.19.0 # ~3MB   - Prometheus 메트릭 수집 (Section 6.1 필수)
-psutil>=5.9.6            # ~5MB   - 시스템 리소스 모니터링 (CPU, 메모리, 디스크)
-prometheus-fastapi-instrumentator==6.1.0
-
-# PyTorch 관련 추가 패키지
-# transformers>=4.21.0  # Hugging Face transformers (NLP용)
-# tokenizers>=0.13.0    # 빠른 토크나이저
-# datasets>=2.14.0      # Hugging Face 데이터셋
+# ===========================================
+mlflow>=2.22.0
+evidently>=0.7.0
 
 # ===========================================
-# 추가 MLOps 향상 패키지 (선택사항)
+# Database
 # ===========================================
+sqlalchemy>=2.0.0
+alembic>=1.16.0
 
-# 모델 서빙 및 배포
-# gradio>=3.40.0          # 빠른 모델 데모 생성
-# streamlit>=1.25.0       # 웹 앱 구축
+# ===========================================
+# Utilities
+# ===========================================
+python-dotenv>=1.1.0
+requests>=2.32.0
 
-# 실험 추적 대안
-wandb>=0.15.0           # Weights & Biases (실험 관리)
-# tensorboard>=2.13.0     # TensorBoard (시각화)
-
-
-# 확장된 데이터 처리
-# datasets[audio,vision]>=2.14.0  # 오디오/비전 데이터셋 지원
-# pillow>=9.0.0           # 이미지 처리
-# opencv-python>=4.8.0    # 컴퓨터 비전
-
-# 테스트 및 코드 품질
-# pytest>=7.0.0          # 단위 테스트
-# black>=22.0.0           # 코드 포맷팅
-# flake8>=5.0.0           # 코드 린팅
-# isort>=5.12.0           # import 정렬
-
-# 클라우드 스토리지 (필요시)
-# boto3>=1.26.0           # AWS 연동
-# google-cloud-storage>=2.10.0  # GCP 연동
-# azure-storage-blob>=12.17.0   # Azure 연동
-
-# 고급 ML 도구
-# optuna>=3.3.0           # 하이퍼파라미터 최적화
-# shap>=0.42.0            # 모델 해석성
-# lime>=0.2.0             # 로컬 해석성
-
-# 데이터 파이프라인
-# apache-airflow>=2.7.0   # 워크플로우 관리 (선택사항)
-# prefect>=2.10.0         # 현대적 워크플로우 (선택사항)
-
-# 성능 모니터링
-# psutil>=5.9.0           # 시스템 리소스 모니터링
-# memory-profiler>=0.61.0 # 메모리 사용량 분석
-
-# 보안 및 환경 관리
-# cryptography>=41.0.0    # 암호화
-# keyring>=24.2.0         # 안전한 키 관리
+# ===========================================
+# Monitoring
+# ===========================================
+prometheus-client>=0.22.0
+psutil>=7.0.0
+prometheus-fastapi-instrumentator>=7.1.0

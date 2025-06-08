@@ -106,14 +106,14 @@ jobs:
         cd docker
         
         # Start services
-        docker-compose up -d
+        docker compose up -d
         
         # Wait for services to be ready
         echo "⏳ Waiting for services to be ready..."
         sleep 30
         
         # Check service status
-        docker-compose ps
+        docker compose ps
     
     - name: Test API endpoints
       run: |
@@ -122,7 +122,7 @@ jobs:
         # Test health endpoint
         curl -f http://localhost:8000/health || {
           echo "❌ Health endpoint failed"
-          docker-compose -C docker logs api
+          docker compose -C docker logs api
           exit 1
         }
         echo "✅ Health endpoint working"
@@ -130,7 +130,7 @@ jobs:
         # Test MLflow
         curl -f http://localhost:5000/health || {
           echo "❌ MLflow endpoint failed"
-          docker-compose -C docker logs mlflow
+          docker compose -C docker logs mlflow
           exit 1
         }
         echo "✅ MLflow endpoint working"
@@ -140,7 +140,7 @@ jobs:
              -H "Content-Type: application/json" \
              -d '{"title":"Docker Test","startYear":2020,"runtimeMinutes":120,"numVotes":5000}' || {
           echo "❌ Movie prediction failed"
-          docker-compose -C docker logs api
+          docker compose -C docker logs api
           exit 1
         }
         echo "✅ Movie prediction working"
@@ -150,7 +150,7 @@ jobs:
       run: |
         echo "🧹 Cleaning up..."
         cd docker
-        docker-compose down --volumes --remove-orphans
+        docker compose down --volumes --remove-orphans
         docker image prune -f
 
   monitoring-integration:
@@ -205,7 +205,7 @@ jobs:
         
         # Start monitoring stack
         cd docker
-        docker-compose -f docker-compose.monitoring.yml up -d
+        docker compose -f docker-compose.monitoring.yml up -d
         
         # Wait for services
         echo "⏳ Waiting for monitoring services..."
@@ -214,7 +214,7 @@ jobs:
         # Check Prometheus
         curl -f http://localhost:9090/-/ready || {
           echo "❌ Prometheus not ready"
-          docker-compose -f docker-compose.monitoring.yml logs prometheus
+          docker compose -f docker-compose.monitoring.yml logs prometheus
           exit 1
         }
         echo "✅ Prometheus ready"
@@ -222,7 +222,7 @@ jobs:
         # Check Grafana
         curl -f http://localhost:3000/api/health || {
           echo "❌ Grafana not ready" 
-          docker-compose -f docker-compose.monitoring.yml logs grafana
+          docker compose -f docker-compose.monitoring.yml logs grafana
           exit 1
         }
         echo "✅ Grafana ready"
@@ -230,7 +230,7 @@ jobs:
         # Check AlertManager
         curl -f http://localhost:9093/-/ready || {
           echo "❌ AlertManager not ready"
-          docker-compose -f docker-compose.monitoring.yml logs alertmanager
+          docker compose -f docker-compose.monitoring.yml logs alertmanager
           exit 1
         }
         echo "✅ AlertManager ready"
@@ -247,7 +247,7 @@ jobs:
       run: |
         echo "🧹 Cleaning up monitoring stack..."
         cd docker
-        docker-compose -f docker-compose.monitoring.yml down --volumes --remove-orphans
+        docker compose -f docker-compose.monitoring.yml down --volumes --remove-orphans
 
   summary:
     name: 📋 Test Summary

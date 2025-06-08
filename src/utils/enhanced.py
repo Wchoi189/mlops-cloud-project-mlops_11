@@ -8,6 +8,12 @@ import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, TYPE_CHECKING
+import importlib
+
+# Force reload of logging module if there's a conflict
+if 'logging' in sys.modules:
+    importlib.reload(sys.modules['logging'])
+import logging
 
 # Enhanced libraries
 try:
