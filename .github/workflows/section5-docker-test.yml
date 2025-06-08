@@ -121,8 +121,8 @@ jobs:
 
       - name: Test enhanced CLI
         run: |
-          python src/utils/enhanced.py demo
-          python src/utils/enhanced.py system_info
+          python src/utils/enhanced.py test_imports
+          python src/utils/enhanced.py demo_enhanced_features
 
   security-scan:
     runs-on: ubuntu-latest
