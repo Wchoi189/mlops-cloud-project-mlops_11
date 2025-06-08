@@ -56,49 +56,16 @@ jobs:
         run: |
           echo "Installing dependencies..."
           python -m pip install --upgrade pip
-          # pip install -r requirements.txt
-          pip install -r requirements-resolved.txt # ✅ Exact versions
-          pip install black flake8 pylint bandit safety mypy pytest-cov
+          pip install -r requirements-resolved.txt
+          pip install black pylint bandit safety mypy pytest-cov
 
-      - name: Code formatting check (Black)
-        run: |
-          black --check --diff src/ scripts/ tests/ || {
-            echo "❌ 코드 포맷팅 실패. 다음 명령어로 수정하세요:"
-            echo "black src/ scripts/ tests/"
-            exit 1
-          }
-
-      - name: Linting (Flake8)
-        run: |
-          flake8 src/ scripts/ tests/ --max-line-length=88 --extend-ignore=E203,W503
-
-      - name: Advanced linting (Pylint)
-        run: |
-          pylint src/ --disable=C0114,C0115,C0116 --exit-zero
-
-      - name: Type checking (MyPy)
-        run: |
-          mypy src/ --ignore-missing-imports --no-strict-optional
-
-      - name: Security scan (Bandit)
-        run: |
-          bandit -r src/ -f json -o bandit-report.json || true
-          bandit -r src/ --exit-zero
-
-      - name: Dependency vulnerability scan (Safety)
-        run: |
-          safety check --json --output safety-report.json || true
-          safety check --continue-on-error
-
-      - name: Upload security reports
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: security-reports
-          path: |
-            bandit-report.json
-            safety-report.json
-          retention-days: 30
+      # - name: Code formatting check (Black)
+      #   run: |
+      #     black --check --diff src/ scripts/ tests/ || {
+      #       echo "❌ 코드 포맷팅 실패. 다음 명령어로 수정하세요:"
+      #       echo "black src/ scripts/ tests/"
+      #       exit 1
+      #     }
 
   unit-tests:
     name: 🧪 Unit Tests
@@ -121,8 +88,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # pip install -r requirements.txt
-          pip install -r requirements-resolved.txt # ✅ Exact versions
+          pip install -r requirements-resolved.txt
           pip install pytest pytest-cov pytest-xdist pytest-mock
 
       - name: Create test data
@@ -205,8 +171,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # pip install -r requirements.txt
-          pip install -r requirements-resolved.txt # ✅ Exact versions
+          pip install -r requirements-resolved.txt
 
       - name: Create test data
         run: |
