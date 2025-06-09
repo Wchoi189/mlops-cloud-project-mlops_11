@@ -34,7 +34,7 @@ venv.bak/
 .env.local
 .env.*.local
 docker/.env
-
+.secrets
 # IDEs
 .vscode/
 .idea/
