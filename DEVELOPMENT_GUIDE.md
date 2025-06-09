@@ -1,4 +1,5 @@
 # MLOps 프로젝트 빠른 시작 가이드
+
 ## 팀: mlops-cloud-project-mlops_11
 
 ---
@@ -6,6 +7,7 @@
 ## 🚀 빠른 설정 (5분)
 
 ### 1단계: 저장소 클론
+
 ```bash
 # 팀 저장소 클론
 git clone https://github.com/AIBootcamp13/mlops-cloud-project-mlops_11.git
@@ -15,6 +17,7 @@ cd mlops-cloud-project-mlops_11
 ```
 
 ### 1.5단계: 프로젝트 구조 설정 (자동화)
+
 ```bash
 # 프로젝트 구조 설정 스크립트 실행
 python setup_project.py
@@ -27,6 +30,7 @@ bash ../setup_essential_files.sh
 ```
 
 ### 2단계: Python 가상환경 설정
+
 ```bash
 # Python 3.11로 가상환경 생성
 python3.11 -m venv mlops-env
@@ -45,6 +49,7 @@ pip install --upgrade pip
 ```
 
 ### 3단계: 의존성 설치
+
 ```bash
 # 모든 필수 패키지 설치
 pip install -r requirements.txt
@@ -54,6 +59,7 @@ python -c "import pandas, numpy, sklearn, fastapi, mlflow, evidently; print('✅
 ```
 
 ### 4단계: 설정 테스트
+
 ```bash
 # API 서버 시작
 uvicorn src.api.main:app --reload --port 8000
@@ -68,6 +74,7 @@ curl -X POST "http://localhost:8000/predict" \
 ---
 
 ## 📋 Requirements.txt 내용
+
 ```
 # 데이터 사이언스 핵심
 pandas>=1.5.0
@@ -105,6 +112,7 @@ requests>=2.28.0
 ---
 
 ## 🗂️ 프로젝트 구조 (자동 생성)
+
 ```
 mlops-cloud-project-mlops_11/
 ├── data/
@@ -179,6 +187,7 @@ mlops-cloud-project-mlops_11/
 ## 💻 개발 워크플로우
 
 ### 일일 워크플로우
+
 ```bash
 # 1. 가상환경 활성화
 source mlops-env/bin/activate
@@ -197,6 +206,7 @@ jupyter lab --port 8888
 ```
 
 ### Git 워크플로우
+
 ```bash
 # 1. 피처 브랜치 생성
 git checkout -b feature/기능이름
@@ -217,6 +227,7 @@ git push origin feature/기능이름
 ## 🔧 공통 명령어
 
 ### 공통 명령어 (Makefile 사용)
+
 ```bash
 # 의존성 설치
 make install          # 프로덕션 의존성
@@ -236,6 +247,7 @@ make docker-run      # Docker 컨테이너 실행
 ```
 
 ### API 개발
+
 ```bash
 # API 서버 시작
 uvicorn src.api.main:app --reload --port 8000
@@ -250,6 +262,7 @@ curl http://localhost:8000/predictions/history  # 예측 기록 조회
 ```
 
 ### MLflow 추적
+
 ```bash
 # MLflow UI 시작
 mlflow ui --port 5000
@@ -258,6 +271,7 @@ mlflow ui --port 5000
 ```
 
 ### 데이터베이스 조작
+
 ```bash
 # SQLite 데이터베이스 연결
 sqlite3 database/mlops_imdb.db
@@ -277,6 +291,7 @@ SELECT * FROM predictions LIMIT 5;
 ## 🧪 설정 테스트
 
 ### 1. Python 환경 테스트
+
 ```bash
 python -c "
 import sys
@@ -286,6 +301,7 @@ print(f'Python 경로: {sys.executable}')
 ```
 
 ### 2. 모든 Import 테스트
+
 ```bash
 python -c "
 try:
@@ -307,6 +323,7 @@ except ImportError as e:
 ```
 
 ### 3. API 기능 테스트
+
 ```bash
 # API 시작
 uvicorn src.api.main:app --port 8000 &
@@ -335,6 +352,7 @@ pkill -f uvicorn
 ### 자주 발생하는 문제 및 해결방법
 
 #### 1. 가상환경 문제
+
 ```bash
 # python3.11을 찾을 수 없는 경우
 python3 -m venv mlops-env
@@ -345,6 +363,7 @@ sudo chown -R $USER:$USER mlops-env
 ```
 
 #### 2. 패키지 설치 충돌
+
 ```bash
 # pip 캐시 지우기
 pip cache purge
@@ -359,6 +378,7 @@ pip install mlflow evidently
 ```
 
 #### 3. API가 시작되지 않는 경우
+
 ```bash
 # 포트 사용 중인지 확인
 lsof -i :8000
@@ -371,6 +391,7 @@ uvicorn src.api.main:app --port 8001
 ```
 
 #### 4. 데이터베이스 문제
+
 ```bash
 # 데이터베이스 디렉토리 생성
 mkdir -p database
@@ -386,17 +407,18 @@ rm -f database/mlops_imdb.db
 
 ## 📚 유용한 자료
 
-- **FastAPI 문서**: https://fastapi.tiangolo.com/
-- **MLflow 문서**: https://mlflow.org/docs/latest/index.html
-- **Evidently 문서**: https://docs.evidentlyai.com/
-- **Pandas 문서**: https://pandas.pydata.org/docs/
-- **Scikit-learn 문서**: https://scikit-learn.org/stable/
+- **FastAPI 문서**: <https://fastapi.tiangolo.com/>
+- **MLflow 문서**: <https://mlflow.org/docs/latest/index.html>
+- **Evidently 문서**: <https://docs.evidentlyai.com/>
+- **Pandas 문서**: <https://pandas.pydata.org/docs/>
+- **Scikit-learn 문서**: <https://scikit-learn.org/stable/>
 
 ---
 
 ## 👥 팀 협업
 
 ### 코드 리뷰 체크리스트
+
 - [ ] 코드가 프로젝트 구조를 따름
 - [ ] 모든 테스트 통과
 - [ ] 문서 업데이트됨
@@ -405,6 +427,7 @@ rm -f database/mlops_imdb.db
 - [ ] API 엔드포인트 테스트됨
 
 ### 소통 방법
+
 - 버그 리포트와 기능 요청은 GitHub Issues 사용
 - 일반적인 질문은 GitHub Discussions 사용
 - PR에서 팀원 태그하여 리뷰 요청
@@ -421,7 +444,6 @@ rm -f database/mlops_imdb.db
 5. **컨테이너화**: 배포를 위한 Docker 컨테이너 생성
 6. **CI/CD 생성**: 자동화된 테스트 및 배포 설정
 
-
 ---
 
 ## 📊 Section 1: IMDb 데이터 파이프라인 구현 (Rating Prediction)
@@ -429,16 +451,18 @@ rm -f database/mlops_imdb.db
 ### 1.1 IMDb 데이터셋 다운로드 및 준비 (최소 구성)
 
 #### 프로젝트 철학: MLOps 파이프라인 중심
+
 - **목표**: 복잡한 ML 모델이 아닌 **MLOps 파이프라인 구축**에 집중
 - **데이터**: 필수 2개 파일만 사용 (title.basics + title.ratings)
 - **피처**: 간단하지만 효과적인 4-5개 피처로 제한
 - **이유**: 팀 협업 용이성, 빠른 구현, 디버깅 단순화
 
 #### Step 1: 데이터 로더 구현
+
 `src/data/data_loader.py` 파일 생성:
 
-
 #### Step 2: 데이터 검증 스크립트
+
 `scripts/validate_data.py` 파일 생성:
 
 #### Step 3: 실행 명령어
@@ -455,23 +479,30 @@ python scripts/validate_data.py
 ```
 
 #### 예상 결과
+
 - `data/raw/` 폴더에 2개 압축 파일 다운로드
-- `data/processed/movies_with_ratings.csv` 생성 
+- `data/processed/movies_with_ratings.csv` 생성
 - 약 10,000-30,000개 영화 데이터 (품질 필터링 후)
 - 4-5개 핵심 피처 (title, year, genre, rating, votes)
+
 ---
+
 ## 📊 Section 2: Data Preprocessing Pipeline
+
 ✅ Step 1: Create the preprocessing module # Create src/data/preprocessing.py
-✅ Step 2: Create the test script # Create scripts/test_preprocessing.py 
+✅ Step 2: Create the test script # Create scripts/test_preprocessing.py
 ✅ Step 3: Run the preprocessing pipeline
 
 # 1. 전처리 파이프라인 실행
+
 bash
 
 # Using single quotes to avoid bash interpretation
+
 python -c 'from src.data.preprocessing import IMDbPreprocessor; p = IMDbPreprocessor(); df = p.load_data(); X, y, features = p.fit_transform(df); p.save_preprocessor(); print("전처리 완료!")'
 
 # 2. 전처리 파이프라인 테스트
+
 python scripts/test_preprocessing.py
 ---
 

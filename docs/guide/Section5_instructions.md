@@ -1,25 +1,29 @@
 # 🐳 Section 5: Docker Containerization - Complete Implementation Guide
 
 ## 📋 Overview
+
 Section 5 containerizes your MLOps pipeline using Docker, making it portable, scalable, and production-ready. We've also integrated enhanced libraries (icecream, tqdm, fire, rich) for better developer experience.
 
 ## 🆕 What's New in Section 5
 
 ### 🐳 Docker Components
+
 1. **API Container** (`docker/Dockerfile.api`) - FastAPI서비스 컨테이너화
-2. **Training Container** (`docker/Dockerfile.train`) - 모델 훈련 파이프라인 컨테이너화  
+2. **Training Container** (`docker/Dockerfile.train`) - 모델 훈련 파이프라인 컨테이너화
 3. **Multi-Service Orchestration** (`docker/docker-compose.yml`) - 전체 스택 관리
 4. **Production Config** (`docker/docker-compose.prod.yml`) - 프로덕션 최적화 설정
 
 ### 🎨 Enhanced Developer Experience
+
 1. **icecream** - Better debugging: `ic()` instead of `print()`
 2. **tqdm** - Progress bars for data processing and training
-3. **fire** - Automatic CLI generation from Python functions  
+3. **fire** - Automatic CLI generation from Python functions
 4. **rich** - Beautiful terminal output and tables
 
 ## 🚀 Quick Start
 
 ### Step 1: Install Enhanced Dependencies (Optional but Recommended)
+
 ```bash
 # Install enhanced libraries for better UX
 pip install icecream tqdm fire rich
@@ -29,6 +33,7 @@ pip install -r requirements-enhanced.txt
 ```
 
 ### Step 2: Quick Docker Test
+
 ```bash
 # Quick validation (no building)
 python scripts/tests/test_section5.py --quick
@@ -38,6 +43,7 @@ python scripts/tests/test_section5.py
 ```
 
 ### Step 3: Build and Deploy
+
 ```bash
 # Option A: Using Docker Compose (Recommended)
 cd docker
@@ -51,6 +57,7 @@ make -f Makefile.docker docker-run
 ```
 
 ### Step 4: Verify Deployment
+
 ```bash
 # Check service status
 curl http://localhost:8000/health
@@ -86,6 +93,7 @@ curl -X POST "http://localhost:8000/predict/movie" \
 ## 🔧 Available Commands
 
 ### Docker Compose Commands
+
 ```bash
 # Start all services
 docker-compose up -d
@@ -105,6 +113,7 @@ docker-compose down --volumes --remove-orphans
 ```
 
 ### Enhanced Makefile Commands
+
 ```bash
 make -f Makefile.docker docker-help     # Show all commands
 make -f Makefile.docker docker-build    # Build images
@@ -116,6 +125,7 @@ make -f Makefile.docker docker-clean    # Cleanup
 ```
 
 ### Enhanced CLI with Fire
+
 ```bash
 # Enhanced training with progress bars
 python src/utils/enhanced.py train --model_type=random_forest
@@ -133,6 +143,7 @@ python src/utils/enhanced.py docker_status
 ## 🧪 Testing & Validation
 
 ### Automated Testing
+
 ```bash
 # Full Section 5 test suite
 python scripts/tests/test_section5.py
@@ -145,6 +156,7 @@ python scripts/quick_api_test.py
 ```
 
 ### Manual Validation
+
 ```bash
 # 1. Check Docker images
 docker images | grep mlops
@@ -166,6 +178,7 @@ curl -X POST "http://localhost:8000/predict/movie" \
 ## 🎨 Enhanced Features Demo
 
 ### Better Debugging with icecream
+
 ```python
 # Instead of print statements
 from src.utils.enhanced import ic
@@ -178,6 +191,7 @@ ic(X.shape, y.shape, model_type)
 ```
 
 ### Progress Bars with tqdm
+
 ```python
 from src.utils.enhanced import track_progress
 
@@ -188,6 +202,7 @@ for epoch in track_progress(range(100), "Training model"):
 ```
 
 ### Rich Tables and Output
+
 ```python
 from src.utils.enhanced import display_table
 
@@ -202,6 +217,7 @@ display_table(
 ```
 
 ### Fire CLI Generation
+
 ```python
 # Automatic CLI from any function
 import fire
@@ -221,6 +237,7 @@ if __name__ == "__main__":
 ### Common Issues
 
 #### Docker Build Fails
+
 ```bash
 # Clear Docker cache
 docker system prune -f
@@ -233,6 +250,7 @@ docker system df
 ```
 
 #### Services Won't Start
+
 ```bash
 # Check port conflicts
 lsof -i :8000
@@ -246,6 +264,7 @@ docker-compose logs --tail=50 api
 ```
 
 #### API Not Responding
+
 ```bash
 # Check container status
 docker ps
@@ -258,6 +277,7 @@ docker-compose exec api ls -la /app/models/
 ```
 
 #### Models Not Loading
+
 ```bash
 # Verify model files exist
 ls -la models/
@@ -276,6 +296,7 @@ print('Available models:', evaluator.get_model_info())
 ## 📈 Performance Optimization
 
 ### Production Deployment
+
 ```bash
 # Use production configuration
 docker-compose -f docker/docker-compose.prod.yml up -d
@@ -288,6 +309,7 @@ docker-compose -f docker/docker-compose.prod.yml --profile production up -d
 ```
 
 ### Resource Limits
+
 ```yaml
 # In docker-compose.prod.yml
 deploy:
@@ -301,6 +323,7 @@ deploy:
 ```
 
 ### Health Checks
+
 ```yaml
 healthcheck:
   test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -330,7 +353,7 @@ healthcheck:
 ## 📚 Key Files Created
 
 - `docker/Dockerfile.api` - API 컨테이너 설정
-- `docker/Dockerfile.train` - 훈련 컨테이너 설정  
+- `docker/Dockerfile.train` - 훈련 컨테이너 설정
 - `docker/docker-compose.yml` - 개발용 멀티 서비스
 - `docker/docker-compose.prod.yml` - 프로덕션 설정
 - `scripts/tests/test_section5.py` - Docker 테스트 스위트
@@ -343,17 +366,19 @@ healthcheck:
 ## 💡 Enhanced Libraries Integration
 
 ### icecream - Better Debugging
+
 ```python
 # Before: print debugging
 print("Data shape:", X.shape)
 print("Model type:", model_type)
 
-# After: Enhanced debugging  
+# After: Enhanced debugging
 from src.utils.enhanced import ic
 ic(X.shape, model_type)  # 🐛 DEBUG | X.shape: (5764, 3), model_type: 'random_forest'
 ```
 
 ### tqdm - Progress Tracking
+
 ```python
 # Before: No progress indication
 for epoch in range(100):
@@ -366,6 +391,7 @@ for epoch in track_progress(range(100), "Training model"):
 ```
 
 ### fire - Automatic CLI
+
 ```python
 # Before: Manual argparse setup
 import argparse
@@ -384,6 +410,7 @@ if __name__ == '__main__':
 ```
 
 ### rich - Beautiful Output
+
 ```python
 # Before: Plain text tables
 print("Model Results:")
@@ -405,6 +432,7 @@ display_table(
 ## 🔄 Development Workflow
 
 ### Daily Development with Docker
+
 ```bash
 # 1. Start development environment
 make -f Makefile.docker docker-run
@@ -423,6 +451,7 @@ make -f Makefile.docker docker-restart
 ```
 
 ### Enhanced Training Workflow
+
 ```bash
 # 1. Use enhanced trainer with progress bars
 python src/models/enhanced_trainer.py
@@ -445,6 +474,7 @@ tools.debug_model_info(None, data)
 ## 🚀 Production Deployment
 
 ### Cloud Deployment Preparation
+
 ```bash
 # 1. Test production configuration
 docker-compose -f docker/docker-compose.prod.yml up -d
@@ -461,6 +491,7 @@ docker push your-registry/mlops-trainer:v1.0
 ```
 
 ### Kubernetes Deployment (Future Section 6+)
+
 ```yaml
 # Example Kubernetes deployment (preview)
 apiVersion: apps/v1
@@ -490,23 +521,27 @@ spec:
 ## 🎉 Section 5 Success Criteria
 
 ✅ **Docker Containerization Complete**
+
 - [x] API containerized with Dockerfile.api
-- [x] Training pipeline containerized with Dockerfile.train  
+- [x] Training pipeline containerized with Dockerfile.train
 - [x] Multi-service orchestration with docker-compose.yml
 - [x] Production-ready configuration with docker-compose.prod.yml
 
 ✅ **Enhanced Developer Experience**
+
 - [x] icecream for better debugging
 - [x] tqdm for progress tracking
 - [x] fire for automatic CLI generation
 - [x] rich for beautiful terminal output
 
 ✅ **Testing & Validation**
+
 - [x] Comprehensive test suite (test_section5.py)
 - [x] Quick validation scripts
 - [x] Health checks and monitoring
 
 ✅ **Production Readiness**
+
 - [x] Resource limits and health checks
 - [x] Volume mounts for persistence
 - [x] Environment variable configuration
@@ -522,7 +557,7 @@ spec:
 | Memory Usage (Training) | ~2GB | ~4GB |
 | Model Load Time | < 5s | < 3s |
 
-## 🎯 Ready for Section 6!
+## 🎯 Ready for Section 6
 
 With Section 5 complete, you now have:
 
@@ -533,6 +568,7 @@ With Section 5 complete, you now have:
 5. **Beautiful CLI and Output** ✨
 
 **Next Section 6 will focus on:**
+
 - Monitoring with Prometheus/Grafana
 - CI/CD with GitHub Actions
 - Automated testing pipelines

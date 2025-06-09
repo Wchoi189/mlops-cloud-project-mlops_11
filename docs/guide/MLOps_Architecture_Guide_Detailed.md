@@ -23,24 +23,28 @@
 
 ## 1️⃣ 데이터 파이프라인 (Data Pipeline)
 
-### 주요 구성 요소:
+### 주요 구성 요소
+
 - **Data Ingestion**: Kafka, RabbitMQ, Amazon SQS, Google Pub/Sub, Azure Service Bus
 - **Batch/Streaming 처리**: Apache Spark, Hadoop, Flink
 - **ETL 자동화**: Airflow, Prefect, Argo Workflows
 - **저장소**: S3, MinIO, HDFS, PostgreSQL
 
-### 관련 도구 예시:
+### 관련 도구 예시
+
 - Kafka, Spark, Airflow, S3, MinIO
 
 ---
 
 ## 2️⃣ Feature Store
 
-### 역할:
+### 역할
+
 - 반복 재사용 가능한 피처를 관리
 - 실시간/배치 피처 제공
 
-### 대표 도구:
+### 대표 도구
+
 - **Feast** (오픈소스 피처 저장소)
 - **Hopsworks**, **Tecton**, **SageMaker Feature Store**
 
@@ -48,10 +52,12 @@
 
 ## 3️⃣ 실험 오케스트레이션 (Experiment Orchestration)
 
-### 역할:
+### 역할
+
 - 실험 관리, 재현 가능한 워크플로우 실행
 
-### 대표 도구:
+### 대표 도구
+
 - **Kubeflow Pipelines**: Kubernetes 기반
 - **MLflow**: 실험 추적, 모델 저장소, 서빙 연동
 - **Argo Workflows / Prefect**: 워크플로우 기반 오케스트레이션
@@ -60,11 +66,13 @@
 
 ## 4️⃣ 모델 학습 파이프라인 (Model Training)
 
-### 단계 구성:
+### 단계 구성
+
 - **Data Extraction / Validation / Preparation**
 - **Training / Evaluation / Validation**
 
-### 자동화 도구:
+### 자동화 도구
+
 - MLflow Tracking
 - DVC, Metaflow, SageMaker Pipelines
 - **Metadata 관리**: ML Metadata Store
@@ -73,11 +81,13 @@
 
 ## 5️⃣ 모델 저장소 (Model Registry)
 
-### 기능:
+### 기능
+
 - 학습된 모델 버전 관리
 - Production/Staging 구분
 
-### 도구:
+### 도구
+
 - MLflow Model Registry
 - SageMaker Model Registry
 - TensorFlow Model Registry
@@ -86,11 +96,13 @@
 
 ## 6️⃣ 서빙 및 배포 (Serving & Deployment)
 
-### 서빙 기술:
+### 서빙 기술
+
 - REST API: FastAPI, Flask
 - 모델 서빙 프레임워크: BentoML, TorchServe, KServe, Triton
 
-### 배포 자동화 (CI/CD):
+### 배포 자동화 (CI/CD)
+
 - GitHub Actions, GitLab CI, Jenkins, ArgoCD, CircleCI
 - 패키징: Docker, Helm, K8s
 
@@ -98,7 +110,8 @@
 
 ## 7️⃣ 성능 모니터링 및 재학습 트리거
 
-### 주요 도구:
+### 주요 도구
+
 - **Prometheus + Grafana**: 리소스 모니터링
 - **Evidently AI / WhyLogs**: 데이터 드리프트 감지
 - **WandB / TensorBoard / ELK / EFK 스택**: 실험 추적, 시각화
@@ -123,7 +136,7 @@
 ## 📌 참고 아키텍처 다이어그램 요약
 
 1. **전체 파이프라인 개요**: 데이터 수집 → 학습 → 서빙 → 예측 순서
-2. **각 구성 요소별 도구 명시 다이어그램**: 
+2. **각 구성 요소별 도구 명시 다이어그램**:
     - 데이터 흐름은 고정 구조, 도구는 교체 가능 모듈로 표현
     - 예: Feature Store에 S3/MinIO, Serving에 Triton/KServe 등 대체 가능
 

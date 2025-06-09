@@ -1,11 +1,13 @@
 # 🚀 섹션 6.2: CI/CD 파이프라인 - 완전한 구현 가이드
 
 ## 📋 개요
+
 섹션 6.2는 테스트, 빌드 및 배포를 자동화하는 포괄적인 CI/CD 시스템으로 MLOps 파이프라인을 완성합니다. 이는 섹션 6.1의 모니터링 스택과 원활하게 통합됩니다.
 
 ## 🆕 섹션 6.2의 새로운 기능
 
 ### 🔄 5단계 CI/CD 파이프라인
+
 1. **🔍 1단계: 코드 품질 및 보안**
    - Black 코드 포맷팅
    - Flake8 + Pylint 린팅
@@ -38,6 +40,7 @@
    - 배포 보고서 작성
 
 ### 🔧 향상된 기능
+
 - **다중 환경 지원**(스테이징/프로덕션)
 - **프로덕션 배포를 위한 승인 워크플로우**
 - **성능 회귀 테스팅**
@@ -47,6 +50,7 @@
 ## 🚀 빠른 시작
 
 ### 1단계: 사전 요구사항 확인
+
 ```bash
 # 이전 섹션이 모두 완료되었는지 확인
 python scripts/tests/test_section6_1.py  # 모니터링이 작동해야 함
@@ -57,12 +61,14 @@ python scripts/tests/test_section6_2.py
 ```
 
 ### 2단계: GitHub Secrets 설정
+
 GitHub 저장소 → Settings → Secrets and variables → Actions로 이동
 
 **필수 Secrets:**
+
 ```bash
 # 알림 (선택 사항이지만 권장됨)
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+SLACK_ML_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
 EMAIL_USERNAME=your-email@gmail.com
 EMAIL_PASSWORD=your-app-password
 NOTIFICATION_EMAIL=team@your-company.com
@@ -71,6 +77,7 @@ NOTIFICATION_EMAIL=team@your-company.com
 **참고:** `GITHUB_TOKEN`은 GitHub Actions에서 자동으로 제공됩니다.
 
 ### 3단계: 첫 파이프라인 트리거
+
 ```bash
 # 변경 사항을 만들고 푸시하여 CI/CD 트리거
 git add .
@@ -88,6 +95,7 @@ git push origin develop  # 스테이징 파이프라인 트리거
 ```
 
 ### 4단계: 파이프라인 실행 모니터링
+
 1. **GitHub Actions 탭**: 실시간으로 파이프라인 실행 확인
 2. **Slack/이메일**: 배포 상태에 대한 알림 수신
 3. **모니터링 대시보드**: 배포 메트릭 확인
@@ -95,9 +103,11 @@ git push origin develop  # 스테이징 파이프라인 트리거
 ## 📊 파이프라인 단계 설명
 
 ### 🔍 1단계: 코드 품질 및 보안
+
 **소요 시간**: ~3-5분
 
 **진행 과정:**
+
 - **Black 포맷팅 검사**: 일관된 코드 스타일 보장
 - **Flake8 린팅**: 스타일 문제 및 잠재적 버그 포착
 - **Pylint 분석**: 고급 코드 품질 검사
@@ -106,79 +116,96 @@ git push origin develop  # 스테이징 파이프라인 트리거
 - **Safety 검사**: 알려진 취약점에 대한 의존성 스캔
 
 **생성되는 아티팩트:**
+
 - `bandit-report.json` - 보안 스캔 결과
 - `safety-report.json` - 의존성 취약점 보고서
 
 **성공 기준:**
+
 - 모든 코드가 포맷팅 검사 통과
 - 중요한 린팅 오류 없음
 - 심각한 보안 문제 없음
 
 ### 🧪 2단계: 테스팅
+
 **소요 시간**: ~5-10분
 
 **진행 과정:**
+
 - **단위 테스트**: pytest로 개별 컴포넌트 테스트
 - **통합 테스트**: Docker로 전체 시스템 테스트
 - **커버리지 분석**: codecov로 테스트 커버리지 측정
 - **다중 Python 테스팅**: Python 3.10 및 3.11에서 테스트
 
 **테스트 데이터 생성:**
+
 - 자동으로 합성 영화 데이터셋 생성
 - 테스트용 모의 ML 모델 생성
 - 테스트 데이터베이스 및 파일 설정
 
 **성공 기준:**
+
 - 모든 단위 테스트 통과
 - 통합 테스트 성공적 완료
 - 최소 임계값 이상의 테스트 커버리지
 
 ### 🔨 3단계: 빌드 및 레지스트리
+
 **소요 시간**: ~8-15분
 
 **진행 과정:**
+
 - **멀티 플랫폼 빌드**: AMD64 및 ARM64용 이미지 생성
 - **컨테이너 레지스트리 푸시**: GitHub Container Registry에 업로드
 - **보안 스캐닝**: Trivy로 컨테이너 취약점 스캔
 - **SBOM 생성**: 소프트웨어 구성 명세서 생성
 
 **생성되는 이미지:**
+
 - `ghcr.io/your-org/mlops-imdb-api:latest`
 - `ghcr.io/your-org/mlops-imdb-trainer:latest`
 
 **보안 기능:**
+
 - 심각도 등급이 포함된 취약점 스캐닝
 - 공급망 보안을 위한 SBOM
 - 서명된 컨테이너 이미지
 
 ### 🚀 4단계: 배포
+
 **소요 시간**: 환경당 ~5-10분
 
 **스테이징 배포**(develop 브랜치):
+
 - 스테이징 환경에 자동 배포
 - 스모크 테스트 실행
 - 성능 기준선 설정
 
 **프로덕션 배포**(main 브랜치):
+
 - 수동 승인 필요(환경 보호)
 - 블루-그린 배포 전략
 - 헬스 체크 및 롤백 기능
 
 **배포 기능:**
+
 - GitHub Deployments API 통합
 - 환경별 구성
 - 실패 시 자동 롤백
 
 ### 📊 5단계: 배포 후 작업
+
 **소요 시간**: ~3-5분
 
 **진행 과정:**
+
 - **성능 벤치마킹**: API 응답 시간 테스트
 - **모니터링 통합**: Prometheus/Grafana 활성화
 - **상태 확인**: 모든 서비스가 정상 작동하는지 확인
 - **알림 발송**: 성공/실패 알림 전송
 
 **모니터링 통합:**
+
 - 자동 메트릭 수집 활성화
 - 배포 마커가 포함된 대시보드 업데이트
 - 새 배포에 대한 알림 규칙 활성화

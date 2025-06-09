@@ -1,13 +1,10 @@
 # docker/docker-compose.monitoring.yml
 # Development Docker Compose with Environment Variables
 
-
-version: '3.8'
-
 services:
   mlflow:
     build:
-      context: ..                           # ✅ Parent directory (project root)
+      context: .. # ✅ Parent directory (project root)
       dockerfile: docker/Dockerfile.mlflow
     image: mlops-mlflow:latest
     container_name: mlops-mlflow-monitoring
@@ -15,19 +12,19 @@ services:
       - "${MLFLOW_PORT:-5000}:5000"
       - "${MLFLOW_METRICS_PORT:-9091}:9090"
     volumes:
-      - ./mlruns:/mlruns                    # ✅ Relative to docker/ directory
-      - ./mlartifacts:/mlartifacts          # ✅ Relative to docker/ directory
+      - ./mlruns:/mlruns # ✅ Relative to docker/ directory
+      - ./mlartifacts:/mlartifacts # ✅ Relative to docker/ directory
       - prometheus_multiproc:/tmp/prometheus_multiproc
     environment:
-      - MLFLOW_BACKEND_STORE_URI=${MLFLOW_BACKEND_STORE_URI:-sqlite:///mlruns/mlflow.db}
+      - MLFLOW_BACKEND_STORE_URI=${MLFLOW_BACKEND_STORE_URI:-sqlite:////mlruns/mlflow.db}
       - MLFLOW_DEFAULT_ARTIFACT_ROOT=${MLFLOW_DEFAULT_ARTIFACT_ROOT:-./mlartifacts}
       - PROMETHEUS_MULTIPROC_DIR=${PROMETHEUS_MULTIPROC_DIR:-/tmp/prometheus_multiproc}
       - MLFLOW_HOST=${MLFLOW_HOST:-0.0.0.0}
       - MLFLOW_PORT=${MLFLOW_PORT:-5000}
     env_file:
-      - monitoring.env                      # ✅ File in same directory as compose file
+      - monitoring.env # ✅ File in same directory as compose file
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:5000/health" ]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -38,7 +35,7 @@ services:
 
   api:
     build:
-      context: ..                           # ✅ Parent directory (project root)
+      context: .. # ✅ Parent directory (project root)
       dockerfile: docker/Dockerfile.api
     container_name: mlops-api-monitoring
     ports:
@@ -52,7 +49,7 @@ services:
       - ENABLE_MONITORING=${ENABLE_MONITORING:-true}
       - DEBUG=${DEBUG:-true}
     env_file:
-      - monitoring.env                      # ✅ File in same directory as compose file
+      - monitoring.env # ✅ File in same directory as compose file
     command: uvicorn src.api.main_with_metrics:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       mlflow:
@@ -60,13 +57,13 @@ services:
       prometheus:
         condition: service_started
     volumes:
-      - ../models:/app/models:ro            # ✅ Go up to project root, then to models
-      - ../logs:/app/logs                   # ✅ Go up to project root, then to logs
-      - ../data:/app/data:ro                # ✅ Go up to project root, then to data
-      - ../src:/app/src                     # ✅ Go up to project root, then to src
+      - ../models:/app/models:ro # ✅ Go up to project root, then to models
+      - ../logs:/app/logs # ✅ Go up to project root, then to logs
+      - ../data:/app/data:ro # ✅ Go up to project root, then to data
+      - ../src:/app/src # ✅ Go up to project root, then to src
       - prometheus_multiproc:/tmp/prometheus_multiproc
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -85,15 +82,15 @@ services:
       - ./monitoring/rules:/etc/prometheus/rules:ro
       - prometheus-storage:/prometheus
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-30d}'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
-      - '--web.enable-admin-api'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-30d}"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
     env_file:
-      - monitoring.env                      # ✅ File in same directory as compose file
+      - monitoring.env # ✅ File in same directory as compose file
     restart: unless-stopped
     networks:
       - mlops-network
@@ -109,7 +106,7 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=${GF_USERS_ALLOW_SIGN_UP:-false}
       - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/dashboards/mlops-overview.json
     env_file:
-      - monitoring.env                      # ✅ Fixed typo and path
+      - monitoring.env # ✅ Fixed typo and path
     volumes:
       - grafana-storage:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
@@ -122,7 +119,7 @@ services:
 
   alertmanager:
     build:
-      context: ..                           # ✅ Parent directory (project root)
+      context: ..
       dockerfile: docker/monitoring/alertmanager/Dockerfile
     image: prom/alertmanager:${ALERTMANAGER_VERSION:-v0.25.0}
     container_name: mlops-alertmanager-monitoring
@@ -140,7 +137,7 @@ services:
       - SMTP_PASSWORD=${SMTP_PASSWORD}
       - WEBHOOK_URL=${WEBHOOK_URL}
     env_file:
-      - monitoring.env                      # ✅ Fixed typo (.en -> .env)
+      - monitoring.env
     volumes:
       - ./monitoring/alertmanager/alertmanager-template.yml:/etc/alertmanager/alertmanager-template.yml:ro
       - ./monitoring/alertmanager/logs:/var/log/alertmanager
@@ -149,7 +146,7 @@ services:
     networks:
       - mlops-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy"]
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9093/-/healthy" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -165,13 +162,13 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)|^/mnt/wsl'
-      - '--collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$$'
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)|^/mnt/wsl"
+      - "--collector.filesystem.fs-types-exclude=^(autofs|binfmt_misc|bpf|cgroup2?|configfs|debugfs|devpts|devtmpfs|fusectl|hugetlbfs|iso9660|mqueue|nsfs|overlay|proc|procfs|pstore|rpc_pipefs|securityfs|selinuxfs|squashfs|sysfs|tracefs)$$"
     env_file:
-      - monitoring.env                      # ✅ File in same directory as compose file
+      - monitoring.env
     networks:
       - mlops-network
 
@@ -189,7 +186,7 @@ services:
     devices:
       - /dev/kmsg:/dev/kmsg
     env_file:
-      - monitoring.env                      # ✅ File in same directory as compose file
+      - monitoring.env
     restart: unless-stopped
     privileged: true
     networks:
@@ -200,6 +197,7 @@ volumes:
   prometheus_multiproc:
   grafana-storage:
   alertmanager-storage:
+
 
 networks:
   mlops-network:

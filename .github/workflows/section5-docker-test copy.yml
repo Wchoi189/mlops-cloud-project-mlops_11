@@ -3,7 +3,7 @@ name: Section 5 - Docker Containerization Test
 
 on:
   push:
-    branches: [ main, wb2x ]
+    branches: [main, develop]
     paths:
       - "docker/**"
       - "src/api/**"
@@ -64,6 +64,43 @@ jobs:
         run: |
           python scripts/tests/section5_simulation_test.py
 
+      - name: Prepare test model
+        run: |
+          # Create necessary directories
+          mkdir -p models data/processed
+          
+          # Create a simple test model for the API
+          python -c "
+          import joblib
+          import numpy as np
+          from sklearn.ensemble import RandomForestRegressor
+          from sklearn.preprocessing import StandardScaler
+          
+          # Create a simple model
+          model = RandomForestRegressor(n_estimators=10, random_state=42)
+          X = np.random.rand(100, 3)  # 3 features: startYear, runtimeMinutes, numVotes
+          y = np.random.rand(100) * 10  # ratings 0-10
+          model.fit(X, y)
+          
+          # Create scaler
+          scaler = StandardScaler()
+          scaler.fit(X)
+          
+          # Save model data in expected format
+          model_data = {
+              'model': model,
+              'scaler': scaler,
+              'feature_names': ['startYear', 'runtimeMinutes', 'numVotes'],
+              'model_info': {
+                  'model_type': 'RandomForestRegressor',
+                  'features': 3,
+                  'version': '1.0.0'
+              }
+          }
+          joblib.dump(model_data, 'models/latest_model.joblib')
+          print('✅ Test model created for CI/CD')
+          "
+          
       - name: Test Docker containers
         run: |
           # Start services
@@ -121,8 +158,8 @@ jobs:
 
       - name: Test enhanced CLI
         run: |
-          python src/utils/enhanced.py test
-          python src/utils/enhanced.py demo
+          python src/utils/enhanced.py test_imports
+          python src/utils/enhanced.py demo_enhanced_features
 
   security-scan:
     runs-on: ubuntu-latest
@@ -140,7 +177,7 @@ jobs:
           output: "trivy-results.sarif"
 
       - name: Upload Trivy scan results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v2
         if: always()
         with:
           sarif_file: "trivy-results.sarif"
@@ -389,7 +426,7 @@ jobs:
           "
 
       - name: Upload test artifacts
-        uses: actions/upload-artifact@v4
+        uses: codecov/codecov-action@v4
         if: always()
         with:
           name: section5-test-results

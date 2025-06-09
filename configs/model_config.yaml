@@ -1,7 +1,7 @@
 model:
   name: "imdb_sentiment_model"
   type: "classification"
-  algorithm: "logistic_regression"  # or "random_forest", "neural_network"
+  algorithm: "logistic_regression" # or "random_forest", "neural_network"
   version: "1.0.0"
 
 data:

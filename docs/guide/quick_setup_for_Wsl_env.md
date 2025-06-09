@@ -1,6 +1,7 @@
 # 🚀 Quick Setup Guide for Windows WSL Environment
 
 ## 📋 Overview
+
 This guide will help you set up the MLOps project quickly on Windows WSL with minimal dependencies.
 
 ## ⚡ Step 1: Create Virtual Environment (30 seconds)
@@ -72,17 +73,19 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 
 ## 🎯 What's Included in Minimal Setup
 
-### ✅ Core Functionality Available:
+### ✅ Core Functionality Available
+
 - ✅ **Data Pipeline**: Load and process IMDB data
-- ✅ **Model Training**: RandomForest, LinearRegression with sklearn  
+- ✅ **Model Training**: RandomForest, LinearRegression with sklearn
 - ✅ **API Serving**: FastAPI with prediction endpoints
 - ✅ **MLflow Integration**: Experiment tracking
 - ✅ **Model Evaluation**: Basic metrics and evaluation
 - ✅ **Docker Support**: All Dockerfiles will work
 
-### ⚠️ Not Included (Add Later If Needed):
+### ⚠️ Not Included (Add Later If Needed)
+
 - ❌ **Deep Learning**: No PyTorch/TensorFlow (add separately)
-- ❌ **Advanced NLP**: No NLTK/transformers (not needed for basic rating prediction)  
+- ❌ **Advanced NLP**: No NLTK/transformers (not needed for basic rating prediction)
 - ❌ **Heavy Monitoring**: No Evidently (can add later)
 - ❌ **Workflow Orchestration**: No Airflow/Prefect (basic scripts work fine)
 - ❌ **Advanced Visualization**: No Plotly (matplotlib available if you add it)
@@ -96,7 +99,7 @@ pip install -r requirements-minimal.txt
 # 2. Run Section 1 (Data Pipeline)
 python scripts/validate_data.py
 
-# 3. Run Section 2 (Preprocessing) 
+# 3. Run Section 2 (Preprocessing)
 python scripts/test_preprocessing.py
 
 # 4. Run Section 3 (Model Training)
@@ -108,13 +111,13 @@ uvicorn src.api.main:app --port 8000
 
 ## 🔍 Troubleshooting WSL Issues
 
-### Common WSL Problems:
+### Common WSL Problems
 
 ```bash
 # Fix: Python not found
 sudo apt update && sudo apt install python3 python3-pip python3-venv
 
-# Fix: pip issues  
+# Fix: pip issues
 python3 -m pip install --upgrade pip
 
 # Fix: Build tools missing (if compilation errors)
@@ -124,7 +127,7 @@ sudo apt install build-essential python3-dev
 rm -rf mlops-env-light && python3 -m venv mlops-env-light
 ```
 
-### Performance Tips for WSL:
+### Performance Tips for WSL
 
 ```bash
 # Use WSL2 (much faster than WSL1)
@@ -158,7 +161,7 @@ When you need more features:
 # Stage 1: Minimal (2-3 minutes)
 pip install -r requirements-minimal.txt
 
-# Stage 2: Enhanced UX (+1 minute)  
+# Stage 2: Enhanced UX (+1 minute)
 pip install icecream tqdm rich fire
 
 # Stage 3: Visualization (+1 minute)
@@ -180,7 +183,7 @@ pip list | wc -l  # Should show ~15-20 packages instead of 50+
 # Check core functionality
 python -c "
 import pandas as pd
-import numpy as np  
+import numpy as np
 import sklearn
 import fastapi
 import mlflow
@@ -197,6 +200,7 @@ python scripts/tests/test_section1.py --quick
 ## 🎉 Success Criteria
 
 You'll know the minimal setup worked when:
+
 - ✅ Installation completes in under 5 minutes
 - ✅ Total package count is under 25 (vs 50+ in full setup)
 - ✅ All Section 1-4 basic tests pass

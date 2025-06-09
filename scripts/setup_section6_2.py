@@ -5,11 +5,12 @@ Automates the setup process for CI/CD pipeline
 """
 
 import os
-import sys
 import shutil
 import subprocess
+import sys
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 
 def run_command(cmd: str, cwd: Optional[str] = None) -> tuple[bool, str, str]:
     """Execute command and return (success, stdout, stderr)"""
@@ -21,11 +22,12 @@ def run_command(cmd: str, cwd: Optional[str] = None) -> tuple[bool, str, str]:
     except Exception as e:
         return False, "", str(e)
 
+
 def check_prerequisites() -> bool:
     """Check if all prerequisites are met"""
     print("🔍 Checking Section 6.2 Prerequisites...")
     print("=" * 50)
-    
+
     # Check previous sections
     previous_sections = [
         ("Section 1", "scripts/tests/test_section1.py"),
@@ -33,18 +35,18 @@ def check_prerequisites() -> bool:
         ("Section 3", "scripts/tests/test_section3.py"),
         ("Section 4", "scripts/tests/test_section4.py"),
         ("Section 5", "scripts/tests/test_section5.py"),
-        ("Section 6.1", "scripts/tests/test_section6_1.py")
+        ("Section 6.1", "scripts/tests/test_section6_1.py"),
     ]
-    
+
     all_prerequisites_met = True
-    
+
     for section_name, test_script in previous_sections:
         if os.path.exists(test_script):
             print(f"✅ {section_name} test script available")
         else:
             print(f"❌ {section_name} test script missing: {test_script}")
             all_prerequisites_met = False
-    
+
     # Check essential files
     essential_files = [
         "src/api/main.py",
@@ -52,9 +54,9 @@ def check_prerequisites() -> bool:
         "docker/Dockerfile.api",
         "docker/Dockerfile.train",
         "docker/docker-compose.yml",
-        "requirements.txt"
+        "requirements.txt",
     ]
-    
+
     print("\n📁 Essential files check:")
     for file_path in essential_files:
         if os.path.exists(file_path):
@@ -62,20 +64,21 @@ def check_prerequisites() -> bool:
         else:
             print(f"❌ {file_path} missing")
             all_prerequisites_met = False
-    
+
     # Check tools
     tools = ["git", "docker", "python"]
     print("\n🔧 Required tools check:")
     for tool in tools:
         success, stdout, stderr = run_command(f"{tool} --version")
         if success:
-            version = stdout.split('\n')[0] if stdout else "unknown version"
+            version = stdout.split("\n")[0] if stdout else "unknown version"
             print(f"✅ {tool}: {version}")
         else:
             print(f"❌ {tool} not found")
             all_prerequisites_met = False
-    
+
     return all_prerequisites_met
+
 
 def create_github_workflows_directory():
     """Create .github/workflows directory if it doesn't exist"""
@@ -83,10 +86,11 @@ def create_github_workflows_directory():
     workflows_dir.mkdir(parents=True, exist_ok=True)
     print(f"✅ Created directory: {workflows_dir}")
 
+
 def check_github_repository():
     """Check if we're in a Git repository and suggest GitHub setup"""
     print("\n📂 GitHub Repository Setup...")
-    
+
     # Check if we're in a git repository
     success, stdout, stderr = run_command("git status")
     if not success:
@@ -95,14 +99,14 @@ def check_github_repository():
         print("   git init")
         print("   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git")
         return False
-    
+
     # Check for remote repository
     success, stdout, stderr = run_command("git remote -v")
     if success and stdout.strip():
         print("✅ Git repository with remote configured")
-        remote_lines = stdout.strip().split('\n')
+        remote_lines = stdout.strip().split("\n")
         for line in remote_lines:
-            if 'origin' in line and '(push)' in line:
+            if "origin" in line and "(push)" in line:
                 remote_url = line.split()[1]
                 print(f"   Remote: {remote_url}")
                 break
@@ -110,36 +114,38 @@ def check_github_repository():
         print("⚠️ Git repository without remote")
         print("💡 Add GitHub remote:")
         print("   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git")
-    
+
     return True
+
 
 def create_directories():
     """Create necessary directories"""
     print("\n📁 Creating necessary directories...")
-    
+
     directories = [
         ".github/workflows",
         "docs/guide",
         "scripts/tests",
-        "data/processed", 
+        "data/processed",
         "models",
-        "logs"
+        "logs",
     ]
-    
+
     for directory in directories:
         Path(directory).mkdir(parents=True, exist_ok=True)
         print(f"✅ {directory}")
 
+
 def copy_workflow_files():
     """Copy workflow files to .github/workflows/"""
     print("\n📋 Workflow files setup...")
-    
+
     # The workflow files should already be created by the artifacts
     workflow_files = [
         ".github/workflows/ci-cd-pipeline.yml",
-        ".github/workflows/section5-docker-test.yml"
+        ".github/workflows/section5-docker-test.yml",
     ]
-    
+
     for workflow_file in workflow_files:
         if os.path.exists(workflow_file):
             print(f"✅ {workflow_file} exists")
@@ -147,21 +153,22 @@ def copy_workflow_files():
             print(f"❌ {workflow_file} missing")
             print(f"   Please ensure the CI/CD pipeline artifact was created correctly")
 
+
 def install_code_quality_tools():
     """Install code quality tools for local development"""
     print("\n🔧 Installing code quality tools...")
-    
+
     tools = [
         "black",
-        "flake8", 
+        "flake8",
         "pylint",
         "bandit",
         "safety",
         "mypy",
         "pytest",
-        "pytest-cov"
+        "pytest-cov",
     ]
-    
+
     # Check if tools are already installed
     missing_tools = []
     for tool in tools:
@@ -170,11 +177,11 @@ def install_code_quality_tools():
             print(f"✅ {tool} already installed")
         else:
             missing_tools.append(tool)
-    
+
     if missing_tools:
         print(f"\n📦 Installing missing tools: {', '.join(missing_tools)}")
         install_cmd = f"pip install {' '.join(missing_tools)}"
-        
+
         success, stdout, stderr = run_command(install_cmd)
         if success:
             print("✅ Code quality tools installed successfully")
@@ -184,13 +191,14 @@ def install_code_quality_tools():
     else:
         print("✅ All code quality tools already installed")
 
+
 def create_sample_secrets_guide():
     """Create a guide for setting up GitHub Secrets"""
     print("\n🔐 Creating GitHub Secrets setup guide...")
-    
+
     secrets_guide_path = Path("docs/guide/GitHub_Secrets_Setup.md")
     secrets_guide_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     secrets_guide_content = """# GitHub Secrets Setup Guide
 
 ## Required Secrets for CI/CD Pipeline
@@ -201,7 +209,7 @@ Navigate to your GitHub repository → Settings → Secrets and variables → Ac
 
 ```bash
 # Slack Webhook for notifications
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+SLACK_ML_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
 
 # Email notifications
 EMAIL_USERNAME=your-email@gmail.com
@@ -215,7 +223,7 @@ NOTIFICATION_EMAIL=team@your-company.com
 1. Go to your Slack workspace
 2. Apps → Incoming Webhooks → Add to Slack
 3. Choose channel and copy webhook URL
-4. Add as `SLACK_WEBHOOK_URL` secret
+4. Add as `SLACK_ML_WEBHOOK_URL` secret
 
 #### Email Notifications:
 1. Use Gmail with App Password (recommended)
@@ -239,16 +247,17 @@ git push origin main
 
 Check GitHub Actions tab for pipeline execution.
 """
-    
-    with open(secrets_guide_path, 'w') as f:
+
+    with open(secrets_guide_path, "w") as f:
         f.write(secrets_guide_content)
-    
+
     print(f"✅ Created secrets guide: {secrets_guide_path}")
+
 
 def run_section_tests():
     """Run tests to verify everything is working"""
     print("\n🧪 Running verification tests...")
-    
+
     # Run Section 6.2 test
     test_script = "scripts/tests/test_section6_2.py"
     if os.path.exists(test_script):
@@ -258,19 +267,22 @@ def run_section_tests():
             print("✅ Section 6.2 test passed")
         else:
             print(f"⚠️ Section 6.2 test had issues: {stderr}")
-            print("This is normal on first setup - the test checks if everything is properly configured")
+            print(
+                "This is normal on first setup - the test checks if everything is properly configured"
+            )
     else:
         print(f"❌ Test script missing: {test_script}")
+
 
 def create_sample_test_data():
     """Create sample test data for CI/CD pipeline"""
     print("\n📊 Creating sample test data...")
-    
+
     try:
         # Create sample movie dataset
         data_dir = Path("data/processed")
         data_dir.mkdir(parents=True, exist_ok=True)
-        
+
         sample_script = """
 import pandas as pd
 import numpy as np
@@ -314,30 +326,31 @@ model_info = {
 joblib.dump(model_info, 'models/sample_model.joblib')
 print('✅ Sample model created')
 """
-        
-        success, stdout, stderr = run_command(f"python -c \"{sample_script}\"")
+
+        success, stdout, stderr = run_command(f'python -c "{sample_script}"')
         if success:
             print("✅ Sample test data created successfully")
             print(stdout)
         else:
             print(f"❌ Failed to create test data: {stderr}")
-    
+
     except Exception as e:
         print(f"❌ Error creating test data: {e}")
+
 
 def show_next_steps():
     """Show next steps for the user"""
     print("\n" + "=" * 60)
     print("🎉 Section 6.2 CI/CD Pipeline Setup Complete!")
     print("=" * 60)
-    
+
     print("\n📝 What was set up:")
     print("   ✅ GitHub Actions workflow files created")
     print("   ✅ Code quality tools installed")
     print("   ✅ Directory structure created")
     print("   ✅ Sample test data generated")
     print("   ✅ Documentation and guides created")
-    
+
     print("\n🚀 Next Steps:")
     print("   1. Set up GitHub Secrets (see docs/guide/GitHub_Secrets_Setup.md)")
     print("   2. Push your code to trigger the first pipeline:")
@@ -346,7 +359,7 @@ def show_next_steps():
     print("      git push origin main")
     print("   3. Monitor pipeline execution in GitHub Actions tab")
     print("   4. Check notifications in Slack/Email (if configured)")
-    
+
     print("\n🔧 Local Development Commands:")
     print("   # Run code quality checks locally")
     print("   black src/ scripts/ tests/")
@@ -360,7 +373,7 @@ def show_next_steps():
     print("   # Test Docker builds locally")
     print("   docker build -f docker/Dockerfile.api -t test-api .")
     print("   docker build -f docker/Dockerfile.train -t test-trainer .")
-    
+
     print("\n📊 Monitoring Integration:")
     print("   # Start full monitoring stack")
     print("   python scripts/start_monitoring_stack.py")
@@ -368,17 +381,18 @@ def show_next_steps():
     print("   - Grafana: http://localhost:3000 (admin/mlops123)")
     print("   - Prometheus: http://localhost:9090")
     print("   - API: http://localhost:8000")
-    
+
     print("\n📁 Important Files Created:")
     print("   - .github/workflows/ci-cd-pipeline.yml")
     print("   - .github/workflows/section5-docker-test.yml")
     print("   - docs/guide/Section6_2_CICD_Instructions.md")
     print("   - docs/guide/GitHub_Secrets_Setup.md")
     print("   - scripts/tests/test_section6_2.py")
-    
+
     print("\n🎯 Final Project Status:")
     print("   🏆 100% Complete - All 7 sections implemented!")
     print("   🎉 Ready for final presentation (June 10th)")
+
 
 def main():
     """Main setup function"""
@@ -387,62 +401,67 @@ def main():
     print("This script will set up a comprehensive CI/CD pipeline")
     print("for your MLOps project.")
     print()
-    
+
     # Step 1: Check prerequisites
     if not check_prerequisites():
         print("\n❌ Prerequisites not met. Please complete previous sections first.")
         return False
-    
+
     # Step 2: Check GitHub repository
     check_github_repository()
-    
+
     # Step 3: Create directories
     create_directories()
-    
+
     # Step 4: Create workflow files directory
     create_github_workflows_directory()
-    
+
     # Step 5: Check workflow files
     copy_workflow_files()
-    
+
     # Step 6: Install code quality tools
     install_code_quality_tools()
-    
+
     # Step 7: Create documentation
     create_sample_secrets_guide()
-    
+
     # Step 8: Create test data
     create_sample_test_data()
-    
+
     # Step 9: Run verification tests
     run_section_tests()
-    
+
     # Step 10: Show next steps
     show_next_steps()
-    
+
     return True
+
 
 if __name__ == "__main__":
     import argparse
-    
-    parser = argparse.ArgumentParser(description='Section 6.2 CI/CD Pipeline Setup')
-    parser.add_argument('--skip-tools', action='store_true', 
-                      help='Skip installing code quality tools')
-    parser.add_argument('--skip-data', action='store_true',
-                      help='Skip creating sample test data')
-    
+
+    parser = argparse.ArgumentParser(description="Section 6.2 CI/CD Pipeline Setup")
+    parser.add_argument(
+        "--skip-tools", action="store_true", help="Skip installing code quality tools"
+    )
+    parser.add_argument(
+        "--skip-data", action="store_true", help="Skip creating sample test data"
+    )
+
     args = parser.parse_args()
-    
+
     try:
         success = main()
         if success:
             print("\n✅ Setup completed successfully!")
-            print("📖 Read docs/guide/Section6_2_CICD_Instructions.md for detailed usage")
+            print(
+                "📖 Read docs/guide/Section6_2_CICD_Instructions.md for detailed usage"
+            )
         else:
             print("\n❌ Setup failed. Please check the errors above.")
-        
+
         sys.exit(0 if success else 1)
-        
+
     except KeyboardInterrupt:
         print("\n\n⏹️ Setup interrupted by user")
         sys.exit(1)

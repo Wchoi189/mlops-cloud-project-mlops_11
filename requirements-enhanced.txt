@@ -1,94 +1,19 @@
-# requirements-enhanced.txt
-# 향상된 MLOps 의존성 - 크기 최적화 버전
-# Enhanced MLOps Dependencies - Size Optimized Version
+# requirements-enhanced.txt (CLEANED)
+-r requirements.txt
 
 # ===========================================
-# 기본 요구사항 (Base Requirements)
+# UX Enhancements
 # ===========================================
--r requirements.txt                    # 기존 기본 요구사항 포함
-
-# ===========================================
-# 필수 UX 개선 라이브러리 (Essential UX Libraries)
-# 총 크기: ~15MB
-# ===========================================
-
-# 디버깅 및 출력 개선 (Debugging & Output Enhancement)
-icecream>=2.1.3          # ~1MB   - 향상된 디버깅: print() 대신 ic() 사용
-rich>=13.7.0             # ~5MB   - 아름다운 터미널 출력, 테이블, 진행률 표시줄
-colorama>=0.4.6          # ~0.5MB - 크로스 플랫폼 컬러 터미널 텍스트
-
-# 진행률 표시 및 사용자 경험 (Progress & User Experience)
-tqdm>=4.66.0             # ~1MB   - 루프 및 데이터 처리용 진행률 표시줄
-fire>=0.5.0              # ~1MB   - Python 함수에서 자동 CLI 생성
-
-# 로깅 및 구성 관리 (Logging & Configuration)
-loguru>=0.7.2            # ~2MB   - 표준 라이브러리보다 나은 로깅
-python-dotenv>=1.0.0     # ~0.5MB - 환경 변수 관리 (.env 파일 지원)
-watchdog>=3.0.0          # ~2MB   - 자동 리로드를 위한 파일 시스템 모니터링
+icecream>=2.1.4
+rich>=14.0.0
+colorama>=0.4.6
+tqdm>=4.67.0
+fire>=0.7.0
+loguru>=0.7.3
+watchdog>=6.0.0
 
 # ===========================================
-# 모니터링 및 관찰 가능성 (Monitoring & Observability)
-# 총 크기: ~10MB
+# Additional Monitoring
 # ===========================================
-
-# 메트릭 수집 (Metrics Collection)
-prometheus-client>=0.19.0 # ~3MB   - Prometheus 메트릭 수집 (Section 6.1 필수)
-psutil>=5.9.6            # ~5MB   - 시스템 리소스 모니터링 (CPU, 메모리, 디스크)
-prometheus-fastapi-instrumentatormentator=7.1.0 # ~2MB   - FastAPI용 Prometheus 메트릭 수집기
-
-# 성능 모니터링 (Performance Monitoring)
-memory-profiler>=0.61.0  # ~2MB   - 메모리 사용량 프로파일링
-
-# ===========================================
-# API 향상 (API Enhancements)
-# 총 크기: ~5MB
-# ===========================================
-
-# FastAPI 확장 (FastAPI Extensions)
-py-healthcheck>=1.10.1   # ~1MB   - 향상된 헬스 체크 엔드포인트
-pydantic>=2.5.0          # ~3MB   - 이미 requirements.txt에 포함, v2 성능 보장
-
-# ===========================================
-# 선택적 성능 라이브러리 (Optional Performance - 필요시만)
-# 총 크기: ~20MB (주석 처리됨)
-# ===========================================
-
-# 더 빠른 JSON 처리 (Faster JSON Processing)
-# orjson>=3.9.10           # ~5MB   - 훨씬 빠른 JSON 인코딩/디코딩 (선택사항)
-
-# 더 빠른 HTTP 클라이언트 (Faster HTTP Client)  
-# httpx>=0.25.2            # ~10MB  - 모던 비동기 HTTP 클라이언트 (requests 대안)
-
-# 더 빠른 이벤트 루프 (Faster Event Loop)
-# uvloop>=0.19.0           # ~5MB   - uvicorn용 더 빠른 이벤트 루프 (Linux/macOS만)
-
-# ===========================================
-# 무거운 라이브러리들 (Heavy Libraries - 제거됨)
-# 총 크기: ~400MB+ (설치하지 않음)
-# ===========================================
-
-# 대용량 데이터 처리 (Heavy Data Processing - 현재 불필요)
-# polars>=0.20.0           # ~200MB - pandas 대안 (현재 pandas로 충분)
-# pyarrow>=14.0.0          # ~100MB - Arrow 백엔드 (단순 CSV에는 불필요)
-
-# 고급 시각화 (Advanced Visualization - 현재 불필요)
-# plotly>=5.17.0           # ~50MB  - 인터랙티브 플롯 (matplotlib/seaborn으로 충분)
-
-# 고급 테스트 도구 (Advanced Testing Tools - 현재 불필요)
-# pytest-xdist>=3.5.0     # ~10MB  - 병렬 테스트 실행 (소규모 프로젝트에는 과도)
-# pytest-benchmark>=4.0.0 # ~15MB  - 성능 벤치마킹 (현재 단계에서 불필요)
-# factory-boy>=3.3.0      # ~5MB   - 테스트 데이터 생성 (아직 사용하지 않음)
-# faker>=20.1.0            # ~20MB  - 가짜 데이터 생성 (아직 사용하지 않음)
-
-# ===========================================
-# 설치 크기 요약 (Installation Size Summary)
-# ===========================================
-# 현재 버전 (최적화됨): ~30MB
-# 이전 버전 (전체): ~500MB+
-# 설치 시간: 1-2분 (이전: 5-10분)
-# 
-# 필요시 나중에 추가 가능한 라이브러리들:
-# pip install plotly      # 인터랙티브 대시보드용
-# pip install polars      # 더 빠른 데이터 처리용  
-# pip install pyarrow     # Parquet 파일 지원용
-# ===========================================
+memory-profiler>=0.61.0
+py-healthcheck>=1.10.1
