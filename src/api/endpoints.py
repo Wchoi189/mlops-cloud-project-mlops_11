@@ -513,60 +513,154 @@ async def health_check():
                 "fallback_prediction": False
             }
         )
-
-# 모델 로드 함수 (main.py에서 호출됨)
 def load_model_at_startup():
-    """앱 시작시 모델 로드 (CI/CD 환경 친화적)"""
+    """
+    Enhanced model loading with Docker packaging support
+    Priority: 1) Packaged model 2) Latest trained model 3) Fallback
+    """
     global model_evaluator
 
     try:
         from pathlib import Path
         import os
 
-        # CI/CD 환경 감지
+        # CI/CD environment detection
         is_ci_environment = any([
             os.getenv('CI') == 'true',
             os.getenv('GITHUB_ACTIONS') == 'true',
             os.getenv('DOCKER_ENV') == 'ci',
             os.getenv('ENVIRONMENT') == 'ci'
         ])
+        
+        is_docker_environment = any([
+            os.path.exists('/.dockerenv'),
+            os.getenv('DOCKER_CONTAINER') == 'true'
+        ])
 
-        # 가장 최근 모델 찾기
         models_dir = Path("models")
         if not models_dir.exists():
-            if is_ci_environment:
-                logger.info("ℹ️ CI/CD 환경 - 모델 디렉토리 없음 (예상됨)")
-            else:
-                logger.error("models 디렉토리가 없습니다.")
+            logger.warning("⚠️ models 디렉토리가 없습니다")
             return False
 
+        # 🎯 PRIORITY 1: Look for packaged CI/CD model (Docker containers)
+        packaged_models = [
+            # "cicd_default_model.joblib",
+            # "docker_model.joblib", 
+            # "cicd_linear_model.joblib",
+            "scaler_20250601_000406.joblib",
+            "latest_model.joblib"
+
+        ]
+        
+        for packaged_model in packaged_models:
+            packaged_path = models_dir / packaged_model
+            if packaged_path.exists():
+                try:
+                    logger.info(f"🐳 Found packaged model: {packaged_model}")
+                    model_evaluator = ModelEvaluator()
+                    model_evaluator.load_model(str(packaged_path))
+                    
+                    logger.info("✅ Packaged model loaded successfully!")
+                    logger.info(f"   Model type: {model_evaluator.model_type}")
+                    logger.info(f"   Features: {model_evaluator.get_feature_names()}")
+                    logger.info(f"   Source: Packaged for containers")
+                    
+                    return True
+                    
+                except Exception as e:
+                    logger.warning(f"⚠️ Failed to load packaged model {packaged_model}: {e}")
+                    continue
+
+        # 🎯 PRIORITY 2: Look for latest trained model (development/production)
         model_files = list(models_dir.glob("*forest*.joblib"))
-        if not model_files:
-            if is_ci_environment:
-                logger.info("ℹ️ CI/CD 환경 - 모델 파일 없음 (fallback 모드로 동작)")
-            else:
-                logger.error("저장된 모델 파일이 없습니다.")
-                logger.info("💡 모델 훈련 방법: python scripts/train_model.py")
-            return False
+        model_files.extend(list(models_dir.glob("*regressor*.joblib")))
+        model_files.extend(list(models_dir.glob("*model*.joblib")))
+        
+        # Filter out packaged models from search
+        model_files = [f for f in model_files if f.name not in packaged_models]
+        
+        if model_files:
+            # Get the most recent model
+            latest_model = max(model_files, key=lambda x: x.stat().st_mtime)
+            
+            try:
+                logger.info(f"📦 Found trained model: {latest_model.name}")
+                model_evaluator = ModelEvaluator()
+                model_evaluator.load_model(str(latest_model))
+                
+                logger.info("✅ Trained model loaded successfully!")
+                logger.info(f"   Model type: {model_evaluator.model_type}")
+                logger.info(f"   Features: {model_evaluator.get_feature_names()}")
+                logger.info(f"   Source: Training pipeline")
+                
+                return True
+                
+            except Exception as e:
+                logger.warning(f"⚠️ Failed to load trained model: {e}")
 
-        # 가장 최근 파일 선택
-        latest_model = max(model_files, key=lambda x: x.stat().st_mtime)
-        logger.info(f"모델 로드 시도: {latest_model}")
+        # 🎯 PRIORITY 3: No model found - log appropriate message
+        if is_docker_environment and is_ci_environment:
+            logger.info("ℹ️ CI/CD 컨테이너에서 모델을 찾을 수 없습니다")
+            logger.info("💡 컨테이너에 모델이 패키징되지 않았을 수 있습니다")
+        elif is_ci_environment:
+            logger.info("ℹ️ CI/CD 환경 - 모델 없이 fallback 모드로 실행")
+        else:
+            logger.error("❌ 모델 파일이 없습니다")
+            logger.info("💡 모델 훈련 방법: python scripts/train_model.py")
 
-        # 모델 평가기 초기화 및 로드
-        model_evaluator = ModelEvaluator()
-        model_evaluator.load_model(str(latest_model))
-
-        logger.info("✅ 모델 로드 성공!")
-        logger.info(f"   모델 타입: {model_evaluator.model_type}")
-        logger.info(f"   피처: {model_evaluator.get_feature_names()}")
-
-        return True
+        model_evaluator = None
+        return False
 
     except Exception as e:
         if is_ci_environment:
             logger.info(f"ℹ️ CI/CD 환경에서 모델 로드 건너뜀: {e}")
         else:
-            logger.error(f"모델 로드 실패: {e}")
+            logger.error(f"❌ 모델 로드 실패: {e}")
         model_evaluator = None
         return False
+
+
+def get_model_status():
+    """Get detailed model status for debugging"""
+    try:
+        from pathlib import Path
+        import os
+        
+        models_dir = Path("models")
+        status = {
+            "models_directory_exists": models_dir.exists(),
+            "is_docker": os.path.exists('/.dockerenv'),
+            "is_ci": os.getenv('CI') == 'true',
+            "model_evaluator_loaded": model_evaluator is not None,
+            "available_models": [],
+            "packaged_models": [],
+            "environment": {
+                "DOCKER_CONTAINER": os.getenv('DOCKER_CONTAINER'),
+                "CI": os.getenv('CI'),
+                "GITHUB_ACTIONS": os.getenv('GITHUB_ACTIONS'),
+                "MODEL_PATH": os.getenv('MODEL_PATH')
+            }
+        }
+        
+        if models_dir.exists():
+            # List all model files
+            all_models = list(models_dir.glob("*.joblib")) + list(models_dir.glob("*.pkl"))
+            status["available_models"] = [f.name for f in all_models]
+            
+            # Identify packaged models
+            packaged_names = ["cicd_default_model.joblib", "docker_model.joblib", "cicd_linear_model.joblib"]
+            status["packaged_models"] = [name for name in packaged_names if (models_dir / name).exists()]
+        
+        if model_evaluator is not None:
+            try:
+                status["current_model"] = {
+                    "type": model_evaluator.model_type if hasattr(model_evaluator, 'model_type') else "unknown",
+                    "features": model_evaluator.get_feature_names() if hasattr(model_evaluator, 'get_feature_names') else []
+                }
+            except:
+                status["current_model"] = "loaded_but_details_unavailable"
+        
+        return status
+        
+    except Exception as e:
+        return {"error": str(e)}

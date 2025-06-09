@@ -19,8 +19,8 @@ RUN pip install -r requirements-resolved.txt
 COPY configs/ /app/configs/
 COPY src/ /app/src/
 COPY models/ /app/models/
-
-
+COPY models/latest_model.joblib /app/models/
+COPY models/scaler_20250601_000406.joblib /app/models/
 # 모델과 로그를 위한 디렉토리 생성
 RUN mkdir -p models logs data/processed
 

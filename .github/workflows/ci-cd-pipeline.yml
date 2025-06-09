@@ -363,7 +363,7 @@ jobs:
   build:
     name: 🐳 Build & Push
     runs-on: ubuntu-latest
-    timeout-minutes: 20  # ADDED: Prevent infinite hanging
+    timeout-minutes: 5  # ADDED: Prevent infinite hanging
     needs: [setup, quality]
     outputs:
       api-image: ${{ steps.meta.outputs.tags }}
