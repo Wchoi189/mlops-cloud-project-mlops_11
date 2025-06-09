@@ -3,7 +3,7 @@ name: Section 5 - Docker Containerization Test
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ main, wb2x ]
     paths:
       - "docker/**"
       - "src/api/**"
@@ -121,8 +121,8 @@ jobs:
 
       - name: Test enhanced CLI
         run: |
-          python src/utils/enhanced.py test_imports
-          python src/utils/enhanced.py demo_enhanced_features
+          python src/utils/enhanced.py test
+          python src/utils/enhanced.py demo
 
   security-scan:
     runs-on: ubuntu-latest
