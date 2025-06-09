@@ -8,7 +8,7 @@ import logging
 import time
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -56,7 +56,7 @@ router = APIRouter()
 
 # 전역 모델 평가기 (앱 시작시 로드됨)
 
-# model_evaluator: ModelEvaluator = None
+model_evaluator: Optional[ModelEvaluator] = None
 
 
 def get_model_evaluator() -> ModelEvaluator:
@@ -398,6 +398,7 @@ async def health_check():
     start_time = time.time()
 
     try:
+        global model_evaluator
         model_loaded = model_evaluator is not None
 
         # Record API call

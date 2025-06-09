@@ -308,6 +308,8 @@ jobs:
           name: test-results
           path: |
             coverage.xml
+            pytest-report.html
+          retention-days: 7
 
   # ===================================================================
   # 🐳 STAGE 3: Docker Build & Registry

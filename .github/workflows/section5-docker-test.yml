@@ -389,7 +389,7 @@ jobs:
           "
 
       - name: Upload test artifacts
-        uses: codecov/codecov-action@v4
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: section5-test-results
