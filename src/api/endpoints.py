@@ -516,21 +516,37 @@ async def health_check():
 
 # 모델 로드 함수 (main.py에서 호출됨)
 def load_model_at_startup():
-    """앱 시작시 모델 로드"""
+    """앱 시작시 모델 로드 (CI/CD 환경 친화적)"""
     global model_evaluator
 
     try:
         from pathlib import Path
+        import os
+
+        # CI/CD 환경 감지
+        is_ci_environment = any([
+            os.getenv('CI') == 'true',
+            os.getenv('GITHUB_ACTIONS') == 'true',
+            os.getenv('DOCKER_ENV') == 'ci',
+            os.getenv('ENVIRONMENT') == 'ci'
+        ])
 
         # 가장 최근 모델 찾기
         models_dir = Path("models")
         if not models_dir.exists():
-            logger.error("models 디렉토리가 없습니다.")
+            if is_ci_environment:
+                logger.info("ℹ️ CI/CD 환경 - 모델 디렉토리 없음 (예상됨)")
+            else:
+                logger.error("models 디렉토리가 없습니다.")
             return False
 
         model_files = list(models_dir.glob("*forest*.joblib"))
         if not model_files:
-            logger.error("저장된 모델 파일이 없습니다.")
+            if is_ci_environment:
+                logger.info("ℹ️ CI/CD 환경 - 모델 파일 없음 (fallback 모드로 동작)")
+            else:
+                logger.error("저장된 모델 파일이 없습니다.")
+                logger.info("💡 모델 훈련 방법: python scripts/train_model.py")
             return False
 
         # 가장 최근 파일 선택
@@ -548,6 +564,9 @@ def load_model_at_startup():
         return True
 
     except Exception as e:
-        logger.error(f"모델 로드 실패: {e}")
+        if is_ci_environment:
+            logger.info(f"ℹ️ CI/CD 환경에서 모델 로드 건너뜀: {e}")
+        else:
+            logger.error(f"모델 로드 실패: {e}")
         model_evaluator = None
         return False

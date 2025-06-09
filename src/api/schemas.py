@@ -50,7 +50,7 @@ class MoviePredictionResponse(BaseModel):
     rating_out_of_10: str
     features_used: Union[Dict[str, Any], List[str]]  # Support both formats
     model_features: Optional[List[str]] = Field(None, description="Model features available")
-    timestamp: str
+    timestamp: datetime  # Changed to datetime for consistency
     confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Prediction confidence")
     model_version: Optional[str] = Field(None, description="Model version")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
@@ -139,16 +139,3 @@ class CustomMetricsResponse(BaseModel):
     average_rating: Optional[float] = None
     active_users: Optional[int] = None
     error: Optional[str] = None
-
-class PredictionResponse(BaseModel):
-    text: str
-    sentiment: str = Field(..., description="Predicted sentiment: positive or negative")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Prediction confidence")
-    timestamp: datetime
-    
-    # Enhanced fields for graceful degradation
-    predicted_rating: Optional[float] = Field(None, ge=1.0, le=10.0, description="Predicted movie rating")
-    model_version: Optional[str] = Field(None, description="Model version used")
-    features_used: Optional[List[str]] = Field(None, description="Features used for prediction")
-    processing_time: Optional[float] = Field(None, description="Processing time in seconds")
-    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional prediction metadata")
