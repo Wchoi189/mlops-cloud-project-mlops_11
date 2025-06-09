@@ -372,8 +372,8 @@ jobs:
           context: .
           file: ./docker/Dockerfile.api
           push: true
-          # Filter out tags that are empty or start with a dash (invalid)
-          tags: ${{ join(fromJson('["' + join('","', steps.meta.outputs.tags.split(',') | map(trim) | reject(startsWith('-')) | reject(startsWith('')) ) + '"]'), ',') }}
+          # Use tags output from metadata action
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
