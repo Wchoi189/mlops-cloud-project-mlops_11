@@ -461,7 +461,7 @@ jobs:
           
           # Wait up to 60 seconds for container to be ready with proper timeout
           echo "⏳ Waiting for container startup (max 60s)..."
-          timeout 60s bash -c 'while ! curl -f -s http://localhost:8081/health >/dev/null 2>&1; do sleep 2; done' || {
+          timeout 60s bash -c 'while ! curl -f -s http://localhost:8081/health ; do sleep 2; done' || {
             echo "❌ Health check timeout after 60s"
             echo "📋 Container logs (last 20 lines):"
             docker logs test-container | tail -20
