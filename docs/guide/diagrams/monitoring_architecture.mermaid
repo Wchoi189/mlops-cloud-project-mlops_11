@@ -1,0 +1,58 @@
+graph TB
+    subgraph "애플리케이션 계층"
+        A[MLOps API<br/>FastAPI 서버]
+        B[커스텀 메트릭<br/>src/monitoring/metrics.py]
+        C[헬스 엔드포인트<br/>/health, /metrics]
+    end
+    
+    subgraph "메트릭 수집"
+        D[Prometheus<br/>Port 9090<br/>메트릭 스크래핑]
+        E[AlertManager<br/>Port 9093<br/>알림 라우팅]
+        F[알림 규칙<br/>16개 모니터링 규칙]
+    end
+    
+    subgraph "시각화"
+        G[Grafana 대시보드<br/>Port 3000<br/>10개 패널]
+        H[실시간 차트<br/>성능 메트릭]
+        I[알림 통지<br/>이메일/Slack 연동]
+    end
+    
+    subgraph "주요 모니터링 메트릭"
+        J[API 응답 시간<br/>95퍼센타일]
+        K[에러율<br/>5xx 응답]
+        L[모델 지연시간<br/>예측 시간]
+        M[시스템 자원<br/>CPU, 메모리]
+        N[요청 볼륨<br/>처리량]
+    end
+    
+    subgraph "알림 조건"
+        O[API 다운 > 1분<br/>위험]
+        P[높은 응답시간 > 1초<br/>경고]
+        Q[에러율 > 10%<br/>위험]
+        R[모델 지연 > 5초<br/>경고]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    D --> G
+    G --> H
+    E --> I
+    
+    F --> O
+    F --> P
+    F --> Q
+    F --> R
+    
+    G --> J
+    G --> K
+    G --> L
+    G --> M
+    G --> N
+    
+    style A fill:#4caf50
+    style D fill:#ff9800
+    style G fill:#9c27b0
+    style F fill:#f44336

@@ -1,0 +1,42 @@
+graph TB
+    subgraph "Docker Compose 환경"
+        subgraph "애플리케이션 계층"
+            A[MLOps API 컨테이너<br/>FastAPI:8000<br/>src/api/main.py]
+            B[MLflow 서버<br/>Port 5000<br/>모델 레지스트리]
+        end
+        
+        subgraph "모니터링 계층"
+            C[Prometheus<br/>Port 9090<br/>메트릭 수집]
+            D[Grafana<br/>Port 3000<br/>시각화]
+            E[AlertManager<br/>Port 9093<br/>알림 라우팅]
+        end
+        
+        subgraph "스토리지"
+            F[볼륨: models/<br/>훈련된 모델]
+            G[볼륨: data/<br/>처리된 데이터]
+            H[볼륨: mlruns/<br/>MLflow 아티팩트]
+        end
+    end
+    
+    subgraph "외부 접근"
+        I[localhost:8000<br/>API 문서]
+        J[localhost:3000<br/>Grafana 대시보드<br/>admin/mlops123]
+        K[localhost:9090<br/>Prometheus UI]
+    end
+    
+    A --> F
+    A --> G
+    B --> H
+    C --> A
+    D --> C
+    E --> C
+    
+    A --> I
+    D --> J
+    C --> K
+    
+    style A fill:#4caf50
+    style B fill:#2196f3
+    style C fill:#ff9800
+    style D fill:#9c27b0
+    style E fill:#f44336

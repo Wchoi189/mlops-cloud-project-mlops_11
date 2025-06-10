@@ -1,63 +1,49 @@
 # Dockerfile.api
 FROM python:3.11-slim
 
-# 작업 디렉토리 설정
+# Set working directory
 WORKDIR /app
 
-# 시스템 의존성 설치
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 더 나은 캐싱을 위해 requirements 먼저 복사
+# Copy requirements first for better caching
 COPY requirements-resolved.txt .
 RUN pip install -r requirements-resolved.txt
-# RUN pip install  -r requirements.txt
 
-# 애플리케이션 코드 복사
+# Copy application code
 COPY configs/ /app/configs/
 COPY src/ /app/src/
-COPY models/ /app/models/
-RUN python -c "\
-    import joblib; \
-    import numpy as np; \
-    from sklearn.ensemble import RandomForestRegressor; \
-    print('Creating Docker model...'); \
-    np.random.seed(42); \
-    X = np.random.rand(50, 3); \
-    X[:, 0] = 2000 + X[:, 0] * 24; \
-    X[:, 1] = 90 + X[:, 1] * 90; \
-    X[:, 2] = 5000 + X[:, 2] * 995000; \
-    y = 5 + np.random.rand(50) * 5; \
-    model = RandomForestRegressor(n_estimators=5, random_state=42); \
-    model.fit(X, y); \
-    model_data = {'model': model, 'feature_names': ['startYear', 'runtimeMinutes', 'numVotes'], 'model_info': {'model_type': 'RandomForestRegressor', 'version': 'docker-1.0'}}; \
-    joblib.dump(model_data, '/app/models/docker_model.joblib'); \
-    print('✅ Docker model created')"
 
-# 모델과 로그를 위한 디렉토리 생성
-RUN mkdir -p models logs data/processed
+# Create all necessary directories in one command
+RUN mkdir -p /app/models /app/logs /app/data/processed /tmp/prometheus_multiproc
 
-# Option 3: Copy with error handling
-COPY models/*.joblib /app/models/ 2>/dev/null || true
+# Copy test models
+COPY models/test_models /app/models/
 
-RUN mkdir -p /app/logs /tmp/prometheus_multiproc
+# Print success message if files were copied
+RUN if compgen -G "/app/models/*.joblib" > /dev/null; then \
+    echo "✅ Successfully copied test model files to /app/models/:"; \
+    ls -la /app/models/*.joblib; \
+    else \
+    echo "⚠️ No model files found in /app/models/"; \
+    fi
 
-# 환경 변수 설정
-ENV PYTHONPATH=/app
-ENV MODEL_PATH=/app/models
-ENV LOG_LEVEL=INFO
-ENV PYTHONPATH=/app
-ENV PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
+# Set environment variables
+ENV PYTHONPATH=/app \
+    MODEL_PATH=/app/models \
+    LOG_LEVEL=INFO \
+    PROMETHEUS_MULTIPROC_DIR=/tmp/prometheus_multiproc
 
-# 포트 노출
+# Expose port
 EXPOSE 8000
 
-# 헬스 체크
+# Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# 애플리케이션 실행
-
+# Run application
 CMD ["uvicorn", "src.api.main_with_metrics:app", "--host", "0.0.0.0", "--port", "8000"]

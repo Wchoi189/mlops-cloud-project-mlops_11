@@ -62,6 +62,10 @@ models/*.tflite
 !models/*.py
 !models/.gitkeep
 
+# Don't ignore the test_models directory and its contents
+!models/test_models/
+!models/test_models/*.joblib
+
 # Data files (usually large)
 data/processed/*
 data/raw/*

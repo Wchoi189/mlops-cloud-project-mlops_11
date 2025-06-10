@@ -1,0 +1,40 @@
+graph TB
+    subgraph "데이터 계층"
+        A[IMDb 원시 데이터] --> B[데이터 로더<br/>data_loader.py]
+        B --> C[영화 데이터셋<br/>5,764개 레코드]
+    end
+    
+    subgraph "ML 파이프라인"
+        C --> D[피처 엔지니어링<br/>preprocessing.py]
+        D --> E[모델 훈련<br/>Random Forest]
+        E --> F[모델 레지스트리<br/>MLflow]
+        F --> G[모델 평가<br/>RMSE ~0.69]
+    end
+    
+    subgraph "API 계층"
+        G --> H[FastAPI 서버<br/>9개 엔드포인트]
+        H --> I[영화 평점<br/>예측 API]
+    end
+    
+    subgraph "인프라스트럭처"
+        J[Docker 컨테이너<br/>멀티 서비스]
+        K[GitHub Actions<br/>CI/CD 파이프라인]
+        L[모니터링 스택<br/>Prometheus + Grafana]
+    end
+    
+    subgraph "프로덕션 환경"
+        M[로드 밸런서<br/>Port 8000]
+        N[헬스 체크<br/>16개 알림 규칙]
+        O[메트릭 대시보드<br/>10개 패널]
+    end
+    
+    I --> J
+    J --> M
+    K --> J
+    L --> N
+    N --> O
+    
+    style A fill:#e1f5fe
+    style F fill:#f3e5f5
+    style I fill:#e8f5e9
+    style L fill:#fff3e0
