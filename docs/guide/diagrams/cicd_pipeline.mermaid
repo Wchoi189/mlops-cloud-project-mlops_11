@@ -1,0 +1,49 @@
+graph LR
+    subgraph "소스 관리"
+        A[GitHub 레포지토리<br/>mlops-cloud-project-mlops_11]
+        B[main 브랜치에 Push]
+    end
+    
+    subgraph "CI/CD 파이프라인 (.github/workflows/)"
+        C[코드 품질<br/>린팅 & 포매팅]
+        D[보안 스캔<br/>의존성 검사]
+        E[단위 테스트<br/>전체 섹션]
+        F[빌드 & 테스트<br/>Docker 이미지]
+        G[배포<br/>무중단 배포]
+        H[성능<br/>벤치마킹]
+    end
+    
+    subgraph "배포 타겟"
+        I[개발 환경<br/>로컬 Docker]
+        J[스테이징<br/>테스트 환경]
+        K[프로덕션<br/>라이브 API]
+    end
+    
+    subgraph "모니터링 & 알림"
+        L[헬스 체크<br/>16개 알림 규칙]
+        M[성능<br/>메트릭 대시보드]
+        N[롤백<br/>문제 시]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    
+    G --> I
+    G --> J
+    G --> K
+    
+    K --> L
+    L --> M
+    M --> N
+    N --> G
+    
+    style C fill:#ffeb3b
+    style D fill:#f44336
+    style E fill:#4caf50
+    style F fill:#2196f3
+    style G fill:#9c27b0

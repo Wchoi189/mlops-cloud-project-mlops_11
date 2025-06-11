@@ -1,0 +1,51 @@
+flowchart TD
+    subgraph "데이터 수집"
+        A[IMDb 원시 데이터<br/>다중 소스]
+        B[데이터 로더<br/>src/data/data_loader.py]
+        C[원시 데이터셋<br/>영화 + 평점]
+    end
+    
+    subgraph "데이터 처리"
+        D[피처 엔지니어링<br/>src/data/preprocessing.py]
+        E[핵심 피처<br/>연도, 런타임, 투표수]
+        F[처리된 데이터셋<br/>5,764개 영화]
+    end
+    
+    subgraph "모델 개발"
+        G[모델 훈련<br/>src/models/trainer.py]
+        H[Random Forest<br/>하이퍼파라미터 튜닝]
+        I[모델 평가<br/>RMSE ~0.69, R² ~0.31]
+    end
+    
+    subgraph "모델 관리"
+        J[MLflow 추적<br/>실험 로깅]
+        K[모델 레지스트리<br/>버전 관리]
+        L[모델 아티팩트<br/>models/ 디렉토리]
+    end
+    
+    subgraph "프로덕션 서빙"
+        M[FastAPI 서버<br/>src/api/main.py]
+        N[예측 엔드포인트<br/>/predict/movie]
+        O[실시간 추론<br/>영화 평점 예측]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+    K --> L
+    L --> M
+    M --> N
+    N --> O
+    
+    style A fill:#e3f2fd
+    style F fill:#f1f8e9
+    style I fill:#fff3e0
+    style K fill:#fce4ec
+    style O fill:#e8f5e8

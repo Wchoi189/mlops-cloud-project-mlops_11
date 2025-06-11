@@ -15,9 +15,9 @@ import yaml
 # 프로젝트 루트를 Python 경로에 추가
 script_dir = Path(__file__).resolve().parent
 project_root = script_dir.parent.parent
-project_root = os.chdir(project_root)  # 작업 경로를 스크립트 위치로 변경
+os.chdir(project_root)  # 작업 경로를 프로젝트 루트로 변경
 sys.path.append(str(project_root))
-
+sys.path.insert(0, os.path.abspath(os.path.join(project_root, "src")))
 
 def test_docker_files():
     """Docker 파일들 존재 및 구문 검증"""
@@ -35,14 +35,6 @@ def test_docker_files():
         "docker/docker-compose.prod.yml",
         "requirements-resolved.txt",
     ]
-    # required_files = [
-    #     script_dir / 'docker/Dockerfile.api',
-    #     script_dir /'docker/Dockerfile.train',
-    #     script_dir /'docker/docker-compose.yml',
-    #     script_dir /'docker/docker-compose.prod.yml',
-    #     script_dir /'requirements.txt',
-    #     script_dir /'requirements-enhanced.txt'
-    # ]
 
     missing_files = []
     for file_path in required_files:
@@ -192,8 +184,8 @@ def test_docker_files():
 
     # 6. 모델 파일 확인
     print("\n6️⃣ 모델 파일 확인...")
-
-    models_dir = Path("models")
+    # GitHub Actions에서는 작업 디렉토리가 프로젝트 루트가 아닐 수 있으므로, 절대 경로 사용 권장
+    models_dir = Path(os.environ.get("GITHUB_WORKSPACE", ".")) / "models"
     if models_dir.exists():
         model_files = list(models_dir.glob("*.joblib")) + list(models_dir.glob("*.pkl"))
         print(f"✅ models/ 디렉토리 존재: {len(model_files)}개 모델 파일")
@@ -211,7 +203,7 @@ def test_docker_files():
 
     try:
         # enhanced.py 임포트 테스트
-        # sys.path.append('src')
+        sys.path.append('src')
         from src.utils.enhanced import (
             HAS_ICECREAM,
             HAS_RICH,
@@ -304,7 +296,7 @@ def simulate_container_behavior():
     simulated_volumes = {
         "../models": "/app/models",
         "../data": "/app/data",
-        "../logs": "/app/logs",
+        # "../logs": "/app/logs",
     }
 
     print("\n볼륨 마운트 시뮬레이션:")

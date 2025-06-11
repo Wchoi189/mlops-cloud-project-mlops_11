@@ -34,7 +34,7 @@ venv.bak/
 .env.local
 .env.*.local
 docker/.env
-
+.secrets
 # IDEs
 .vscode/
 .idea/
@@ -61,6 +61,10 @@ models/*.tflite
 !models/
 !models/*.py
 !models/.gitkeep
+
+# Don't ignore the test_models directory and its contents
+!models/test_models/
+!models/test_models/*.joblib
 
 # Data files (usually large)
 data/processed/*
@@ -102,4 +106,5 @@ docker/debug.sh
 requirements-enhanced-full.txt
 requirements-minimal.txt
 section5_simulation_test_report.json
-tests/*
+bin/
+.actrc
