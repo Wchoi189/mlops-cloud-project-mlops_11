@@ -795,6 +795,7 @@ jobs:
     steps:
       - name: Calculate pipeline metrics
         id: metrics
+        shell: bash
         run: |
           echo "🎉 MLOps CI/CD Pipeline Summary"
           echo "==============================="
@@ -812,10 +813,15 @@ jobs:
           
           successful=0
           total=${#jobs[@]}
+          # Debug output
+          echo "Job results:"
+          for i in "${!jobs[@]}"; do
+            echo "Job $i: ${jobs[$i]}"
+          done
           
           for result in "${jobs[@]}"; do
             if [[ "$result" == "success" ]]; then
-              ((successful++))
+              successful=$((successful + 1))
             fi
           done
           
