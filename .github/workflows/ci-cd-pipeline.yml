@@ -928,4 +928,5 @@ jobs:
             echo "❌ PIPELINE NEEDS ATTENTION: $success_rate% success rate"
             echo "🔧 Multiple critical stages failed"
             exit 1
+          fi
           
