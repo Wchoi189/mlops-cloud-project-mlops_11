@@ -106,4 +106,4 @@ docker/debug.sh
 requirements-enhanced-full.txt
 requirements-minimal.txt
 section5_simulation_test_report.json
-tests/*
+

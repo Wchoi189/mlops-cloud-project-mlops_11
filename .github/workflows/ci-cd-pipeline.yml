@@ -324,8 +324,8 @@ jobs:
           # Run tests with CI environment variables
           export CI=true
           export GITHUB_ACTIONS=true
-          export MLFLOW_TRACKING_URI="sqlite:///./mlruns/ci_test.db"
-          
+          # export MLFLOW_TRACKING_URI="sqlite:///./mlruns/ci_test.db" # DEBUG
+          export MLFLOW_TRACKING_URI="sqlite:////$(pwd)/mlruns/ci_test.db"
           if [ -d "tests" ]; then
             # Run pytest with custom markers for CI/CD
             pytest tests/ \
@@ -428,11 +428,18 @@ jobs:
         run: |
           echo "🧪 Testing Docker image..."
           
+          set -x  # Print all commands for debugging
+
           # Test 1: Basic Python environment
           echo "📋 Testing Python environment..."
-          docker run --rm ${{ steps.meta.outputs.tags }} python -c "
-          import logging
-          import sys
+          # docker run --rm ${{ steps.meta.outputs.tags }} python -c "
+          # echo "✅ From Docker container"
+          # import logging
+          # echo "✅ import logging"
+          # import sys
+          # echo "✅ import sys"
+          OUTPUT=$(docker run --rm ${{ steps.meta.outputs.tags }} python -c "import logging; import sys; print('✅ Container Python environment works'); print(f'Python version: {sys.version}')")
+          echo "$OUTPUT"
           print('✅ Container Python environment works')
           print(f'Python version: {sys.version}')
           " || echo "⚠️ Container test completed with warnings"
@@ -475,30 +482,53 @@ jobs:
             docker logs test-container | tail -20
           }
 
-          # Wait up to 60 seconds for container to be ready with proper timeout
+          
+
+
+
           echo "⏳ Waiting for container startup (max 60s)..."
-          timeout 60s bash -c 'while ! curl -f -s http://localhost:8081/health >/dev/null 2>&1; do sleep 2; done' || {
+          timeout 60s bash -c '
+            until curl -f -s http://localhost:8081/health >/dev/null 2>&1; do
+              echo "Waiting for health endpoint..."
+              sleep 2
+            done
+          ' || {
             echo "❌ Health check timeout after 60s"
             echo "📋 Container logs (last 20 lines):"
-            docker logs test-container | tail -20
-            docker stop test-container >/dev/null 2>&1 || true
-            docker rm test-container >/dev/null 2>&1 || true
+            docker logs test-container | tail -20 || true
+            docker stop test-container || true
+            docker rm test-container || true
             exit 1
           }
+
+          echo "✅ Health check passed!"
+          docker logs test-container | tail -20
+
+
+          # # Wait up to 60 seconds for container to be ready with proper timeout
+          # echo "⏳ Waiting for container startup (max 60s)..."
+          # timeout 60s bash -c 'while ! curl -f -s http://localhost:8081/health >/dev/null 2>&1; do sleep 2; done' || {
+          #   echo "❌ Health check timeout after 60s"
+          #   echo "📋 Container logs (last 20 lines):"
+          #   docker logs test-container | tail -20
+          #   docker stop test-container >/dev/null 2>&1 || true
+          #   docker rm test-container >/dev/null 2>&1 || true
+          #   exit 1
+          # }
           
-          echo "✅ Container health check passed!"
+          # echo "✅ Container health check passed!"
           
-          # Now verify the actual health response
-          echo "📋 Verifying health response..."
-          HEALTH_RESPONSE=$(curl -s http://localhost:8081/health)
-          echo "Health Response: $HEALTH_RESPONSE"
+          # # Now verify the actual health response
+          # echo "📋 Verifying health response..."
+          # HEALTH_RESPONSE=$(curl -s http://localhost:8081/health)
+          # echo "Health Response: $HEALTH_RESPONSE"
           
-          # Validate the response contains expected fields
-          if echo "$HEALTH_RESPONSE" | grep -q '"status".*"healthy\|degraded"'; then
-            echo "✅ Health status is valid"
-          else
-            echo "⚠️ Health status might be unexpected, but API is responding"
-          fi
+          # # Validate the response contains expected fields
+          # if echo "$HEALTH_RESPONSE" | grep -q '"status".*"healthy\|degraded"'; then
+          #   echo "✅ Health status is valid"
+          # else
+          #   echo "⚠️ Health status might be unexpected, but API is responding"
+          # fi
           
           # Test a simple prediction to ensure API functionality
           echo "📋 Testing API prediction endpoint..."
