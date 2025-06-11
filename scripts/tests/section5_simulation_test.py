@@ -15,9 +15,9 @@ import yaml
 # 프로젝트 루트를 Python 경로에 추가
 script_dir = Path(__file__).resolve().parent
 project_root = script_dir.parent.parent
-project_root = os.chdir(project_root)  # 작업 경로를 스크립트 위치로 변경
+os.chdir(project_root)  # 작업 경로를 프로젝트 루트로 변경
 sys.path.append(str(project_root))
-
+sys.path.insert(0, os.path.abspath(os.path.join(project_root, "src")))
 
 def test_docker_files():
     """Docker 파일들 존재 및 구문 검증"""
@@ -35,14 +35,6 @@ def test_docker_files():
         "docker/docker-compose.prod.yml",
         "requirements-resolved.txt",
     ]
-    # required_files = [
-    #     script_dir / 'docker/Dockerfile.api',
-    #     script_dir /'docker/Dockerfile.train',
-    #     script_dir /'docker/docker-compose.yml',
-    #     script_dir /'docker/docker-compose.prod.yml',
-    #     script_dir /'requirements.txt',
-    #     script_dir /'requirements-enhanced.txt'
-    # ]
 
     missing_files = []
     for file_path in required_files:

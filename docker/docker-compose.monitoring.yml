@@ -6,7 +6,7 @@ services:
     build:
       context: .. # ✅ Parent directory (project root)
       dockerfile: docker/Dockerfile.mlflow
-    image: mlops-mlflow:latest
+    image: mlops-mlflow:${MLFLOW_VERSION:-v2.2.0}
     container_name: mlops-mlflow-monitoring
     ports:
       - "${MLFLOW_PORT:-5000}:5000"

@@ -2,7 +2,7 @@ name: Section 5 - Docker Test
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, wb2x]
     paths:
       - "docker/**"
       - "src/**"

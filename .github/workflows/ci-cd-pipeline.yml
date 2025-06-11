@@ -2,14 +2,14 @@
 name: MLOps CI/CD Pipeline - Production Ready
 on:
   push:
-    branches: [main, develop, feature/*]
+    branches: [main, wb2x, feature/*]
     paths:
       - "src/**"
       - "docker/**" 
       - "requirements*.txt"
       - ".github/workflows/**"
   pull_request:
-    branches: [main, develop]
+    branches: [main, wb2x]
     paths:
       - "src/**"
       - "docker/**"
@@ -402,33 +402,13 @@ jobs:
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}-api
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=ref,event=branch,enable=${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
-            type=ref,event=pr,prefix=pr-,enable=${{ github.event_name == 'pull_request' }}           
-            "type=sha,prefix={{branch}},sanitize=true,enable=false"
-          flavor: |
-            latest=auto  
+            type=raw,value=latest,enable=true
+
           labels: |
             org.opencontainers.image.title=MLOps IMDB API
             org.opencontainers.image.description=Movie rating prediction API
             org.opencontainers.image.vendor=${{ github.repository_owner }}           
 
-      # NEW: Extract single tag for testing
-      # - name: Extract single tag for testing
-      #   id: single-tag
-      #   run: |
-      #     # Get the first tag from the metadata output
-      #     SINGLE_TAG=$(echo '${{ steps.meta.outputs.tags }}' | head -n1)
-      #     echo "tag=$SINGLE_TAG" >> $GITHUB_OUTPUT
-      #     echo "Using single tag for testing: $SINGLE_TAG"
-      - name: Extract single tag for testing
-        id: single-tag
-        run: |
-          # Extract the first tag from metadata output and clean it
-          TAGS="${{ steps.meta.outputs.tags }}"
-          FIRST_TAG=$(echo "$TAGS" | head -n1 | tr -d '\n' | tr -d '\r')
-          echo "tag=$FIRST_TAG" >> $GITHUB_OUTPUT
-          echo "🏷️ Using tag for testing: $FIRST_TAG"
 
       - name: Build and push API image
         id: build
@@ -449,14 +429,13 @@ jobs:
           set -e
           set -x
 
-          # Use single tag for testing
-          SINGLE_TAG="${{ steps.single-tag.outputs.tag }}"
-          echo "Testing image: $SINGLE_TAG"
+          # Use the tag directly
+          IMAGE_TAG="${{ steps.meta.outputs.tags }}"
 
           # Test 1: Basic Python environment (without starting server)
           echo "📋 Testing Python environment..."
-          docker pull "$SINGLE_TAG"
-          docker run --rm --entrypoint python "$SINGLE_TAG" -c "
+          docker pull "$IMAGE_TAG"
+          docker run --rm --entrypoint python "$IMAGE_TAG" -c "
           import sys
           print('✅ Container Python environment works')
           print(f'Python version: {sys.version}')
@@ -464,7 +443,7 @@ jobs:
           
           # Test 2: Import test (without starting server)
           echo "📋 Testing API imports..."
-          docker run --rm --entrypoint python "$SINGLE_TAG" -c "
+          docker run --rm --entrypoint python "$IMAGE_TAG" -c "
           try:
               from src.api.main import app
               print('✅ API module imports successfully')
@@ -481,7 +460,7 @@ jobs:
           
           # Start container with default command (which starts the server)
           echo "🚀 Starting container with server..."
-          docker run -d --name "$CONTAINER_NAME" -p 8080:8000 "$SINGLE_TAG"
+          docker run -d --name "$CONTAINER_NAME" -p 8080:8000 "$IMAGE_TAG"
           
           # Give server time to start (your logs show it needs a few seconds)
           echo "⏳ Waiting for server startup..."
@@ -590,9 +569,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, test]
     environment: staging
-    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
+    # if: github.ref == 'refs/heads/wb2x' || github.event.inputs.environment == 'staging'
+    if: always()
 
     steps:
+      - name: Debug branch and environment
+        run: |
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "GITHUB_EVENT_NAME: $GITHUB_EVENT_NAME"
+          echo "ENVIRONMENT: ${{ github.event.inputs.environment }}"
+
       - name: Deploy to staging
         run: |
           echo "🎭 Deploying to staging environment..."
@@ -625,7 +611,8 @@ jobs:
     name: 🌟 Deploy Production
     runs-on: ubuntu-latest
     needs: [build, test]
-    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production'
+    # if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production'
+    if: always()
     environment: production
 
     steps:
