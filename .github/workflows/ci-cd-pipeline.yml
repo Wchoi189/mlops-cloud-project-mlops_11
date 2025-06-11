@@ -450,18 +450,34 @@ jobs:
           print('✅ FastAPI app configured')
           
           # Quick startup test (don't start server)
-          config = uvicorn.Config(app, host='0.0.0.0', port=8000, log_level='info')
+          config = uvicorn.Config(app, host='0.0.0.0', port=8000, log_level='debug')
           print('✅ Uvicorn config created')
           sys.exit(0)  # Exit before starting server
           " || echo "⚠️ API startup test completed with warnings"
           
           # Test 3: Container health check (SIMPLIFIED AND FIXED)
           echo "📋 Testing container health (simplified approach)..."
+ 
           docker run --rm -d --name test-container -p 8081:8000 ${{ steps.meta.outputs.tags }} || exit 1
-          
+ 
+           # DEBUG 1#
+          echo "📋 Container logs (last 20 lines):"
+          bash -c 'sleep 5 && curl -v http://localhost:8080/health' || {
+            echo " ⚠️ Health check: curl -v http://localhost:8080/health"
+            echo "📋 Container logs (last 20 lines):"
+          }
+
+          # DEBUG 2#
+          echo "📋 Container logs (last 20 lines):"
+          bash -c 'curl -v http://localhost:8081/health' || {
+            echo " ⚠️ Health check: curl -v http://localhost:8081/health"
+            echo "📋 Container logs (last 20 lines):"
+            docker logs test-container | tail -20
+          }
+
           # Wait up to 60 seconds for container to be ready with proper timeout
           echo "⏳ Waiting for container startup (max 60s)..."
-          timeout 60s bash -c 'while ! curl -f -s http://localhost:8081/health ; do sleep 2; done' || {
+          timeout 60s bash -c 'while ! curl -f -s http://localhost:8081/health >/dev/null 2>&1; do sleep 2; done' || {
             echo "❌ Health check timeout after 60s"
             echo "📋 Container logs (last 20 lines):"
             docker logs test-container | tail -20
