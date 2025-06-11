@@ -482,24 +482,38 @@ jobs:
             docker logs test-container | tail -20
           }
 
-          
-
-
-
           echo "⏳ Waiting for container startup (max 60s)..."
-          timeout 60s bash -c '
-            until curl -f -s http://localhost:8081/health >/dev/null 2>&1; do
-              echo "Waiting for health endpoint..."
-              sleep 2
-            done
-          ' || {
-            echo "❌ Health check timeout after 60s"
-            echo "📋 Container logs (last 20 lines):"
-            docker logs test-container | tail -20 || true
-            docker stop test-container || true
-            docker rm test-container || true
+          for i in {1..30}; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/health || echo "000")
+            echo "Health check attempt $i: HTTP $STATUS"
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Health check passed!"
+              break
+            fi
+            sleep 2
+          done
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Health check failed after 60s"
+            docker logs test-container | tail -20
+            docker stop test-container >/dev/null 2>&1 || true
+            docker rm test-container >/dev/null 2>&1 || true
             exit 1
-          }
+          fi
+          
+          # echo "⏳ Waiting for container startup (max 60s)..."
+          # timeout 60s bash -c '
+          #   until curl -f -s http://localhost:8081/health >/dev/null 2>&1; do
+          #     echo "Waiting for health endpoint..."
+          #     sleep 2
+          #   done
+          # ' || {
+          #   echo "❌ Health check timeout after 60s"
+          #   echo "📋 Container logs (last 20 lines):"
+          #   docker logs test-container | tail -20 || true
+          #   docker stop test-container || true
+          #   docker rm test-container || true
+          #   exit 1
+          # }
 
           echo "✅ Health check passed!"
           docker logs test-container | tail -20
