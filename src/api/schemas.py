@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class PredictionRequest(BaseModel):
-    text: str = Field(..., min_length=1, max_length=5000, description="Text to analyze")
+    text: Optional[str] = Field(..., min_length=1, max_length=5000, description="Text to analyze")
     # Optional movie features for enhanced prediction
     startYear: Optional[int] = Field(
         None, ge=1900, le=2030, description="Movie release year"
@@ -31,8 +31,8 @@ class MoviePredictionRequest(BaseModel):
 class PredictionResponse(BaseModel):
     text: Optional[str] = Field(None, description="Input text (for legacy compatibility)")
     sentiment: Optional[str] = Field(None, description="Predicted sentiment (for legacy)")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Prediction confidence")
-    timestamp: datetime
+    confidence:  Optional[float] = Field(..., ge=0.0, le=1.0, description="Prediction confidence")
+    timestamp: Optional[str] = None
     
     # Enhanced fields for movie prediction
     predicted_rating: Optional[float] = Field(None, ge=1.0, le=10.0, description="Predicted movie rating")
@@ -50,7 +50,7 @@ class MoviePredictionResponse(BaseModel):
     rating_out_of_10: str
     features_used: Union[Dict[str, Any], List[str]]  # Support both formats
     model_features: Optional[List[str]] = Field(None, description="Model features available")
-    timestamp: datetime  # Changed to datetime for consistency
+    timestamp: Optional[str] = None
     confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Prediction confidence")
     model_version: Optional[str] = Field(None, description="Model version")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
@@ -121,7 +121,7 @@ class ErrorResponse(BaseModel):
 # New schema for fallback prediction requests
 class FallbackPredictionRequest(BaseModel):
     """Fallback prediction request (when no ML model available)"""
-    title: str = Field(..., min_length=1, max_length=200, description="Movie title")
+    title: Optional[str] = Field(..., min_length=1, max_length=200, description="Movie title")
     startYear: int = Field(..., ge=1900, le=2030, description="Movie release year")
     runtimeMinutes: int = Field(..., ge=1, le=600, description="Movie runtime in minutes")
     numVotes: int = Field(..., ge=1, description="Number of votes")
