@@ -427,141 +427,98 @@ jobs:
       - name: Test Docker image
         run: |
           echo "🧪 Testing Docker image..."
-          
-          set -x  # Print all commands for debugging
+          set -e
+          set -x
 
-          # Test 1: Basic Python environment
+          # Test 1: Basic Python environment (without starting server)
           echo "📋 Testing Python environment..."
-          # docker run --rm ${{ steps.meta.outputs.tags }} python -c "
-          # echo "✅ From Docker container"
-          # import logging
-          # echo "✅ import logging"
-          # import sys
-          # echo "✅ import sys"
-          OUTPUT=$(docker run --rm ${{ steps.meta.outputs.tags }} python -c "import logging; import sys; print('✅ Container Python environment works'); print(f'Python version: {sys.version}')")
-          echo "$OUTPUT"
+          docker run --rm --entrypoint python ${{ steps.meta.outputs.tags }} -c "
+          import sys
           print('✅ Container Python environment works')
           print(f'Python version: {sys.version}')
-          " || echo "⚠️ Container test completed with warnings"
+          "
           
-          # Test 2: Quick API startup test (with timeout)
-          echo "📋 Testing API can start (10 second test)..."
-          timeout 15s docker run --rm -p 8080:8000 ${{ steps.meta.outputs.tags }} python -c "
-          import sys
-          import asyncio
-          import uvicorn
-          from src.api.main import app
+          # Test 2: Import test (without starting server)
+          echo "📋 Testing API imports..."
+          docker run --rm --entrypoint python ${{ steps.meta.outputs.tags }} -c "
+          try:
+              from src.api.main import app
+              print('✅ API module imports successfully')
+              print('✅ FastAPI app configured')
+          except ImportError as e:
+              print(f'❌ Import failed: {e}')
+              exit(1)
+          "
           
-          # Test that API can be imported and configured
-          print('✅ API module imports successfully')
-          print('✅ FastAPI app configured')
+          # Test 3: Full server startup and health check
+          echo "📋 Testing full server startup..."
           
-          # Quick startup test (don't start server)
-          config = uvicorn.Config(app, host='0.0.0.0', port=8000, log_level='debug')
-          print('✅ Uvicorn config created')
-          sys.exit(0)  # Exit before starting server
-          " || echo "⚠️ API startup test completed with warnings"
+          CONTAINER_NAME="test-container-${{ github.run_id }}"
           
-          # Test 3: Container health check (SIMPLIFIED AND FIXED)
-          echo "📋 Testing container health (simplified approach)..."
- 
-          docker run --rm -d --name test-container -p 8081:8000 ${{ steps.meta.outputs.tags }} || exit 1
- 
-           # DEBUG 1#
-          echo "📋 Container logs (last 20 lines):"
-          bash -c 'sleep 5 && curl -v http://localhost:8080/health' || {
-            echo " ⚠️ Health check: curl -v http://localhost:8080/health"
-            echo "📋 Container logs (last 20 lines):"
-          }
-
-          # DEBUG 2#
-          echo "📋 Container logs (last 20 lines):"
-          bash -c 'curl -v http://localhost:8081/health' || {
-            echo " ⚠️ Health check: curl -v http://localhost:8081/health"
-            echo "📋 Container logs (last 20 lines):"
-            docker logs test-container | tail -20
-          }
-
-          echo "⏳ Waiting for container startup (max 60s)..."
-          for i in {1..30}; do
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/health || echo "000")
-            echo "Health check attempt $i: HTTP $STATUS"
-            if [ "$STATUS" = "200" ]; then
-              echo "✅ Health check passed!"
-              break
-            fi
-            sleep 2
-          done
-          if [ "$STATUS" != "200" ]; then
-            echo "❌ Health check failed after 60s"
-            docker logs test-container | tail -20
-            docker stop test-container >/dev/null 2>&1 || true
-            docker rm test-container >/dev/null 2>&1 || true
+          # Start container with default command (which starts the server)
+          echo "🚀 Starting container with server..."
+          docker run -d --name "$CONTAINER_NAME" -p 8080:8000 ${{ steps.meta.outputs.tags }}
+          
+          # Give server time to start (your logs show it needs a few seconds)
+          echo "⏳ Waiting for server startup..."
+          sleep 15
+          
+          # Check container is still running
+          if ! docker ps --format "table {{.Names}}" | grep -q "$CONTAINER_NAME"; then
+            echo "❌ Container stopped unexpectedly"
+            docker logs "$CONTAINER_NAME"
             exit 1
           fi
           
-          # echo "⏳ Waiting for container startup (max 60s)..."
-          # timeout 60s bash -c '
-          #   until curl -f -s http://localhost:8081/health >/dev/null 2>&1; do
-          #     echo "Waiting for health endpoint..."
-          #     sleep 2
-          #   done
-          # ' || {
-          #   echo "❌ Health check timeout after 60s"
-          #   echo "📋 Container logs (last 20 lines):"
-          #   docker logs test-container | tail -20 || true
-          #   docker stop test-container || true
-          #   docker rm test-container || true
-          #   exit 1
-          # }
-
-          echo "✅ Health check passed!"
-          docker logs test-container | tail -20
-
-
-          # # Wait up to 60 seconds for container to be ready with proper timeout
-          # echo "⏳ Waiting for container startup (max 60s)..."
-          # timeout 60s bash -c 'while ! curl -f -s http://localhost:8081/health >/dev/null 2>&1; do sleep 2; done' || {
-          #   echo "❌ Health check timeout after 60s"
-          #   echo "📋 Container logs (last 20 lines):"
-          #   docker logs test-container | tail -20
-          #   docker stop test-container >/dev/null 2>&1 || true
-          #   docker rm test-container >/dev/null 2>&1 || true
-          #   exit 1
-          # }
+          # Show startup logs
+          echo "📋 Server startup logs:"
+          docker logs "$CONTAINER_NAME" | tail -10
           
-          # echo "✅ Container health check passed!"
+          # Health check
+          echo "🔍 Testing health endpoint..."
+          for i in {1..20}; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 5 \
+              "http://localhost:8080/health" 2>/dev/null || echo "000")
+            
+            echo "Health check attempt $i: HTTP $HTTP_CODE"
+            
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Health check passed!"
+              break
+            fi
+            
+            if [ $i -eq 20 ]; then
+              echo "❌ Health check failed after 40 seconds"
+              echo "📋 Final logs:"
+              docker logs "$CONTAINER_NAME"
+              docker stop "$CONTAINER_NAME" || true
+              docker rm "$CONTAINER_NAME" || true
+              exit 1
+            fi
+            
+            sleep 2
+          done
           
-          # # Now verify the actual health response
-          # echo "📋 Verifying health response..."
-          # HEALTH_RESPONSE=$(curl -s http://localhost:8081/health)
-          # echo "Health Response: $HEALTH_RESPONSE"
+          # Optional: Test prediction endpoint
+          echo "📋 Testing prediction endpoint..."
+          RESPONSE=$(curl -s -X POST "http://localhost:8080/predict/movie" \
+            -H "Content-Type: application/json" \
+            -d '{"title":"Test Movie","startYear":2020,"runtimeMinutes":120,"numVotes":5000}' \
+            2>/dev/null || echo "FAILED")
           
-          # # Validate the response contains expected fields
-          # if echo "$HEALTH_RESPONSE" | grep -q '"status".*"healthy\|degraded"'; then
-          #   echo "✅ Health status is valid"
-          # else
-          #   echo "⚠️ Health status might be unexpected, but API is responding"
-          # fi
-          
-          # Test a simple prediction to ensure API functionality
-          echo "📋 Testing API prediction endpoint..."
-          PREDICTION_RESPONSE=$(curl -s -X POST "http://localhost:8081/predict/movie" \
-                      -H "Content-Type: application/json" \
-                      -d '{"title":"CI Test Movie","startYear":2020,"runtimeMinutes":120,"numVotes":5000}')
-          
-          if echo "$PREDICTION_RESPONSE" | grep -q "predicted_rating"; then
+          if echo "$RESPONSE" | grep -q "predicted_rating"; then
             echo "✅ Prediction endpoint working"
           else
-            echo "⚠️ Prediction endpoint may have issues, but container is running"
+            echo "⚠️ Prediction test: $RESPONSE"
           fi
           
           # Cleanup
-          echo "🧹 Cleaning up test container..."
-          docker stop test-container >/dev/null 2>&1 || true
-          docker rm test-container >/dev/null 2>&1 || true
+          echo "🧹 Cleaning up..."
+          docker stop "$CONTAINER_NAME" || true
+          docker rm "$CONTAINER_NAME" || true
           
-          echo "✅ Docker image test completed successfully!"   
+          echo "✅ All tests completed!"
+          set +x
 
       - name: Security scan (Trivy)
         run: |

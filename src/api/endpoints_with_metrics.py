@@ -3,7 +3,7 @@ Enhanced API endpoints with Prometheus metrics integration
 Monitoring-ready endpoints for MLOps pipeline
 """
 
-import asyncio
+
 import logging
 import time
 from datetime import datetime
@@ -105,7 +105,7 @@ async def predict_movie_rating(request: PredictionRequest):
     start_time = time.time()
 
     try:
-        logger.info(f"평점 예측 요청: {request.text[:50]}...")
+        logger.info(f"평점 예측 요청: {(request.text[:50] + '...') if request.text else 'No text provided'}")
 
         # Record API call if monitoring enabled
         if HAS_MONITORING:
@@ -185,7 +185,7 @@ async def predict_movie_rating(request: PredictionRequest):
                 text=request.text,
                 sentiment=sentiment,
                 confidence=confidence,
-                timestamp=datetime.now(),
+                timestamp=datetime.now().isoformat(),
                 # Enhanced fields for graceful degradation
                 predicted_rating=round(predicted_rating, 2),
                 model_version="fallback-v1.0",
@@ -234,7 +234,7 @@ async def predict_movie_rating(request: PredictionRequest):
             text=request.text,
             sentiment=sentiment,
             confidence=confidence,
-            timestamp=datetime.now(),
+            timestamp=datetime.now().isoformat(),
             # Enhanced fields for graceful degradation
             predicted_rating=round(predicted_rating, 2),
             model_version="fallback-v1.0",
@@ -416,7 +416,7 @@ async def predict_batch_movies(request: BatchPredictionRequest):
                             text=text,
                             sentiment=sentiment,
                             confidence=confidence,
-                            timestamp=datetime.now(),
+                            timestamp=datetime.now().isoformat(),
                             # Enhanced fields for fallback
                             predicted_rating=round(predicted_rating, 2),
                             model_version="fallback-v1.0",
@@ -460,7 +460,7 @@ async def predict_batch_movies(request: BatchPredictionRequest):
                             text=text,
                             sentiment=sentiment,
                             confidence=confidence,
-                            timestamp=datetime.now(),
+                            timestamp=datetime.now().isoformat(),
                             # Enhanced fields for normal prediction
                             predicted_rating=round(predicted_rating, 2),
                             model_version="1.0.0",
@@ -492,7 +492,7 @@ async def predict_batch_movies(request: BatchPredictionRequest):
                         text=text,
                         sentiment="neutral",
                         confidence=0.3,
-                        timestamp=datetime.now(),
+                        timestamp=datetime.now().isoformat(),
                         # Enhanced fields for error case
                         predicted_rating=5.0,  # 중간값
                         model_version="error-fallback",
