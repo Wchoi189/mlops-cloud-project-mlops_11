@@ -421,6 +421,14 @@ jobs:
       #     SINGLE_TAG=$(echo '${{ steps.meta.outputs.tags }}' | head -n1)
       #     echo "tag=$SINGLE_TAG" >> $GITHUB_OUTPUT
       #     echo "Using single tag for testing: $SINGLE_TAG"
+      - name: Extract single tag for testing
+        id: single-tag
+        run: |
+          # Extract the first tag from metadata output and clean it
+          TAGS="${{ steps.meta.outputs.tags }}"
+          FIRST_TAG=$(echo "$TAGS" | head -n1 | tr -d '\n' | tr -d '\r')
+          echo "tag=$FIRST_TAG" >> $GITHUB_OUTPUT
+          echo "🏷️ Using tag for testing: $FIRST_TAG"
 
       - name: Build and push API image
         id: build
@@ -442,13 +450,13 @@ jobs:
           set -x
 
           # Use single tag for testing
-          TEST_IMAGE="${{ fromJSON(steps.meta.outputs.json).tags[0] }}"
-          echo "Testing image: $TEST_IMAGE"
+          SINGLE_TAG="${{ steps.single-tag.outputs.tag }}"
+          echo "Testing image: $SINGLE_TAG"
 
           # Test 1: Basic Python environment (without starting server)
           echo "📋 Testing Python environment..."
-          docker pull "$TEST_IMAGE"
-          docker run --rm --entrypoint python "$TEST_IMAGE" -c "
+          docker pull "$SINGLE_TAG"
+          docker run --rm --entrypoint python "$SINGLE_TAG" -c "
           import sys
           print('✅ Container Python environment works')
           print(f'Python version: {sys.version}')
@@ -456,7 +464,7 @@ jobs:
           
           # Test 2: Import test (without starting server)
           echo "📋 Testing API imports..."
-          docker run --rm --entrypoint python "$TEST_IMAGE" -c "
+          docker run --rm --entrypoint python "$SINGLE_TAG" -c "
           try:
               from src.api.main import app
               print('✅ API module imports successfully')
@@ -576,6 +584,9 @@ jobs:
 
   deploy-staging:
     name: 🎭 Deploy Staging
+    env:
+      ACTIONS_STEP_DEBUG: true
+      ACTIONS_RUNNER_DEBUG: true
     runs-on: ubuntu-latest
     needs: [build, test]
     environment: staging

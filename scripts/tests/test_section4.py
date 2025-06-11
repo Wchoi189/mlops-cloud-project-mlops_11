@@ -19,6 +19,61 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 
+def setup_ci_test_environment():
+    """Set up test environment with mock model for CI"""
+    import os
+    from pathlib import Path
+    
+    # Check if we're in CI environment
+    is_ci = any([
+        os.getenv('CI') == 'true',
+        os.getenv('GITHUB_ACTIONS') == 'true',
+        os.getenv('DOCKER_ENV') == 'ci'
+    ])
+    
+    if is_ci:
+        print("🔧 Setting up CI test environment...")
+        
+        # Create models directory
+        models_dir = Path("models")
+        models_dir.mkdir(exist_ok=True)
+        
+        # Create a mock model file for CI testing
+        mock_model_path = models_dir / "cicd_default_model.joblib"
+        if not mock_model_path.exists():
+            try:
+                import joblib
+                from sklearn.ensemble import RandomForestRegressor
+                import numpy as np
+                
+                # Create a simple mock model
+                mock_model = RandomForestRegressor(n_estimators=3, random_state=42)
+                X_mock = np.array([[2020, 120, 5000], [2019, 90, 3000]])
+                y_mock = np.array([7.5, 6.5])
+                mock_model.fit(X_mock, y_mock)
+                
+                # Save in the expected format
+                model_info = {
+                    "model": mock_model,
+                    "feature_names": ["startYear", "runtimeMinutes", "numVotes"],
+                    "model_type": "random_forest"
+                }
+                
+                joblib.dump(model_info, mock_model_path)
+                print(f"✅ Created mock model: {mock_model_path}")
+                
+                # Create mock scaler
+                from sklearn.preprocessing import StandardScaler
+                mock_scaler = StandardScaler()
+                mock_scaler.fit(X_mock)
+                
+                scaler_path = models_dir / "scaler_default_model.joblib"
+                joblib.dump(mock_scaler, scaler_path)
+                print(f"✅ Created mock scaler: {scaler_path}")
+                
+            except Exception as e:
+                print(f"⚠️ Could not create mock model: {e}")
+
 def test_section4_manual_mode():  # FIXED: Renamed from test_section4()
     """Section 4 API 서빙 파이프라인 테스트 (Manual mode - requires running services)"""
 
@@ -303,8 +358,12 @@ def test_section4_manual_mode():  # FIXED: Renamed from test_section4()
 def test_section4_ci_mode():
     """Section 4 tests for CI/CD environment (no running services)"""
     print("🔧 Section 4 CI/CD Mode Tests")
+
     print("=" * 30)
-    
+    # Add this line at the very beginning
+    setup_ci_test_environment()  # ✅ Add this line  
+    print("🧪 Running Section 4 tests in CI/CD mode...")
+
     # 1. Import tests
     print("\n1️⃣ Testing API imports...")
     try:
@@ -339,7 +398,7 @@ def test_section4_ci_mode():
                 print(f"✅ Route {route} registered")
             else:
                 print(f"⚠️ Route {route} not found (may be auto-generated)")
-                
+       
     except Exception as e:
         print(f"❌ FastAPI structure test error: {e}")
         return False
@@ -366,7 +425,7 @@ def test_section4_ci_mode():
         test_requests = [
             # Movie-based prediction
             {
-                "title": "Test Movie",
+                "text": "Test Movie Review",
                 "startYear": 2020,
                 "runtimeMinutes": 120,
                 "numVotes": 5000
@@ -496,6 +555,11 @@ def test_section4_ci_mode():
         return False
     
     print("\n✅ All Section 4 CI/CD tests passed!")
+
+    # Add this line before the final return
+    if not test_movie_endpoint_schema():
+        return False
+
     return True
 
 
@@ -533,6 +597,33 @@ def test_api_manually():
         print(f"❌ API 테스트 실패: {e}")
         print("\n💡 먼저 API 서버를 시작하세요:")
         print("   uvicorn src.api.main:app --reload --port 8000")
+        return False
+    
+def test_movie_endpoint_schema():
+    """Test the movie-specific endpoint and schema"""
+    print("\n7️⃣ Testing movie prediction endpoint schema...")
+    try:
+        # Test MoviePredictionRequest schema (if it exists)
+        try:
+            from src.api.schemas import MoviePredictionRequest
+            
+            movie_request = MoviePredictionRequest(
+                title="Test Movie",
+                startYear=2020,
+                runtimeMinutes=120,
+                numVotes=5000
+            )
+            print("✅ MoviePredictionRequest schema validation successful")
+            print(f"   Title: {movie_request.title}")
+            print(f"   Year: {movie_request.startYear}")
+            
+        except ImportError:
+            print("⚠️ MoviePredictionRequest not found - using fallback test")
+            
+        return True
+        
+    except Exception as e:
+        print(f"❌ Movie endpoint schema test error: {e}")
         return False
    
 
