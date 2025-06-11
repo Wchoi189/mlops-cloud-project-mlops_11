@@ -481,7 +481,7 @@ jobs:
           
           # Start container with default command (which starts the server)
           echo "🚀 Starting container with server..."
-          docker run -d --name "$CONTAINER_NAME" -p 8080:8000 "$TEST_IMAGE"
+          docker run -d --name "$CONTAINER_NAME" -p 8080:8000 "$SINGLE_TAG"
           
           # Give server time to start (your logs show it needs a few seconds)
           echo "⏳ Waiting for server startup..."
