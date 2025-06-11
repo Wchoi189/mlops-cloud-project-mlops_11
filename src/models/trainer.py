@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Tuple, Union
 
 import joblib
 import mlflow
-import mlflow.sklearn
+from mlflow import sklearn as mlflow_sklearn
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
@@ -72,6 +72,9 @@ class MovieRatingTrainer:
 
         y = df[self.TARGET_COLUMN].values
 
+        # y를 명시적으로 np.ndarray로 변환
+        y = np.asarray(y)
+
         # 피처명 저장
         self.feature_names = available_features
 
@@ -136,7 +139,7 @@ class MovieRatingTrainer:
                     X_train_scaled[:5], columns=self.feature_names
                 )
 
-                mlflow.sklearn.log_model(
+                mlflow_sklearn.log_model(
                     self.model,
                     "model",
                     input_example=input_example,

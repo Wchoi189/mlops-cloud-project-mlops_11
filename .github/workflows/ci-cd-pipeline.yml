@@ -368,6 +368,7 @@ jobs:
     outputs:
       api-image: ${{ steps.meta.outputs.tags }}
       api-digest: ${{ steps.build.outputs.digest }}
+      single-tag: ${{ steps.single-tag.outputs.tag }}  # NEW: Single tag for testing
 
     steps:
       - name: Checkout code
@@ -386,18 +387,11 @@ jobs:
       - name: Prepare Docker context
         run: |
           echo "🔧 Preparing Docker build context..."
-          
-          # Apply the same import fixes for Docker
           rm -f src/utils/logging.py 2>/dev/null || true
           find . -name "*.pyc" -delete 2>/dev/null || true
           find src -type d -exec touch {}/__init__.py \; 2>/dev/null || true
-          
-          # Create necessary directories
           mkdir -p models logs data/processed data/raw data/interim data/external
-          
-          # Create minimal test model for Docker
-          echo "# Docker build model placeholder" > models/.dockerkeep
-          
+          echo "# Docker build model placeholder" > models/.dockerkeep      
           echo "✅ Docker context prepared"
 
       - name: Extract metadata
@@ -410,6 +404,19 @@ jobs:
             type=ref,event=pr
             type=sha,prefix={{branch}},sanitize=true
             type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.title=MLOps IMDB API
+            org.opencontainers.image.description=Movie rating prediction API
+            org.opencontainers.image.vendor=${{ github.repository_owner }}           
+
+      # NEW: Extract single tag for testing
+      - name: Extract single tag for testing
+        id: single-tag
+        run: |
+          # Get the first tag from the metadata output
+          SINGLE_TAG=$(echo '${{ steps.meta.outputs.tags }}' | head -n1)
+          echo "tag=$SINGLE_TAG" >> $GITHUB_OUTPUT
+          echo "Using single tag for testing: $SINGLE_TAG"
 
       - name: Build and push API image
         id: build
@@ -418,11 +425,11 @@ jobs:
           context: .
           file: ./docker/Dockerfile.api
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          platforms: linux/amd64
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        platforms: linux/amd64
 
       - name: Test Docker image
         run: |
@@ -430,9 +437,13 @@ jobs:
           set -e
           set -x
 
+          # Use single tag for testing
+          TEST_IMAGE="${{ steps.single-tag.outputs.tag }}"
+          echo "Testing image: $TEST_IMAGE"
+
           # Test 1: Basic Python environment (without starting server)
           echo "📋 Testing Python environment..."
-          docker run --rm --entrypoint python ${{ steps.meta.outputs.tags }} -c "
+          docker run --rm --entrypoint python "$TEST_IMAGE" -c "
           import sys
           print('✅ Container Python environment works')
           print(f'Python version: {sys.version}')
@@ -440,7 +451,7 @@ jobs:
           
           # Test 2: Import test (without starting server)
           echo "📋 Testing API imports..."
-          docker run --rm --entrypoint python ${{ steps.meta.outputs.tags }} -c "
+          docker run --rm --entrypoint python "$TEST_IMAGE" -c "
           try:
               from src.api.main import app
               print('✅ API module imports successfully')
@@ -457,7 +468,7 @@ jobs:
           
           # Start container with default command (which starts the server)
           echo "🚀 Starting container with server..."
-          docker run -d --name "$CONTAINER_NAME" -p 8080:8000 ${{ steps.meta.outputs.tags }}
+          docker run -d --name "$CONTAINER_NAME" -p 8080:8000 "$TEST_IMAGE"
           
           # Give server time to start (your logs show it needs a few seconds)
           echo "⏳ Waiting for server startup..."

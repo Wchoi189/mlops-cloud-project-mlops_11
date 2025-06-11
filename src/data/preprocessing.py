@@ -179,7 +179,7 @@ class IMDbPreprocessor:
         self.feature_names = feature_names
 
         # 타겟 준비
-        y = df["averageRating"].values
+        y = np.asarray(df["averageRating"].values)
 
         # 스케일링 (StandardScaler)
         X_scaled = self.scaler.fit_transform(X)
@@ -227,30 +227,43 @@ class IMDbPreprocessor:
 
         return X_train, X_test, y_train, y_test
 
-    def save_preprocessor(self, filepath: str = None):
+    def save_preprocessor(self, filepath: Optional[str] = None):
         """전처리기 저장 (재사용을 위해)"""
-        if filepath is None:
-            filepath = self.processed_data_path / "preprocessor.pkl"
+        try:
+            if filepath is None:
+                # Ensure directory exists
+                import os
+                os.makedirs("data/processed", exist_ok=True)
+                filepath = str(self.processed_data_path / "preprocessor.pkl")
 
-        preprocessor_data = {
-            "top_genres": self.top_genres,
-            "scaler": self.scaler,
-            "feature_names": self.feature_names,
-            "is_fitted": self.is_fitted,
-            "top_n_genres": self.top_n_genres,
-            "min_year": self.min_year,
-            "max_year": self.max_year,
-        }
+            # Check if we have a fitted preprocessor
+            if not hasattr(self, 'feature_names') or self.feature_names is None:
+                logger.warning("전처리기가 아직 fit되지 않았습니다.")
+                return False
 
-        with open(filepath, "wb") as f:
-            pickle.dump(preprocessor_data, f)
+            preprocessor_data = {
+                "top_genres": self.top_genres,
+                "scaler": self.scaler,
+                "feature_names": self.feature_names,
+                "is_fitted": self.is_fitted,
+                "top_n_genres": self.top_n_genres,
+                "min_year": self.min_year,
+                "max_year": self.max_year,
+            }
 
-        logger.info(f"전처리기 저장: {filepath}")
+            with open(filepath, "wb") as f:
+                pickle.dump(preprocessor_data, f)
 
-    def load_preprocessor(self, filepath: str = None):
+            logger.info(f"전처리기 저장 완료: {filepath}")
+            return True
+        except Exception as e:
+            logger.error(f"전처리기 저장 실패: {e}")
+            return False
+
+    def load_preprocessor(self, filepath: Optional[str] = None):
         """저장된 전처리기 로드"""
         if filepath is None:
-            filepath = self.processed_data_path / "preprocessor.pkl"
+            filepath = str(self.processed_data_path / "preprocessor.pkl")
 
         with open(filepath, "rb") as f:
             preprocessor_data = pickle.load(f)
