@@ -110,6 +110,7 @@ jobs:
     name: 🔍 Code Quality
     runs-on: ubuntu-latest
     needs: setup
+    if: always() && needs.setup.result == 'success'  # Always run if setup succeeds
 
     steps:
       - name: Checkout code
@@ -191,7 +192,7 @@ jobs:
     name: 🧪 Test Suite
     runs-on: ubuntu-latest
     needs: setup
-    if: github.event.inputs.skip_tests != 'true'
+    if: always() && needs.setup.result == 'success' && github.event.inputs.skip_tests != 'true'
 
     steps:
       - name: Checkout code
@@ -363,12 +364,13 @@ jobs:
   build:
     name: 🐳 Build & Push
     runs-on: ubuntu-latest
-    timeout-minutes: 10  # ADDED: Prevent infinite hanging
+    timeout-minutes: 15 
     needs: [setup, quality]
+    if: always() && needs.setup.result == 'success' && (needs.quality.result == 'success' || needs.quality.result == 'skipped')
     outputs:
       api-image: ${{ steps.meta.outputs.tags }}
       api-digest: ${{ steps.build.outputs.digest }}
-      single-tag: ${{ steps.single-tag.outputs.tag }}  # NEW: Single tag for testing
+      primary-tag: ${{ fromJSON(steps.meta.outputs.json).tags[0] }}
 
     steps:
       - name: Checkout code
@@ -400,23 +402,25 @@ jobs:
         with:
           images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}-api
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix={{branch}},sanitize=true
             type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=branch,enable=${{ github.event_name == 'push' && github.ref != 'refs/heads/main' }}
+            type=ref,event=pr,prefix=pr-,enable=${{ github.event_name == 'pull_request' }}           
+            "type=sha,prefix={{branch}},sanitize=true,enable=false"
+          flavor: |
+            latest=auto  
           labels: |
             org.opencontainers.image.title=MLOps IMDB API
             org.opencontainers.image.description=Movie rating prediction API
             org.opencontainers.image.vendor=${{ github.repository_owner }}           
 
       # NEW: Extract single tag for testing
-      - name: Extract single tag for testing
-        id: single-tag
-        run: |
-          # Get the first tag from the metadata output
-          SINGLE_TAG=$(echo '${{ steps.meta.outputs.tags }}' | head -n1)
-          echo "tag=$SINGLE_TAG" >> $GITHUB_OUTPUT
-          echo "Using single tag for testing: $SINGLE_TAG"
+      # - name: Extract single tag for testing
+      #   id: single-tag
+      #   run: |
+      #     # Get the first tag from the metadata output
+      #     SINGLE_TAG=$(echo '${{ steps.meta.outputs.tags }}' | head -n1)
+      #     echo "tag=$SINGLE_TAG" >> $GITHUB_OUTPUT
+      #     echo "Using single tag for testing: $SINGLE_TAG"
 
       - name: Build and push API image
         id: build
@@ -438,7 +442,7 @@ jobs:
           set -x
 
           # Use single tag for testing
-          TEST_IMAGE="${{ steps.single-tag.outputs.tag }}"
+          TEST_IMAGE="${{ fromJSON(steps.meta.outputs.json).tags[0] }}"
           echo "Testing image: $TEST_IMAGE"
 
           # Test 1: Basic Python environment (without starting server)
